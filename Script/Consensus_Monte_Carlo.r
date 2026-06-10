@@ -1,11 +1,13 @@
 # 1. Load and prepare data
 
-accident_data <- read.csv("Dataset\\accident_2013.csv")
+accident_data <- read.csv(
+  file.path("Dataset", "accident_2013.csv")
+)
 
 # Display first 5 rows of the dataset
 head(accident_data, 5)
 
-# Select variables
+# Select variables used in the analysis
 data_used <- accident_data[, c(
   "road_type",
   "speed_limit",
@@ -16,54 +18,89 @@ data_used <- accident_data[, c(
 data_used <- na.omit(data_used)
 
 # Create binary response variable
+# serious_fatal combines serious and fatal accidents
 data_used$accident_severity_binary <- ifelse(
   data_used$accident_severity == "slight",
   "slight",
-  "others"
+  "serious_fatal"
 )
 
 # Convert predictors to factors
 data_used$road_type <- factor(data_used$road_type)
 data_used$speed_limit <- factor(data_used$speed_limit)
 
-# "others" is the reference class, "slight" is the event being modeled
+# "slight" is the reference class,
+# "serious_fatal" is the event being modeled
 data_used$accident_severity_binary <- factor(
   data_used$accident_severity_binary,
-  levels = c("others", "slight")
+  levels = c("slight", "serious_fatal")
 )
 
 # Remove the original multiclass severity variable
 data_used$accident_severity <- NULL
 
-# Check data
-head(data_used, 10)
+# Check data before removing unknown road type
+head(data_used, 5)
 
-# Check response distribution
+# Check response distribution before removing unknown road type
 table(data_used$accident_severity_binary)
 prop.table(table(data_used$accident_severity_binary))
+
+# Check predictor distributions before removing unknown road type
+table(data_used$road_type)
+table(data_used$speed_limit)
+
+# Remove observations with unknown road type
+# This category is removed because it is not an interpretable road type
+data_used <- subset(data_used, road_type != "unknown")
+data_used$road_type <- droplevels(data_used$road_type)
+
+# Set meaningful reference categories
+# The reference categories are chosen because they are the most common groups
+data_used$road_type <- relevel(
+  data_used$road_type,
+  ref = "single carriageway"
+)
+
+data_used$speed_limit <- relevel(
+  data_used$speed_limit,
+  ref = "2"
+)
+
+# Check response distribution after removing unknown road type
+table(data_used$accident_severity_binary)
+
+# Check predictor distributions after removing unknown road type
+table(data_used$road_type)
+table(data_used$speed_limit)
 
 
 
 # 2. Fit frequentist logistic regression
 
-# Remove observations with unknown road type
-data_used <- subset(data_used, road_type != "unknown")
-data_used$road_type <- droplevels(data_used$road_type)
-
-# Check response distribution after removing unknown road type
-table(data_used$accident_severity_binary)
-prop.table(table(data_used$accident_severity_binary))
-
-# Fit final frequentist logistic regression
+# Fit frequentist logistic regression
+# The model estimates the log-odds of serious/fatal accident severity
+# relative to slight accident severity.
 logistic_model <- glm(
   accident_severity_binary ~ .,
   data = data_used,
   family = binomial
 )
 
+# Display frequentist model summary
 summary(logistic_model)
 
-# Check estimated coefficient correlation
+# Convert frequentist coefficients to odds ratios
+glm_odds_ratios <- data.frame(
+  Parameter = names(coef(logistic_model)),
+  Estimate = coef(logistic_model),
+  Odds_Ratio = exp(coef(logistic_model)),
+  row.names = NULL
+)
+
+print(glm_odds_ratios)
+
+# Check estimated coefficient covariance and correlation
 cov_beta <- vcov(logistic_model)
 cor_beta <- cov2cor(cov_beta)
 
@@ -71,12 +108,13 @@ round(cor_beta, 3)
 
 
 
-# 3. Prepare response and design matrix
+## 3. Prepare response and design matrix
 
 # Recode response variable
-y <- ifelse(data_used$accident_severity_binary == "slight", 1, 0)
+# serious_fatal is coded as 1 because it is the event being modeled
+y <- ifelse(data_used$accident_severity_binary == "serious_fatal", 1, 0)
 
-# Extract design matrix
+# Extract design matrix from the frequentist logistic regression model
 X <- model.matrix(logistic_model)
 
 # Store parameter names
@@ -86,8 +124,10 @@ param_names <- colnames(X)
 
 # 4. Define prior, likelihood, and posterior
 
+prior_sd_value <- 2.5
+
 # Log-prior
-log_prior <- function(beta, prior_sd = 10) {
+log_prior <- function(beta, prior_sd = prior_sd_value) {
   sum(dnorm(beta, mean = 0, sd = prior_sd, log = TRUE))
 }
 
@@ -105,7 +145,7 @@ log_likelihood <- function(beta, y, X) {
 }
 
 # Log-posterior
-log_posterior <- function(beta, y, X, prior_sd = 10) {
+log_posterior <- function(beta, y, X, prior_sd = prior_sd_value) {
   log_prior(beta, prior_sd = prior_sd) +
     log_likelihood(beta, y, X)
 }
@@ -151,7 +191,7 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
     colnames(post_samples) <- paste0("beta_", seq_len(ncol(post_samples)))
   }
 
-  # Posterior summaries
+  # Posterior summaries on log-odds scale
   post_mean <- colMeans(post_samples)
   post_median <- apply(post_samples, 2, median)
   post_sd <- apply(post_samples, 2, sd)
@@ -177,6 +217,9 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
     MCSE = post_mcse,
     Lower_95_CI = lower_ci,
     Upper_95_CI = upper_ci,
+    Odds_Ratio = exp(post_mean),
+    Lower_95_OR = exp(lower_ci),
+    Upper_95_OR = exp(upper_ci),
     row.names = NULL
   )
 
@@ -206,8 +249,8 @@ hist_trace_plot <- function(samples,
     end <- min(start + params_per_page - 1, num_params)
     index <- start:end
 
-    # 2 rows:
-    # first row = histogram
+    # Two rows:
+    # first row = posterior histogram
     # second row = trace plot
     par(mfrow = c(2, length(index)))
 
@@ -216,7 +259,7 @@ hist_trace_plot <- function(samples,
       hist(
         samples[, i],
         breaks = 30,
-        main = paste("Posterior of", param_names[i]),
+        main = paste("Posterior histogram of", param_names[i]),
         xlab = paste(param_names[i], "values"),
         ylab = "Frequency"
       )
@@ -248,9 +291,56 @@ hist_trace_plot <- function(samples,
   }
 }
 
+# Density plot function for Consensus Monte Carlo samples
+consensus_density_plot <- function(samples,
+                                   param_names = colnames(samples),
+                                   params_per_page = 4) {
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
+
+  if (is.null(param_names)) {
+    param_names <- paste0("beta_", seq_len(ncol(samples)))
+  }
+
+  num_params <- length(param_names)
+  post_means <- colMeans(samples)
+
+  for (start in seq(1, num_params, by = params_per_page)) {
+    end <- min(start + params_per_page - 1, num_params)
+    index <- start:end
+
+    par(mfrow = c(1, length(index)))
+
+    for (i in index) {
+      plot(
+        density(samples[, i]),
+        main = paste("CMC posterior density of", param_names[i]),
+        xlab = paste(param_names[i], "values"),
+        ylab = "Density",
+        lwd = 1.5
+      )
+
+      abline(
+        v = post_means[i],
+        col = "red",
+        lwd = 1.5
+      )
+    }
+  }
+}
 
 
-# 7. Random Walk Metropolis-Hastings
+
+# Store runtimes
+runtime_table <- data.frame(
+  Method = character(),
+  Runtime_Seconds = numeric(),
+  Runtime_Minutes = numeric()
+)
+
+
+
+# 7. Full-data Random Walk Metropolis-Hastings
 
 set.seed(1)
 
@@ -270,7 +360,10 @@ start_value[!is.finite(start_value)] <- 0
 rwmh_tuning_factor <- 0.75
 
 # Full covariance random-walk proposal
-proposal_cov_rwmh <- rwmh_tuning_factor^2 * (2.38^2 / d) * vcov(logistic_model)
+proposal_cov_rwmh <- rwmh_tuning_factor^2 *
+  (2.38^2 / d) *
+  vcov(logistic_model)
+
 proposal_cov_rwmh <- as.matrix(proposal_cov_rwmh)
 
 # Cholesky decomposition is used to generate correlated multivariate normal proposals
@@ -288,7 +381,7 @@ rwmh_block <- function(start_value,
                        y,
                        X,
                        proposal_chol,
-                       prior_sd = 10,
+                       prior_sd = prior_sd_value,
                        param_names = NULL) {
   # Create matrix to store MCMC samples
   chain <- matrix(
@@ -334,7 +427,8 @@ rwmh_block <- function(start_value,
     )
 
     # Log acceptance probability
-    log_acceptance_prob <- proposal_log_posterior - current_log_posterior
+    log_acceptance_prob <- proposal_log_posterior -
+      current_log_posterior
 
     # Accept or reject
     if (log(runif(1)) < log_acceptance_prob) {
@@ -359,6 +453,9 @@ rwmh_block <- function(start_value,
   )
 }
 
+# Start runtime measurement
+rwmh_start_time <- Sys.time()
+
 # Run Random Walk MH
 rwmh_result <- rwmh_block(
   start_value = start_value,
@@ -366,8 +463,24 @@ rwmh_result <- rwmh_block(
   y = y,
   X = X,
   proposal_chol = proposal_chol_rwmh,
-  prior_sd = 10,
+  prior_sd = prior_sd_value,
   param_names = param_names
+)
+
+# End runtime measurement
+rwmh_end_time <- Sys.time()
+
+rwmh_runtime <- as.numeric(
+  difftime(rwmh_end_time, rwmh_start_time, units = "secs")
+)
+
+runtime_table <- rbind(
+  runtime_table,
+  data.frame(
+    Method = "Full-data RWMH",
+    Runtime_Seconds = rwmh_runtime,
+    Runtime_Minutes = rwmh_runtime / 60
+  )
 )
 
 # Extract the full Random Walk MH chain
@@ -384,19 +497,17 @@ rwmh_post_stats_table <- posterior_statistics(rwmh_post_samples)
 
 print(rwmh_post_stats_table)
 
-# Odds ratio summary
-rwmh_post_stats_table$Odds_Ratio <- exp(rwmh_post_stats_table$Mean)
-rwmh_post_stats_table$Lower_95_OR <- exp(rwmh_post_stats_table$Lower_95_CI)
-rwmh_post_stats_table$Upper_95_OR <- exp(rwmh_post_stats_table$Upper_95_CI)
-
-print(rwmh_post_stats_table)
-
 # Histogram and trace plots
 hist_trace_plot(rwmh_post_samples)
 
+# Print runtime so far
+print(runtime_table)
 
 
-# 8. Independent Metropolis-Hastings
+
+# 8. Full-data Independent Metropolis-Hastings
+
+set.seed(2)
 
 # Proposal mean from frequentist logistic regression
 proposal_mean_imh <- coef(logistic_model)
@@ -453,7 +564,7 @@ imh_block <- function(start_value,
                       proposal_mean,
                       proposal_cov,
                       proposal_chol,
-                      prior_sd = 10,
+                      prior_sd = prior_sd_value,
                       param_names = NULL) {
   # Create matrix to store MCMC samples
   chain <- matrix(
@@ -543,6 +654,9 @@ imh_block <- function(start_value,
   )
 }
 
+# Start runtime measurement
+imh_start_time <- Sys.time()
+
 # Run Independent MH
 imh_result <- imh_block(
   start_value = start_value,
@@ -552,8 +666,24 @@ imh_result <- imh_block(
   proposal_mean = proposal_mean_imh,
   proposal_cov = proposal_cov_imh,
   proposal_chol = proposal_chol_imh,
-  prior_sd = 10,
+  prior_sd = prior_sd_value,
   param_names = param_names
+)
+
+# End runtime measurement
+imh_end_time <- Sys.time()
+
+imh_runtime <- as.numeric(
+  difftime(imh_end_time, imh_start_time, units = "secs")
+)
+
+runtime_table <- rbind(
+  runtime_table,
+  data.frame(
+    Method = "Full-data IMH",
+    Runtime_Seconds = imh_runtime,
+    Runtime_Minutes = imh_runtime / 60
+  )
 )
 
 # Extract the full Independent MH chain
@@ -567,13 +697,6 @@ imh_post_stats_table <- posterior_statistics(imh_post_samples)
 
 print(imh_post_stats_table)
 
-# Odds ratio summary
-imh_post_stats_table$Odds_Ratio <- exp(imh_post_stats_table$Mean)
-imh_post_stats_table$Lower_95_OR <- exp(imh_post_stats_table$Lower_95_CI)
-imh_post_stats_table$Upper_95_OR <- exp(imh_post_stats_table$Upper_95_CI)
-
-print(imh_post_stats_table)
-
 # Histogram and trace plots
 hist_trace_plot(imh_post_samples)
 
@@ -581,27 +704,40 @@ hist_trace_plot(imh_post_samples)
 
 # 9. Consensus Monte Carlo using Random Walk MH
 
+set.seed(3)
+
 # Number of data subsets
+# K = 4 is chosen to divide the computation while keeping each subset large enough
+# for stable logistic regression inference.
 cmc_num_subsets <- 4
 
 # Number of MCMC iterations for each subset chain
-cmc_iterations <- 50000
+# Use the same number of iterations as the full-data MCMC chains for comparability.
+cmc_iterations <- num_iterations
 cmc_burn_in <- round(cmc_iterations * burn_in_fraction)
 
 # Randomly split observations into subsets
-set.seed(123)
-
 cmc_subset_id <- sample(
   rep(seq_len(cmc_num_subsets), length.out = nrow(X))
 )
 
+# Check subset balance
+table(cmc_subset_id)
+
+# Check response distribution within each subset
+table(cmc_subset_id, y)
+
+# Check predictor distributions within each subset
+table(cmc_subset_id, data_used$road_type)
+table(cmc_subset_id, data_used$speed_limit)
+
 # Subposterior log-density
-# The prior is divided by the number of subsets so that
-# multiplying all subposteriors gives the full posterior.
+# Each subset uses 1 / K of the prior so that multiplying all
+# subposteriors gives the full posterior structure.
 log_subposterior <- function(beta,
                              y_subset,
                              X_subset,
-                             prior_sd = 10,
+                             prior_sd = prior_sd_value,
                              num_subsets = 4) {
   (1 / num_subsets) * log_prior(beta, prior_sd = prior_sd) +
     log_likelihood(beta, y_subset, X_subset)
@@ -613,7 +749,7 @@ rwmh_subset_block <- function(start_value,
                               y_subset,
                               X_subset,
                               proposal_chol,
-                              prior_sd = 10,
+                              prior_sd = prior_sd_value,
                               num_subsets = 4,
                               param_names = NULL) {
   # Create matrix to store MCMC samples
@@ -662,7 +798,7 @@ rwmh_subset_block <- function(start_value,
     )
 
     # Random Walk MH acceptance probability
-    # No proposal-density correction is needed because the proposal is symmetric
+    # No proposal-density correction is needed because the proposal is symmetric.
     log_acceptance_prob <-
       proposal_log_subposterior -
       current_log_subposterior
@@ -689,8 +825,9 @@ rwmh_subset_block <- function(start_value,
 }
 
 # Proposal covariance for subset Random Walk MH
-# Each subset posterior is wider than the full posterior,
-# so the covariance is multiplied by cmc_num_subsets.
+# Each subset contains roughly 1 / K of the full dataset.
+# Therefore, each subposterior is expected to be wider than the full posterior.
+# The full-data covariance estimate is multiplied by K to approximate this.
 cmc_rwmh_tuning_factor <- 0.75
 
 cmc_rwmh_proposal_cov <-
@@ -708,6 +845,9 @@ cmc_rwmh_proposal_chol <- chol(cmc_rwmh_proposal_cov)
 cmc_rwmh_subset_samples_list <- vector("list", cmc_num_subsets)
 cmc_rwmh_acceptance_rates <- numeric(cmc_num_subsets)
 
+# Start runtime measurement
+cmc_rwmh_start_time <- Sys.time()
+
 # Run Random Walk MH on each subset
 for (k in seq_len(cmc_num_subsets)) {
   cat("\nRunning Consensus RWMH subset", k, "of", cmc_num_subsets, "\n")
@@ -723,7 +863,7 @@ for (k in seq_len(cmc_num_subsets)) {
     y_subset = y_subset,
     X_subset = X_subset,
     proposal_chol = cmc_rwmh_proposal_chol,
-    prior_sd = 10,
+    prior_sd = prior_sd_value,
     num_subsets = cmc_num_subsets,
     param_names = param_names
   )
@@ -745,7 +885,7 @@ for (k in seq_len(cmc_num_subsets)) {
 
 # Function to combine subposterior samples using Consensus Monte Carlo
 combine_consensus_samples <- function(subposterior_samples_list, param_names) {
-  # Use the same number of samples from each subset
+  # Use the same number of post-burn-in samples from each subset
   num_consensus_samples <- min(
     sapply(subposterior_samples_list, nrow)
   )
@@ -806,45 +946,41 @@ cmc_rwmh_samples <- combine_consensus_samples(
   param_names = param_names
 )
 
+# End runtime measurement
+cmc_rwmh_end_time <- Sys.time()
+
+cmc_rwmh_runtime <- as.numeric(
+  difftime(cmc_rwmh_end_time, cmc_rwmh_start_time, units = "secs")
+)
+
+runtime_table <- rbind(
+  runtime_table,
+  data.frame(
+    Method = "CMC-RWMH",
+    Runtime_Seconds = cmc_rwmh_runtime,
+    Runtime_Minutes = cmc_rwmh_runtime / 60
+  )
+)
+
 # Posterior summary for Consensus Monte Carlo using RWMH
 cmc_rwmh_post_stats_table <- posterior_statistics(cmc_rwmh_samples)
 
-cmc_rwmh_post_stats_table$Odds_Ratio <-
-  exp(cmc_rwmh_post_stats_table$Mean)
-
-cmc_rwmh_post_stats_table$Lower_95_OR <-
-  exp(cmc_rwmh_post_stats_table$Lower_95_CI)
-
-cmc_rwmh_post_stats_table$Upper_95_OR <-
-  exp(cmc_rwmh_post_stats_table$Upper_95_CI)
-
 print(cmc_rwmh_post_stats_table)
 
-# Histogram and trace plots
-hist_trace_plot(cmc_rwmh_samples)
+# Density plots for Consensus Monte Carlo samples
+# These are combined consensus samples, not one single Markov chain.
+consensus_density_plot(cmc_rwmh_samples)
 
 
 
 # 10. Consensus Monte Carlo using Independent MH
 
-# Proposal mean from the full-data frequentist logistic regression
-cmc_imh_proposal_mean <- coef(logistic_model)
-cmc_imh_proposal_mean[!is.finite(cmc_imh_proposal_mean)] <- 0
+set.seed(4)
 
-# Tuning factor for Independent MH subset proposal
-cmc_imh_tuning_factor <- 1.5
-
-# Each subset posterior is wider than the full posterior,
-# so the covariance is multiplied by cmc_num_subsets.
-cmc_imh_proposal_cov <-
-  cmc_imh_tuning_factor^2 *
-  cmc_num_subsets *
-  vcov(logistic_model)
-
-cmc_imh_proposal_cov <- as.matrix(cmc_imh_proposal_cov)
-
-# Cholesky decomposition is used to generate correlated multivariate normal proposals
-cmc_imh_proposal_chol <- chol(cmc_imh_proposal_cov)
+# Tuning factor for subset-specific Independent MH proposal
+# A value of 1.0 is used because the subset-specific proposal covariance
+# is already matched to each subset posterior.
+cmc_imh_tuning_factor <- 1.0
 
 # Independent MH sampler for one subset
 imh_subset_block <- function(start_value,
@@ -854,7 +990,7 @@ imh_subset_block <- function(start_value,
                              proposal_mean,
                              proposal_cov,
                              proposal_chol,
-                             prior_sd = 10,
+                             prior_sd = prior_sd_value,
                              num_subsets = 4,
                              param_names = NULL) {
   # Create matrix to store MCMC samples
@@ -894,7 +1030,7 @@ imh_subset_block <- function(start_value,
   )
 
   for (i in seq_len(iterations)) {
-    # Independent proposal from a fixed multivariate normal distribution
+    # Independent proposal from a subset-specific multivariate normal distribution
     proposal <- independent_proposal(
       proposal_mean = proposal_mean,
       proposal_chol = proposal_chol
@@ -917,7 +1053,7 @@ imh_subset_block <- function(start_value,
     )
 
     # Independent MH acceptance probability
-    # Proposal-density correction is required
+    # Proposal-density correction is required because the proposal is not symmetric.
     log_acceptance_prob <-
       proposal_log_subposterior -
       current_log_subposterior +
@@ -950,6 +1086,9 @@ imh_subset_block <- function(start_value,
 cmc_imh_subset_samples_list <- vector("list", cmc_num_subsets)
 cmc_imh_acceptance_rates <- numeric(cmc_num_subsets)
 
+# Start runtime measurement
+cmc_imh_start_time <- Sys.time()
+
 # Run Independent MH on each subset
 for (k in seq_len(cmc_num_subsets)) {
   cat("\nRunning Consensus IMH subset", k, "of", cmc_num_subsets, "\n")
@@ -959,15 +1098,41 @@ for (k in seq_len(cmc_num_subsets)) {
   y_subset <- y[subset_rows]
   X_subset <- X[subset_rows, , drop = FALSE]
 
+  # Fit a logistic regression model on the current subset.
+  # This provides a subset-specific proposal mean and covariance.
+  subset_data <- data_used[subset_rows, , drop = FALSE]
+
+  subset_logistic_model <- glm(
+    accident_severity_binary ~ .,
+    data = subset_data,
+    family = binomial
+  )
+
+  # Subset-specific proposal mean
+  subset_proposal_mean <- coef(subset_logistic_model)
+  subset_proposal_mean[!is.finite(subset_proposal_mean)] <- 0
+
+  # Subset-specific proposal covariance
+  # No multiplication by cmc_num_subsets is used here because
+  # vcov(subset_logistic_model) is already based on the subset.
+  subset_proposal_cov <-
+    cmc_imh_tuning_factor^2 *
+    vcov(subset_logistic_model)
+
+  subset_proposal_cov <- as.matrix(subset_proposal_cov)
+
+  # Cholesky decomposition is used to generate correlated multivariate normal proposals
+  subset_proposal_chol <- chol(subset_proposal_cov)
+
   subset_result <- imh_subset_block(
-    start_value = start_value,
+    start_value = subset_proposal_mean,
     iterations = cmc_iterations,
     y_subset = y_subset,
     X_subset = X_subset,
-    proposal_mean = cmc_imh_proposal_mean,
-    proposal_cov = cmc_imh_proposal_cov,
-    proposal_chol = cmc_imh_proposal_chol,
-    prior_sd = 10,
+    proposal_mean = subset_proposal_mean,
+    proposal_cov = subset_proposal_cov,
+    proposal_chol = subset_proposal_chol,
+    prior_sd = prior_sd_value,
     num_subsets = cmc_num_subsets,
     param_names = param_names
   )
@@ -993,19 +1158,63 @@ cmc_imh_samples <- combine_consensus_samples(
   param_names = param_names
 )
 
+# End runtime measurement
+cmc_imh_end_time <- Sys.time()
+
+cmc_imh_runtime <- as.numeric(
+  difftime(cmc_imh_end_time, cmc_imh_start_time, units = "secs")
+)
+
+runtime_table <- rbind(
+  runtime_table,
+  data.frame(
+    Method = "CMC-IMH",
+    Runtime_Seconds = cmc_imh_runtime,
+    Runtime_Minutes = cmc_imh_runtime / 60
+  )
+)
+
 # Posterior summary for Consensus Monte Carlo using IMH
 cmc_imh_post_stats_table <- posterior_statistics(cmc_imh_samples)
 
-cmc_imh_post_stats_table$Odds_Ratio <-
-  exp(cmc_imh_post_stats_table$Mean)
-
-cmc_imh_post_stats_table$Lower_95_OR <-
-  exp(cmc_imh_post_stats_table$Lower_95_CI)
-
-cmc_imh_post_stats_table$Upper_95_OR <-
-  exp(cmc_imh_post_stats_table$Upper_95_CI)
-
 print(cmc_imh_post_stats_table)
 
-# Histogram and trace plots
-hist_trace_plot(cmc_imh_samples)
+# Density plots for Consensus Monte Carlo samples
+# These are combined consensus samples, not one single Markov chain.
+consensus_density_plot(cmc_imh_samples)
+
+
+# 11. Compare all methods
+
+cat("\nFull-data Random Walk MH Acceptance Rate:\n")
+print(rwmh_result$acceptance_rate)
+
+cat("\nFull-data Independent MH Acceptance Rate:\n")
+print(imh_result$acceptance_rate)
+
+cat("\nCMC-RWMH Subset Acceptance Rates:\n")
+print(cmc_rwmh_acceptance_rates)
+
+cat("\nMean CMC-RWMH Acceptance Rate:\n")
+print(mean(cmc_rwmh_acceptance_rates))
+
+cat("\nCMC-IMH Subset Acceptance Rates:\n")
+print(cmc_imh_acceptance_rates)
+
+cat("\nMean CMC-IMH Acceptance Rate:\n")
+print(mean(cmc_imh_acceptance_rates))
+
+cat("\nFull-data RWMH ESS and MCSE:\n")
+print(rwmh_post_stats_table[, c("Parameter", "ESS", "MCSE")])
+
+cat("\nFull-data IMH ESS and MCSE:\n")
+print(imh_post_stats_table[, c("Parameter", "ESS", "MCSE")])
+
+cat("\nCMC-RWMH ESS and MCSE:\n")
+print(cmc_rwmh_post_stats_table[, c("Parameter", "ESS", "MCSE")])
+
+cat("\nCMC-IMH ESS and MCSE:\n")
+print(cmc_imh_post_stats_table[, c("Parameter", "ESS", "MCSE")])
+
+cat("\nRuntime Comparison:\n")
+print(runtime_table)
