@@ -1,0 +1,11 @@
+"Method","Acceptance_Rate"
+"Full RWMH",0.39195
+"Full IMH",0.21504
+"CMC RWMH Subset 1",0.4085
+"CMC RWMH Subset 2",0.39748
+"CMC RWMH Subset 3",0.39106
+"CMC RWMH Subset 4",0.38446
+"CMC IMH Subset 1",0.02318
+"CMC IMH Subset 2",0.14236
+"CMC IMH Subset 3",0.03542
+"CMC IMH Subset 4",0.0142

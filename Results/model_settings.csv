@@ -1,0 +1,7 @@
+"Setting","Value"
+"Observations after preprocessing","82344"
+"Number of coefficients","10"
+"Full-data MCMC iterations","1e+05"
+"Burn-in fraction","0.2"
+"Number of subsets","4"
+"Subset MCMC iterations","50000"

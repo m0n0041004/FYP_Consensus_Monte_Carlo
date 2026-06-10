@@ -1,0 +1,252 @@
+\documentclass[12pt]{xmumthesis}  
+\usepackage{times}
+\usepackage{amsmath,amssymb,enumerate,amsbsy,amsthm,parskip,xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+
+\definecolor{darkblue}{rgb}{0,0.1255,0.3765}
+\definecolor{gold}{rgb}{1,0.8510,0.4000}
+
+
+\newcommand{\studentname}{Lim Yie Hang}%Replace by your name
+\newcommand{\studentid}{MAT2309816}%Replace by your student ID
+\newcommand{\intake}{2023/09}%put your intake here
+\newcommand{\supervisor}{Dr. Nurhidayah Binti Hamdan}%Replace by your supervisor's title and name, such as "Dr. Liu Jie"
+
+\newcommand{\thesismonth}{JUNE}%Delete the part not applicable
+\newcommand{\thesisyear}{2026}%change XX to correct year
+
+\newcommand{\thesistitlea}{A study of Consensus Monte Carlo:}%Input the first line of your thesis title in upper case
+\newcommand{\thesistitleb}{Metropolis–Hastings on Distributed Data}%Input the second line of your thesis title in upper case, put "\!" if none
+\newcommand{\thesistitlec}{\!}%Input the third line of your thesis title in upper case, put "\!" if none
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\studentnameupper}{\expandafter\MakeUppercase
+                           \expandafter{\studentname}}
+\newcommand{\supervisorupper}{\expandafter\MakeUppercase
+                           \expandafter{\supervisor}}
+ \newcommand{\thesistitleaupper}{\expandafter\MakeUppercase
+                           \expandafter{\thesistitlea}}
+\newcommand{\thesistitlebupper}{\expandafter\MakeUppercase
+                           \expandafter{\thesistitleb}}
+\newcommand{\thesistitlecupper}{\expandafter\MakeUppercase
+                           \expandafter{\thesistitlec}}
+\newcommand{\thesistitleupper}{\thesistitlea\space\thesistitleb}
+
+
+
+\title{ \thesistitleaupper\\[0.5ex]\thesistitlebupper \\[0.5ex] \thesistitlecupper  }           
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    citecolor=black,
+    linkcolor=black,
+    urlcolor=blue,
+    pdfpagemode=FullScreen,
+    pdftitle={\studentid FYP Report},
+    } 
+ \urlstyle{same}       
+ %------------------------------------------------------------------------------------------------------------------------
+%% Now, the document starts
+%------------------------------------------------------------------------------------------------------------------------
+  
+\begin{document}
+
+%this baselineskip gives sufficient line spacing for an examiner to easily
+%markup the thesis with comments
+\baselineskip=20pt plus1pt
+
+%set the number of sectioning levels that get number and appear in the contents
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\begin{coverpage}
+
+~\vspace{2cm}
+\begin{center}
+{\fontfamily{phv}\fontseries{mc}\fontsize{18}{21}\selectfont \textcolor{gold}{  {\bfseries {\thesistitleaupper}} }
+
+\vspace{0.3cm}
+  \textcolor{gold}{  {\bfseries {\thesistitlebupper}} }
+\vspace{0.3cm}
+
+ \textcolor{gold}{  {\bfseries {\thesistitlecupper}} }
+\vspace{6cm}
+
+\textcolor{gold}{{ \bfseries{\studentnameupper}}}
+
+\vspace{7cm}
+ \textcolor{gold}{  {\bfseries {XIAMEN UNIVERSITY MALAYSIA}} }
+\vspace{0.3cm}
+
+ \textcolor{gold}{  {\bfseries {\thesisyear}} }
+}
+\end{center}
+\end{coverpage}
+\pagecolor{white}
+ 
+\maketitle
+
+
+\begin{romanpages}              % start roman page numbering
+
+%%------------------------------------------------------------------------------------------------------------------------
+\begin{declaration}
+
+I hereby declare that this thesis is based on my original work except for citations and quotations which have been 
+duly acknowledged. I also declare that it has not been previously and concurrently submitted for any other degree or award 
+at Xiamen University Malaysia or other institutions.
+\\[15ex]
+
+\begin{tabular}{llp{10cm}}
+Signature & : & \\\cline{3-3}\\[2ex]
+Name & : &  \studentname  \\\cline{3-3}\\[2ex]
+ID No. & : &  \studentid \\ \cline{3-3}\\[2ex]
+Date & : & \today\\\cline{3-3}
+\end{tabular}
+
+\end{declaration}
+
+%%------------------------------------------------------------------------------------------------------------------------
+
+%%------------------------------------------------------------------------------------------------------------------------
+\begin{approval}
+
+I certify that this project/thesis, entitled ``\thesistitleupper", 
+and prepared by \studentnameupper, has met the required standard for submission in partial fulfilment of the requirements
+for the award of Bachelor of Science in Mathematics and Applied Mathematics (Honours) at Xiamen University Malaysia.
+\\[30ex]
+
+\begin{tabular}{llp{9cm}}
+Approved by, & & \\[7.5ex]
+Signature & : &   \\ \cline{3-3}\\[2.5ex]
+Supervisor & : & \supervisor \\\cline{3-3}\\[2.5ex]
+Date & : & \today \\\cline{3-3}\\[10ex]
+
+\end{tabular}
+
+\end{approval}
+
+%%------------------------------------------------------------------------------------------------------------------------
+
+
+
+%%------------------------------------------------------------------------------------------------------------------------
+\begin{copyrightstatement}
+The copyright of this report belongs to the author under the terms of Xiamen University Malaysia copyright policy. 
+Due acknowledgement shall always be made of the use of any material contained in, or derived from, this project report.
+
+\vspace{6ex} 
+
+\begin{center}
+\copyright \thesisyear, \studentname. All right reserved.
+\end{center}
+\end{copyrightstatement}
+
+%%------------------------------------------------------------------------------------------------------------------------
+
+
+
+%%------------------------------------------------------------------------------------------------------------------------
+\begin{acknowledgements}
+
+I would like to thank all who have contributed to the successful completion of this project. 
+I would like to express my gratitude to my final year project supervisor, \supervisor, 
+for the invaluable advice, guidance and the enormous patience throughout the development of the project.
+
+In addition, I would also like to express my gratitude to my loving parents and friends who have helped and given me encouragement.
+
+\end{acknowledgements}
+
+%%------------------------------------------------------------------------------------------------------------------------
+
+%%------------------------------------------------------------------------------------------------------------------------
+\begin{abstract}
+In statistical inference, the frequentist approach treats parameters as unknown fixed constants, whereas the Bayesian framework views them as random variables following a probability distribution. While Monte Carlo methods allow for the computational approximation of these distributions, traditional centralized Markov Chain Monte Carlo (MCMC) becomes computationally prohibitive when dealing with large-scale or distributed datasets.
+
+To address this, Consensus Monte Carlo offers a scalable alternative by partitioning data into shards, running separate MCMC chains locally, and combining the results to approximate the full posterior. This project implements a Consensus Monte Carlo framework using Independent Metropolis-Hastings (IMH) and Random Walk Metropolis-Hastings (RWMH). The study evaluates the accuracy of the consensus approach against a full-data Metropolis-Hastings baseline to determine the conditions under which the distributed method is an adequate substitute.
+
+\vspace{6ex}
+
+\noindent {\bf Keywords}: Bayesian Inference, Markov Chain Monte Carlo (MCMC), Metropolis-Hastings, Consensus Monte Carlo.
+
+\end{abstract}
+
+%%------------------------------------------------------------------------------------------------------------------------
+
+
+\tableofcontents                     % automatically generate and include a table of contents
+\listoftables                            % automatically generates and includes a list of tables
+\listoffigures                           % automatically generates and includes a list of figures
+
+
+\chapter*{List of Symbols / Abbreviations}
+
+\textcolor{red}{List of Symbols/Abbreviations is optional. Delete this chapter if you do not want to include it. Delete this red paragraph if you want to include it, and remember to modify the list to include only those symbols/abbreviations that appear in your own thesis.}
+
+
+\begin{tabular}{lll}
+$\pmb{r}(t)$ & : & Parametric curve \\[1ex]
+$\nabla$ & : & Gradient operator \\[1ex]
+$\left< ,\right>$ & : & Inner product \\[1ex]
+CLT & : & Central limit theorem 
+ 
+\end{tabular}
+
+\end{romanpages}                % end roman page numbering
+
+\setlength\parskip{0.7em plus 0.1em minus 0.1em}
+
+%%------------------------------------------------------------------------------------------------------------------------
+\linespread{1.35}
+ \include{Chapter1_Introduction}
+
+ \include{Chapter2_LiteratureReview}
+
+ \include{Chapter3_Methodology}
+
+\include{Chapter4_Results}
+
+\include{Chapter5_Conclusion}
+
+
+
+
+
+
+
+%now enable appendix numbering format and include any appendices
+\appendix
+%%------------------------------------------------------------------------------------------------------------------------
+\include{appendix}
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+%%------------------------------------------------------------------------------------------------------------------------
+% bibliography
+% modify refs.bib file to add references
+%%------------------------------------------------------------------------------------------------------------------------
+% see the following webpage to see how to use bibtex
+% https://www.latex-tutorial.com/tutorials/bibtex/
+% http://homepage.stat.uiowa.edu/~rlenth/ALPHA/apa-tutorial.pdf
+% remark: if you use TexShop, compile with pdflatexmk 
+% you can also first compile by Bibtex, then compile by Latex
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{alpha}
+\bibliography{refs}  % reference informations are contained in refs.bib 
+
+
+\end{document}
+

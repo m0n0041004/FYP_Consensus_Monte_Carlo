@@ -1,0 +1,22 @@
+\newcommand{\etalchar}[1]{$^{#1}$}
+\begin{thebibliography}{SBB{\etalchar{+}}22}
+
+\bibitem[HG05]{huang2005sampling}
+Zaijing Huang and Andrew Gelman.
+\newblock Sampling for bayesian computation with large datasets.
+\newblock {\em Available at SSRN 1010107}, 2005.
+
+\bibitem[SBB{\etalchar{+}}22]{scott2022bayes}
+Steven~L Scott, Alexander~W Blocker, Fernando~V Bonassi, Hugh~A Chipman,
+  Edward~I George, and Robert~E McCulloch.
+\newblock Bayes and big data: The consensus monte carlo algorithm.
+\newblock In {\em Big Data and Information Theory}, pages 8--18. Routledge,
+  2022.
+
+\bibitem[Sco17]{scott2017comparing}
+Steven~L Scott.
+\newblock Comparing consensus monte carlo strategies for distributed bayesian
+  computation.
+\newblock 2017.
+
+\end{thebibliography}
