@@ -16,8 +16,8 @@
 \newcommand{\thesismonth}{JUNE}%Delete the part not applicable
 \newcommand{\thesisyear}{2026}%change XX to correct year
 
-\newcommand{\thesistitlea}{A study of Consensus Monte Carlo:}%Input the first line of your thesis title in upper case
-\newcommand{\thesistitleb}{Metropolis–Hastings on Distributed Data}%Input the second line of your thesis title in upper case, put "\!" if none
+\newcommand{\thesistitlea}{A STUDY ON CONSENSUS MONTE CARLO:}%Input the first line of your thesis title in upper case
+\newcommand{\thesistitleb}{METROPOLIS--HASTINGS ON DISTRIBUTED DATA}%Input the second line of your thesis title in upper case, put "\!" if none
 \newcommand{\thesistitlec}{\!}%Input the third line of your thesis title in upper case, put "\!" if none
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,14 +184,17 @@ To address this, Consensus Monte Carlo offers a scalable alternative by partitio
 
 \chapter*{List of Symbols / Abbreviations}
 
-\textcolor{red}{List of Symbols/Abbreviations is optional. Delete this chapter if you do not want to include it. Delete this red paragraph if you want to include it, and remember to modify the list to include only those symbols/abbreviations that appear in your own thesis.}
-
-
 \begin{tabular}{lll}
-$\pmb{r}(t)$ & : & Parametric curve \\[1ex]
-$\nabla$ & : & Gradient operator \\[1ex]
-$\left< ,\right>$ & : & Inner product \\[1ex]
-CLT & : & Central limit theorem 
+MCMC & : & Markov Chain Monte Carlo \\[1ex]
+MH & : & Metropolis--Hastings \\[1ex]
+RWMH & : & Random Walk Metropolis--Hastings \\[1ex]
+IMH & : & Independent Metropolis--Hastings \\[1ex]
+CMC & : & Consensus Monte Carlo \\[1ex]
+$\beta$ & : & Regression coefficient vector \\[1ex]
+$X$ & : & Design matrix or predictor matrix \\[1ex]
+$y$ & : & Response variable \\[1ex]
+$K$ & : & Number of data subsets \\[1ex]
+$\pi(\beta \mid y, X)$ & : & Posterior distribution of $\beta$ given $y$ and $X$
  
 \end{tabular}
 
@@ -220,7 +223,7 @@ CLT & : & Central limit theorem
 %now enable appendix numbering format and include any appendices
 \appendix
 %%------------------------------------------------------------------------------------------------------------------------
-\include{appendix}
+\include{Appendix}
  
 
 
