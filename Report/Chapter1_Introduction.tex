@@ -2,86 +2,68 @@
 
 \section{Background Study}
 
-Bayesian inference is a statistical framework for learning about unknown quantities through probability. Let $\beta$ denote a vector of unknown regression coefficients and let $y$ denote the observed response variable. In the Bayesian approach, prior information about $\beta$ is represented by a prior distribution $\pi(\beta)$, while the information provided by the observed data is represented by the likelihood function $L(y \mid \beta)$. These two components are combined through Bayes' theorem to obtain the posterior distribution,
+Bayesian inference is a statistical framework in which uncertainty about unknown model parameters is represented through probability distributions. Let $y$ denote the observed response variable, let $X$ denote the design matrix, and let $\beta$ denote the regression coefficient vector. Prior information about $\beta$ is expressed through a prior distribution $\pi(\beta)$, while information from the observed data is represented by the likelihood function $L(y \mid \beta, X)$. The posterior distribution combines these two sources of information and may be written as
 \[
-\pi(\beta \mid y) = \frac{L(y \mid \beta)\pi(\beta)}{p(y)},
+\pi(\beta \mid y, X) \propto L(y \mid \beta, X)\pi(\beta).
 \]
-where $p(y)$ is the marginal likelihood. Since $p(y)$ does not depend on $\beta$, the posterior distribution is commonly written as
+Posterior summaries such as posterior means, posterior standard deviations, and credible intervals are then used to describe parameter uncertainty after observing the data. TODO: add citation for Bayesian inference.
+
+In many applied Bayesian models, the posterior distribution cannot be summarised analytically. Markov Chain Monte Carlo (MCMC) methods address this problem by generating samples from a Markov chain whose stationary distribution is the target posterior distribution. These samples can then be used to approximate posterior summaries. The Metropolis--Hastings algorithm is a general MCMC method in which candidate parameter values are proposed and then accepted or rejected according to an acceptance probability determined by the target posterior density and the proposal distribution. TODO: add citation for MCMC and the Metropolis--Hastings algorithm.
+
+Although MCMC is widely applicable, full-data MCMC can be computationally expensive for large datasets. In a Bayesian logistic regression model, each Metropolis--Hastings iteration requires likelihood evaluation across the observations used in the target posterior. When the number of observations is large and many iterations are required, repeated full-data likelihood calculations can make posterior simulation time-consuming. This motivates the study of distributed Bayesian computation, where the data are divided into smaller subsets so that posterior simulation can be carried out at the subset level.
+
+Consensus Monte Carlo is one approach to distributed Bayesian computation. The central idea is to partition the data into $K$ subsets, construct a subposterior distribution for each subset, simulate from these subposteriors, and combine the resulting samples to approximate the full posterior distribution \cite{scott2017comparing,scott2022bayes}. If $y_m$ and $X_m$ denote the response vector and design matrix for subset $m$, then a common subposterior construction is
 \[
-\pi(\beta \mid y) \propto L(y \mid \beta)\pi(\beta).
-\]
-The posterior distribution is central in Bayesian inference because it describes the uncertainty about the unknown parameters after the data have been observed. Posterior means, posterior medians, posterior standard deviations, and credible intervals can be computed from this distribution when posterior samples or analytic expressions are available.
-
-In many practical models, the posterior distribution cannot be evaluated directly in closed form. This difficulty often arises because the marginal likelihood involves integration over the parameter space, and the resulting posterior summaries may also require high-dimensional integration. Markov Chain Monte Carlo (MCMC) methods provide a computational approach for approximating posterior distributions by generating dependent samples from a Markov chain whose stationary distribution is the target posterior distribution. TODO: add citation for Bayesian inference and MCMC.
-
-The Metropolis--Hastings algorithm is a general MCMC method for sampling from a target distribution that is known up to a proportionality constant. Starting from a current parameter value, the algorithm proposes a candidate value from a proposal distribution and then accepts or rejects the candidate according to an acceptance probability determined by the target posterior density and the proposal mechanism. When the Markov chain is run for a sufficiently long period under suitable regularity conditions, the retained samples can be used to approximate posterior summaries. TODO: add citation for the Metropolis--Hastings algorithm.
-
-For large datasets, full-data MCMC can become computationally expensive. If the data contain $n$ observations, then each iteration of a full-data Metropolis--Hastings sampler may require evaluating the likelihood contribution of all $n$ observations. As $n$ increases, the cost of producing a sufficiently long Markov chain can become substantial. This issue is especially important when repeated likelihood evaluations are required for many proposed parameter values.
-
-Distributed data settings provide one possible way to reduce this computational burden. Instead of treating the dataset as a single object processed by one sampler, the observations may be divided into $K$ subsets. Let $y_m$ denote the response data in subset $m$, where $m=1,\ldots,K$. Each subset can be processed separately, which allows the computational work to be divided across independent chains or computing resources.
-
-Consensus Monte Carlo is a distributed Bayesian computation method based on this idea. The full posterior is approximated by first constructing subposteriors from the data subsets, running MCMC separately on each subset, and then combining the resulting subposterior samples to form an approximation to the full posterior distribution \cite{scott2017comparing,scott2022bayes}. Suppose the full dataset is partitioned into $K$ subsets, $y_1,\ldots,y_K$, and the likelihood can be factorised as
-\[
-L(y \mid \beta) = \prod_{m=1}^{K} L(y_m \mid \beta).
-\]
-In Consensus Monte Carlo, a common construction defines the $m$th subposterior as
-\[
-\pi_m(\beta \mid y_m) \propto L(y_m \mid \beta)\pi(\beta)^{1/K},
-\]
-so that the product of the subposteriors satisfies
-\[
-\prod_{m=1}^{K} \pi_m(\beta \mid y_m)
+\pi_m(\beta \mid y_m, X_m)
 \propto
-\prod_{m=1}^{K} L(y_m \mid \beta)\pi(\beta)^{1/K}
-=
-L(y \mid \beta)\pi(\beta)
-\propto
-\pi(\beta \mid y).
+L(y_m \mid \beta, X_m)\pi(\beta)^{1/K},
 \]
-Thus, the product of the subposteriors is proportional to the full posterior under this factorisation. In this project, Consensus Monte Carlo is studied together with the Metropolis--Hastings algorithm for distributed data.
+where the prior contribution is distributed across the $K$ subsets. The product of these subposteriors has the same posterior structure as the full-data posterior under the corresponding likelihood factorisation. In this thesis, the subset posterior samples are combined using a precision-weighted consensus method.
 
-The empirical application uses the UK accident dataset to illustrate Bayesian logistic regression within the distributed posterior simulation framework. Accident severity is suitable for this application because the response is binary after fatal and serious accidents are combined into a serious/fatal category and slight accidents are treated as the reference outcome. Logistic regression models the probability of serious/fatal accident severity relative to slight accident severity, while Bayesian inference provides posterior uncertainty for the regression coefficients. In the application, road type and speed limit are used as predictors of serious/fatal accident severity.
+The empirical application in this study uses the UK accident dataset. The response variable is binary accident severity, where serious/fatal accident severity is coded as $1$ and slight accident severity is coded as $0$. Bayesian logistic regression is suitable for this application because the outcome is binary and the model directly represents the probability of a serious/fatal accident relative to the slight accident reference class. The predictors used in the model are road type and speed limit. The reference category for road type is single carriageway, and the reference category for speed limit is category 2.
+
+The thesis topic is therefore a study of Consensus Monte Carlo with Metropolis--Hastings methods on distributed data. The analysis compares four posterior simulation approaches: full-data Random Walk Metropolis--Hastings, full-data Independent Metropolis--Hastings, Consensus Monte Carlo using Random Walk Metropolis--Hastings, and Consensus Monte Carlo using Independent Metropolis--Hastings. The purpose is not to assume that the distributed approximation is superior, but to assess how closely the consensus posterior summaries agree with the corresponding full-data posterior summaries in the selected empirical application.
 
 \section{Problem Statement}
 
-Bayesian inference provides a coherent method for estimating unknown model parameters and quantifying uncertainty through the posterior distribution. However, its practical implementation can be computationally demanding when posterior simulation is required for a large dataset. In a full-data Metropolis--Hastings algorithm, the likelihood is commonly evaluated using all observations at each iteration. Therefore, the computational cost may increase considerably as the dataset becomes larger.
+Bayesian logistic regression provides a principled way to model binary accident severity while quantifying uncertainty in the regression coefficients through the posterior distribution. However, posterior simulation by full-data Metropolis--Hastings can require substantial computation when the likelihood must be evaluated repeatedly over all observations. As dataset size and chain length increase, this repeated likelihood evaluation can become a practical limitation.
 
-Consensus Monte Carlo reduces this computational burden by separating the full dataset into smaller subsets, running Metropolis--Hastings sampling on the corresponding subposteriors, and combining the resulting samples to approximate the full-data posterior. This approach is attractive because each subset chain uses only part of the data and can be treated as a separate computational task.
+Consensus Monte Carlo offers a possible strategy for reducing the computational burden by replacing one full-data posterior simulation problem with several subset posterior simulation problems followed by posterior combination. In principle, the subset simulations can be treated as separate computational tasks. However, a consensus posterior is an approximation to the full-data posterior, and its quality depends on the data partitioning, the subposterior construction, the Metropolis--Hastings proposal behaviour, and the posterior combination rule.
 
-The main statistical issue is whether the consensus posterior is close to the posterior distribution obtained from full-data Metropolis--Hastings sampling. The approximation may be affected by the number of subsets, the way the data are partitioned, the prior adjustment used for the subposteriors, the behaviour of the subset Markov chains, and the posterior combination method. Consequently, it is necessary to compare the consensus posterior with the full-data posterior rather than assuming that the distributed method automatically gives equivalent results.
+For this reason, the consensus posterior cannot be assumed to match the full-data posterior without empirical evaluation. In the present study, the relevant question is whether Consensus Monte Carlo, implemented with Random Walk Metropolis--Hastings and Independent Metropolis--Hastings subset samplers, produces posterior summaries that are close to those obtained from full-data Metropolis--Hastings sampling for the Bayesian logistic regression model fitted to the UK accident data.
 
-This project studies Consensus Monte Carlo using Metropolis--Hastings on distributed data, with Bayesian logistic regression for serious/fatal accident severity as the empirical application. The comparison focuses on posterior summaries, credible intervals, convergence behaviour, acceptance rates, and computational efficiency when runtime output is available. No claim about accuracy, runtime advantage, or practical superiority is made without support from the reported empirical results.
+The study also considers computational runtime as an evaluation criterion. Since the current empirical implementation runs the Consensus Monte Carlo procedures sequentially, runtime comparisons are interpreted as recorded computational timings for the implemented procedures, not as evidence of actual parallel speedup. Any assessment of computational efficiency is therefore made cautiously and together with posterior summaries, credible intervals, acceptance rates, and diagnostic plots.
 
 \section{Research Objectives}
 
 The objectives of this project are as follows:
 
 \begin{enumerate}
-\item To formulate a Bayesian logistic regression model for accident severity, where the binary response represents serious/fatal accident severity relative to slight accident severity.
+\item To formulate a Bayesian logistic regression model for the UK accident data, where $y$ represents serious/fatal accident severity coded as $1$ relative to slight accident severity coded as $0$.
 
-\item To implement full-data Metropolis--Hastings sampling for posterior estimation under the Bayesian logistic regression model.
+\item To use road type and speed limit as categorical predictors in the design matrix $X$, with single carriageway and speed limit category 2 as the reference categories.
 
-\item To implement Consensus Monte Carlo by dividing the dataset into subsets and running Metropolis--Hastings separately on each subset subposterior.
+\item To implement full-data posterior simulation using Random Walk Metropolis--Hastings and Independent Metropolis--Hastings.
 
-\item To combine subposterior samples to approximate the full posterior distribution.
+\item To implement Consensus Monte Carlo by partitioning the data into $K$ subsets, simulating from subset posterior distributions using Random Walk Metropolis--Hastings and Independent Metropolis--Hastings, and combining the subset posterior samples.
 
-\item To compare full-data Metropolis--Hastings and Consensus Monte Carlo in terms of posterior summaries, credible intervals, convergence behaviour, acceptance rates, and computational runtime if available.
+\item To compare the full-data posterior summaries with the consensus posterior summaries using posterior means, posterior medians, posterior standard deviations, credible intervals, acceptance rates, diagnostic plots, and recorded runtime.
 \end{enumerate}
 
 \section{Research Framework}
 
-The research framework begins with data preprocessing. The UK accident dataset is inspected, cleaned, and arranged into a form suitable for Bayesian modelling. This stage includes constructing a binary accident severity response, where serious and fatal accidents are combined as the event category and slight accidents form the baseline category. The predictor information is represented through the design matrix $X$.
+The research framework begins with preparation of the UK accident dataset. The empirical analysis uses accident severity, road type, and speed limit. Accident severity is recoded into a binary response $y$, where serious and fatal accidents are combined as the event category and slight accidents form the reference response class. Road type and speed limit are treated as categorical predictors and encoded in the design matrix $X$.
 
-The second stage is Bayesian logistic regression model specification. Let $y$ denote the binary response and let $X$ denote the design matrix. The regression coefficient vector is denoted by $\beta$, and the target distribution for the full-data analysis is the posterior distribution $\pi(\beta \mid y, X)$. This model provides the statistical basis for estimating how the selected predictors are associated with the probability of serious/fatal accident severity.
+The second stage specifies the Bayesian logistic regression model. The coefficient vector $\beta$ describes the relationship between the selected predictors and the probability of serious/fatal accident severity. The posterior distribution $\pi(\beta \mid y, X)$ is the target distribution for the full-data Bayesian analysis.
 
-The third stage is full-data Metropolis--Hastings sampling. In this stage, a Markov chain is constructed to sample from the posterior distribution based on the complete dataset. The resulting samples provide the baseline posterior summaries for comparison with the distributed approach.
+The third stage applies full-data Metropolis--Hastings sampling. Two full-data samplers are considered: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. The resulting posterior samples provide the main full-data reference distributions for comparison.
 
-The fourth stage is data partitioning. The complete dataset is divided into $K$ subsets, denoted by $y_1,\ldots,y_K$ together with the corresponding predictor matrices. Each subset is used to define a subposterior distribution, with the prior contribution adjusted across subsets so that the product of the subposteriors corresponds to the full posterior structure.
+The fourth stage partitions the data into $K$ subsets for Consensus Monte Carlo. Each subset contains its own response vector $y_m$ and design matrix $X_m$. A subposterior distribution is constructed for each subset by combining the subset likelihood with a fractional prior contribution.
 
-The fifth stage is subset Metropolis--Hastings sampling. Separate Metropolis--Hastings chains are run on each subset to obtain subposterior samples. If $\beta_m$ denotes a subset-specific parameter draw associated with subset $m$, then the collection of samples from all subsets is used as the input for the consensus step.
+The fifth stage runs subset-level Metropolis--Hastings simulation. Random Walk Metropolis--Hastings and Independent Metropolis--Hastings are applied separately within the Consensus Monte Carlo framework, producing subposterior samples for each subset.
 
-The sixth stage is consensus posterior combination. The subposterior samples are combined to construct an approximation to the full posterior distribution. This produces the consensus posterior sample used for comparison with the full-data Metropolis--Hastings sample.
+The sixth stage combines the subposterior samples through precision-weighted posterior combination. The resulting consensus samples approximate the full-data posterior distribution and form the distributed posterior output for comparison.
 
-The final stage is comparison. The full-data posterior and the consensus posterior are compared using posterior summaries, credible intervals, convergence behaviour, acceptance rates, and runtime values recorded during computation.
+The final stage evaluates the methods. The comparison focuses on agreement between full-data and consensus posterior summaries, including credible intervals and posterior distributions for the regression coefficients. Acceptance rates, diagnostic plots, and recorded runtime are also considered, with runtime interpreted in relation to the current sequential implementation.
 
 % TODO: Add a research framework flowchart.
