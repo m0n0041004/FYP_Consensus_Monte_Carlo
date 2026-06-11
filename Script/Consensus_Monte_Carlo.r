@@ -48,7 +48,10 @@ prop.table(table(data_used$accident_severity_binary))
 
 # Check predictor distributions before removing unknown road type
 table(data_used$road_type)
+prop.table(table(data_used$road_type))
+
 table(data_used$speed_limit)
+prop.table(table(data_used$speed_limit))
 
 # Remove observations with unknown road type
 # This category is removed because it is not an interpretable road type
@@ -69,38 +72,64 @@ data_used$speed_limit <- relevel(
 
 # Check response distribution after removing unknown road type
 table(data_used$accident_severity_binary)
+prop.table(table(data_used$accident_severity_binary))
 
 # Check predictor distributions after removing unknown road type
 table(data_used$road_type)
+prop.table(table(data_used$road_type))
+
 table(data_used$speed_limit)
+prop.table(table(data_used$speed_limit))
 
 
 
 # 2. Fit frequentist logistic regression
 
 # Fit frequentist logistic regression
-# The model estimates the log-odds of serious/fatal accident severity
-# relative to slight accident severity.
 logistic_model <- glm(
   accident_severity_binary ~ .,
   data = data_used,
   family = binomial
 )
 
-# Display frequentist model summary
+# Summary of the fitted logistic regression model
 summary(logistic_model)
 
-# Convert frequentist coefficients to odds ratios
-glm_odds_ratios <- data.frame(
-  Parameter = names(coef(logistic_model)),
-  Estimate = coef(logistic_model),
-  Odds_Ratio = exp(coef(logistic_model)),
-  row.names = NULL
+# Model significance using likelihood-ratio test
+g_square <- logistic_model$null.deviance - logistic_model$deviance
+g_square_df <- logistic_model$df.null - logistic_model$df.residual
+p_value <- pchisq(g_square, g_square_df, lower.tail = FALSE)
+
+print(
+  data.frame(
+    G_Square = g_square,
+    DF = g_square_df,
+    P_Value = p_value
+  )
 )
 
-print(glm_odds_ratios)
+# Standardized Pearson residuals
+pearson_resid_std <- rstandard(logistic_model, type = "pearson")
 
-# Check estimated coefficient covariance and correlation
+acf(
+  pearson_resid_std,
+  main = "Correlogram of Pearson Residuals"
+)
+
+# Standardized deviance residuals
+deviance_resid_std <- rstandard(logistic_model, type = "deviance")
+
+acf(
+  deviance_resid_std,
+  main = "Correlogram of Deviance Residuals"
+)
+
+# Multicollinearity check
+gvif_values <- car::vif(logistic_model)
+print(gvif_values)
+
+# Estimated coefficient covariance and correlation
+# Used later as a reference covariance matrix for MH proposal distributions.
 cov_beta <- vcov(logistic_model)
 cor_beta <- cov2cor(cov_beta)
 
@@ -108,7 +137,7 @@ round(cor_beta, 3)
 
 
 
-## 3. Prepare response and design matrix
+# 3. Prepare response and design matrix
 
 # Recode response variable
 # serious_fatal is coded as 1 because it is the event being modeled
@@ -124,11 +153,13 @@ param_names <- colnames(X)
 
 # 4. Define prior, likelihood, and posterior
 
-prior_sd_value <- 2.5
+# Cauchy prior scale
+prior_scale_value <- 2.5
 
 # Log-prior
-log_prior <- function(beta, prior_sd = prior_sd_value) {
-  sum(dnorm(beta, mean = 0, sd = prior_sd, log = TRUE))
+# Each coefficient is assigned a Cauchy(0, prior_scale) prior.
+log_prior <- function(beta, prior_scale = prior_scale_value) {
+  sum(dcauchy(beta, location = 0, scale = prior_scale, log = TRUE))
 }
 
 # Logistic regression log-likelihood
@@ -145,8 +176,8 @@ log_likelihood <- function(beta, y, X) {
 }
 
 # Log-posterior
-log_posterior <- function(beta, y, X, prior_sd = prior_sd_value) {
-  log_prior(beta, prior_sd = prior_sd) +
+log_posterior <- function(beta, y, X, prior_scale = prior_scale_value) {
+  log_prior(beta, prior_scale = prior_scale) +
     log_likelihood(beta, y, X)
 }
 
@@ -156,34 +187,85 @@ log_posterior <- function(beta, y, X, prior_sd = prior_sd_value) {
 
 posterior_statistics <- function(post_samples, alpha = 0.05) {
   # Function to estimate effective sample size
-  ess <- function(x) {
+  ess <- function(x, cap_at_n = TRUE) {
+    x <- as.numeric(x)
+    x <- x[is.finite(x)]
+
     n <- length(x)
 
-    acf_val <- acf(
-      x,
-      plot = FALSE,
-      lag.max = min(200, n - 1)
-    )$acf[-1]
-
-    acf_val <- as.numeric(acf_val)
-
-    sum_rho <- 0
-
-    for (rho in acf_val) {
-      if (abs(rho) < 0.05) {
-        break
-      }
-
-      sum_rho <- sum_rho + rho
-    }
-
-    denominator <- 1 + 2 * sum_rho
-
-    if (!is.finite(denominator) || denominator <= 0) {
+    if (n < 3) {
       return(n)
     }
 
-    min(n, n / denominator)
+    # Degenerate chain: ESS is not meaningful
+    if (stats::var(x) == 0) {
+      return(NA_real_)
+    }
+
+    # Autocorrelation values
+    acf_values <- as.numeric(
+      stats::acf(
+        x,
+        plot = FALSE,
+        lag.max = n - 1
+      )$acf
+    )
+
+    # Remove lag 0 autocorrelation
+    rho <- acf_values[-1]
+
+    # Number of complete autocorrelation pairs:
+    # Gamma_k = rho_{2k - 1} + rho_{2k}
+    n_pairs <- floor(length(rho) / 2)
+
+    if (n_pairs < 1) {
+      return(n)
+    }
+
+    gamma <- rho[2 * seq_len(n_pairs) - 1] +
+      rho[2 * seq_len(n_pairs)]
+
+    # Initial positive sequence:
+    # stop once paired autocorrelation becomes non-positive
+    first_nonpositive <- which(gamma <= 0)[1]
+
+    if (!is.na(first_nonpositive)) {
+      if (first_nonpositive == 1) {
+        return(n)
+      }
+
+      gamma <- gamma[seq_len(first_nonpositive - 1)]
+    }
+
+    if (length(gamma) == 0) {
+      return(n)
+    }
+
+    # Initial monotone sequence:
+    # force paired terms to be non-increasing
+    if (length(gamma) >= 2) {
+      for (i in 2:length(gamma)) {
+        if (gamma[i] > gamma[i - 1]) {
+          gamma[i] <- gamma[i - 1]
+        }
+      }
+    }
+
+    # Integrated autocorrelation time:
+    # tau = 1 + 2 * sum_{t >= 1} rho_t
+    tau <- 1 + 2 * sum(gamma)
+
+    if (!is.finite(tau) || tau <= 0) {
+      return(n)
+    }
+
+    ess_val <- n / tau
+
+    if (cap_at_n) {
+      ess_val <- min(n, ess_val)
+    }
+
+    ess_val
   }
 
   # Add parameter names if missing
@@ -204,8 +286,8 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
   lower_prob <- alpha / 2
   upper_prob <- 1 - alpha / 2
 
-  lower_ci <- apply(post_samples, 2, quantile, probs = lower_prob)
-  upper_ci <- apply(post_samples, 2, quantile, probs = upper_prob)
+  lower_cri <- apply(post_samples, 2, quantile, probs = lower_prob)
+  upper_cri <- apply(post_samples, 2, quantile, probs = upper_prob)
 
   # Create summary table
   stats_df <- data.frame(
@@ -215,11 +297,13 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
     Std_Dev = post_sd,
     ESS = post_ess,
     MCSE = post_mcse,
-    Lower_95_CI = lower_ci,
-    Upper_95_CI = upper_ci,
-    Odds_Ratio = exp(post_mean),
-    Lower_95_OR = exp(lower_ci),
-    Upper_95_OR = exp(upper_ci),
+    CrI_95 = paste0(
+      "[",
+      round(lower_cri, 4),
+      ", ",
+      round(upper_cri, 4),
+      "]"
+    ),
     row.names = NULL
   )
 
@@ -228,7 +312,7 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
 
 
 
-# 6. General histogram and trace plot function
+# 6. Functions
 
 hist_trace_plot <- function(samples,
                             param_names = colnames(samples),
@@ -329,8 +413,6 @@ consensus_density_plot <- function(samples,
   }
 }
 
-
-
 # Store runtimes
 runtime_table <- data.frame(
   Method = character(),
@@ -381,7 +463,7 @@ rwmh_block <- function(start_value,
                        y,
                        X,
                        proposal_chol,
-                       prior_sd = prior_sd_value,
+                       prior_scale = prior_scale_value,
                        param_names = NULL) {
   # Create matrix to store MCMC samples
   chain <- matrix(
@@ -408,7 +490,7 @@ rwmh_block <- function(start_value,
     beta = current,
     y = y,
     X = X,
-    prior_sd = prior_sd
+    prior_scale = prior_scale
   )
 
   for (i in seq_len(iterations)) {
@@ -423,7 +505,7 @@ rwmh_block <- function(start_value,
       beta = proposal,
       y = y,
       X = X,
-      prior_sd = prior_sd
+      prior_scale = prior_scale
     )
 
     # Log acceptance probability
@@ -463,7 +545,7 @@ rwmh_result <- rwmh_block(
   y = y,
   X = X,
   proposal_chol = proposal_chol_rwmh,
-  prior_sd = prior_sd_value,
+  prior_scale = prior_scale_value,
   param_names = param_names
 )
 
@@ -564,7 +646,7 @@ imh_block <- function(start_value,
                       proposal_mean,
                       proposal_cov,
                       proposal_chol,
-                      prior_sd = prior_sd_value,
+                      prior_scale = prior_scale_value,
                       param_names = NULL) {
   # Create matrix to store MCMC samples
   chain <- matrix(
@@ -591,7 +673,7 @@ imh_block <- function(start_value,
     beta = current,
     y = y,
     X = X,
-    prior_sd = prior_sd
+    prior_scale = prior_scale
   )
 
   # Store proposal density of current value
@@ -613,7 +695,7 @@ imh_block <- function(start_value,
       beta = proposal,
       y = y,
       X = X,
-      prior_sd = prior_sd
+      prior_scale = prior_scale
     )
 
     # Calculate proposal density of proposed beta
@@ -666,7 +748,7 @@ imh_result <- imh_block(
   proposal_mean = proposal_mean_imh,
   proposal_cov = proposal_cov_imh,
   proposal_chol = proposal_chol_imh,
-  prior_sd = prior_sd_value,
+  prior_scale = prior_scale_value,
   param_names = param_names
 )
 
@@ -737,9 +819,9 @@ table(cmc_subset_id, data_used$speed_limit)
 log_subposterior <- function(beta,
                              y_subset,
                              X_subset,
-                             prior_sd = prior_sd_value,
+                             prior_scale = prior_scale_value,
                              num_subsets = 4) {
-  (1 / num_subsets) * log_prior(beta, prior_sd = prior_sd) +
+  (1 / num_subsets) * log_prior(beta, prior_scale = prior_scale) +
     log_likelihood(beta, y_subset, X_subset)
 }
 
@@ -749,7 +831,7 @@ rwmh_subset_block <- function(start_value,
                               y_subset,
                               X_subset,
                               proposal_chol,
-                              prior_sd = prior_sd_value,
+                              prior_scale = prior_scale_value,
                               num_subsets = 4,
                               param_names = NULL) {
   # Create matrix to store MCMC samples
@@ -777,7 +859,7 @@ rwmh_subset_block <- function(start_value,
     beta = current,
     y_subset = y_subset,
     X_subset = X_subset,
-    prior_sd = prior_sd,
+    prior_scale = prior_scale,
     num_subsets = num_subsets
   )
 
@@ -793,7 +875,7 @@ rwmh_subset_block <- function(start_value,
       beta = proposal,
       y_subset = y_subset,
       X_subset = X_subset,
-      prior_sd = prior_sd,
+      prior_scale = prior_scale,
       num_subsets = num_subsets
     )
 
@@ -863,7 +945,7 @@ for (k in seq_len(cmc_num_subsets)) {
     y_subset = y_subset,
     X_subset = X_subset,
     proposal_chol = cmc_rwmh_proposal_chol,
-    prior_sd = prior_sd_value,
+    prior_scale = prior_scale_value,
     num_subsets = cmc_num_subsets,
     param_names = param_names
   )
@@ -978,8 +1060,7 @@ consensus_density_plot(cmc_rwmh_samples)
 set.seed(4)
 
 # Tuning factor for subset-specific Independent MH proposal
-# A value of 1.0 is used because the subset-specific proposal covariance
-# is already matched to each subset posterior.
+# A value of 1.5 is used to match the full-data Independent MH tuning factor.
 cmc_imh_tuning_factor <- 1.5
 
 # Independent MH sampler for one subset
@@ -990,7 +1071,7 @@ imh_subset_block <- function(start_value,
                              proposal_mean,
                              proposal_cov,
                              proposal_chol,
-                             prior_sd = prior_sd_value,
+                             prior_scale = prior_scale_value,
                              num_subsets = 4,
                              param_names = NULL) {
   # Create matrix to store MCMC samples
@@ -1018,7 +1099,7 @@ imh_subset_block <- function(start_value,
     beta = current,
     y_subset = y_subset,
     X_subset = X_subset,
-    prior_sd = prior_sd,
+    prior_scale = prior_scale,
     num_subsets = num_subsets
   )
 
@@ -1041,7 +1122,7 @@ imh_subset_block <- function(start_value,
       beta = proposal,
       y_subset = y_subset,
       X_subset = X_subset,
-      prior_sd = prior_sd,
+      prior_scale = prior_scale,
       num_subsets = num_subsets
     )
 
@@ -1132,7 +1213,7 @@ for (k in seq_len(cmc_num_subsets)) {
     proposal_mean = subset_proposal_mean,
     proposal_cov = subset_proposal_cov,
     proposal_chol = subset_proposal_chol,
-    prior_sd = prior_sd_value,
+    prior_scale = prior_scale_value,
     num_subsets = cmc_num_subsets,
     param_names = param_names
   )
