@@ -2,25 +2,25 @@
 
 \section{Data Source}
 
-The empirical application in this project uses UK accident data. TODO: add citation for the UK accident dataset source. The data contain accident-level information, including accident severity and road-related variables. For reproducibility, the data file used in the analysis is stored as \texttt{Dataset/accident\_2013.csv}, and the accompanying variable documentation is provided in \texttt{Dataset/Variables for UK data.pdf}. The detailed description of the variables used in the empirical analysis is reported together with the data preparation and results.
+The empirical analysis uses the UK accident dataset stored as \texttt{Dataset/accident\_2013.csv}. TODO: add citation for the UK accident dataset source. The dataset contains accident-level information, including accident severity and road-related variables. The accompanying variable documentation is provided in \texttt{Dataset/Variables for UK data.pdf}.
 
-The purpose of using this dataset is to provide an applied setting for comparing full-data Metropolis--Hastings sampling with Consensus Monte Carlo. The analysis focuses on a binary response derived from accident severity. In this study, slight accidents are modelled against the other severity categories.
+The dataset is used as an applied setting for comparing full-data Metropolis--Hastings sampling with Consensus Monte Carlo. The statistical model is Bayesian logistic regression, and the response of interest is serious/fatal accident severity relative to slight accident severity. Thus, the accident data provide an empirical application for studying posterior simulation and posterior combination under a distributed-data framework.
 
 \section{Data Preprocessing}
 
-The data preprocessing stage prepares the raw accident data for Bayesian logistic regression. The empirical analysis uses accident severity, road type, and speed limit from the dataset. Road type and speed limit are treated as categorical predictors, and observations with missing values in the selected variables are removed before model fitting.
+The empirical analysis uses three variables from the accident dataset: \texttt{road\_type}, \texttt{speed\_limit}, and \texttt{accident\_severity}. Observations with missing values in these selected variables are removed using complete-case filtering. Observations for which \texttt{road\_type} is recorded as \texttt{unknown} are also removed because this category does not represent an interpretable road type for the regression model.
 
-The original accident severity variable contains more than two categories. For the logistic regression model, it is transformed into a binary response variable. Let $y_i$ denote the response for observation $i$. In this study,
+The original accident severity variable is transformed into a binary response. Serious and fatal accidents are combined into the category \texttt{serious\_fatal}, while slight accidents remain as the baseline category. Let $y_i$ denote the binary response for observation $i$. In this study,
 \[
 y_i =
 \begin{cases}
-1, & \text{if observation } i \text{ corresponds to a slight accident},\\
-0, & \text{otherwise}.
+1, & \text{if observation } i \text{ is serious or fatal},\\
+0, & \text{if observation } i \text{ is slight}.
 \end{cases}
 \]
-Thus, the event being modelled is the occurrence of a slight accident relative to the other accident severity categories. The categorical predictors are converted into a design matrix $X$ using indicator variables, with the intercept included in the model matrix.
+Therefore, the event being modelled is serious/fatal accident severity relative to slight accident severity.
 
-The empirical analysis also removes observations with unknown road type before fitting the logistic regression model. The exact preprocessing decisions and the resulting descriptive summaries are reported in the results chapter. No numerical sample sizes or category counts are stated here unless they are obtained from the analysis output.
+The predictors \texttt{road\_type} and \texttt{speed\_limit} are treated as categorical variables. The reference category for \texttt{road\_type} is \texttt{single carriageway}, and the reference category for \texttt{speed\_limit} is \texttt{2}. A design matrix $X$ is then constructed from the fitted logistic regression model, including the intercept and the indicator variables generated from the categorical predictors.
 
 \section{Bayesian Logistic Regression Model}
 
@@ -28,7 +28,7 @@ Let $y_i \in \{0,1\}$ be the binary accident severity response for observation $
 \[
 y_i \mid \beta \sim \operatorname{Bernoulli}(p_i),
 \]
-where $p_i$ is the probability that observation $i$ is classified as a slight accident. The logistic link function is used:
+where $p_i$ is the probability that observation $i$ has serious/fatal accident severity. The logistic link function is
 \[
 \operatorname{logit}(p_i) = x_i^{T}\beta.
 \]
@@ -44,7 +44,7 @@ L(y \mid \beta, X)
 \prod_{i=1}^{n}
 p_i^{y_i}(1-p_i)^{1-y_i}.
 \]
-In computation, the log-likelihood is used for numerical stability:
+Substituting the logistic form of $p_i$ gives the log-likelihood
 \[
 \log L(y \mid \beta, X)
 =
@@ -55,15 +55,19 @@ y_i x_i^{T}\beta
 \log\{1+\exp(x_i^{T}\beta)\}
 \right].
 \]
-The computation evaluates this expression using a numerically stable form of $\log\{1+\exp(x_i^{T}\beta)\}$. TODO: add citation for Bayesian logistic regression.
+The computation evaluates the term $\log\{1+\exp(x_i^{T}\beta)\}$ using a numerically stable expression. TODO: add citation for Bayesian logistic regression.
 
 \section{Prior Distribution}
 
-A normal prior distribution is assigned independently to each regression coefficient. For coefficient $\beta_j$,
+An independent normal prior distribution is assigned to each regression coefficient. For coefficient $\beta_j$,
 \[
 \beta_j \sim N(0,\sigma_{\beta}^{2}),
 \]
-where $\sigma_{\beta}$ is the prior standard deviation. In this study, the prior standard deviation is set to $\sigma_{\beta}=10$. This prior is centred at zero and gives a relatively diffuse prior distribution for the regression coefficients in the logistic regression model.
+where $\sigma_{\beta}$ is the prior standard deviation. In this study, the prior standard deviation is set to
+\[
+\sigma_{\beta}=2.5.
+\]
+This prior is centred at zero and provides regularisation for the logistic regression coefficients.
 
 Under independence of the prior components, the prior density for $\beta$ can be written as
 \[
@@ -82,13 +86,15 @@ Combining the likelihood and the prior distribution gives the posterior distribu
 \propto
 L(y \mid \beta, X)\pi(\beta).
 \]
-The posterior distribution is not summarised analytically in this project. Instead, posterior samples are generated using Metropolis--Hastings algorithms. TODO: add citation for posterior simulation.
+The posterior distribution is sampled using Metropolis--Hastings algorithms because direct analytical posterior summaries are not used in this study. TODO: add citation for posterior simulation.
 
 \section{Full-Data Metropolis--Hastings Sampling}
 
-The full-data analysis uses the complete response vector $y$ and design matrix $X$ to sample from $\pi(\beta \mid y, X)$. Two Metropolis--Hastings approaches are considered: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. TODO: add citation for the Metropolis--Hastings algorithm. In both cases, the Markov chain is initialised using estimates from a frequentist logistic regression fit, and non-finite starting values are replaced by zero in the computation.
+The full-data analysis uses the complete response vector $y$ and design matrix $X$ to sample from $\pi(\beta \mid y, X)$. Two Metropolis--Hastings approaches are considered: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. TODO: add citation for the Metropolis--Hastings algorithm.
 
-The full-data sampler provides a baseline approximation to the posterior distribution. The posterior summaries from this baseline are later compared with the posterior summaries obtained from Consensus Monte Carlo. Algorithm settings such as the number of iterations, burn-in, tuning constants, and proposal covariance choices are implementation details reported with the computational results.
+Before the Bayesian simulation stage, a frequentist logistic regression model is fitted using the binary response and the selected predictors. Let $\hat{\beta}$ denote the estimated coefficient vector from this model, and let $\hat{\Sigma}$ denote the estimated covariance matrix obtained from \texttt{vcov(logistic\_model)}. These quantities are used to construct starting values and proposal covariance matrices for the Metropolis--Hastings algorithms. Non-finite starting values are replaced by zero in the computation.
+
+The computational procedure records runtime values for the Metropolis--Hastings methods using \texttt{Sys.time()} and stores them in a runtime table. These runtime values are used for computational comparison in Chapter 4, without affecting the posterior target distribution.
 
 \subsection{Random Walk Metropolis--Hastings Algorithm}
 
@@ -102,7 +108,15 @@ where
 \[
 \epsilon \sim N(0,\Sigma_{\mathrm{RWMH}}).
 \]
-Here, $\Sigma_{\mathrm{RWMH}}$ is the proposal covariance matrix. In this study, the random walk sampler uses a multivariate normal proposal with covariance based on the covariance matrix from the fitted logistic regression model and a tuning factor.
+For the full-data Random Walk Metropolis--Hastings sampler, the proposal covariance matrix is
+\[
+\Sigma_{\mathrm{RWMH}}
+=
+c_{\mathrm{RWMH}}^{2}
+\frac{2.38^{2}}{d}
+\hat{\Sigma},
+\]
+where $c_{\mathrm{RWMH}}=0.75$, $d$ is the number of regression coefficients, and $\hat{\Sigma}$ is the estimated covariance matrix from the fitted frequentist logistic regression model.
 
 Since the random walk proposal is symmetric, the proposal densities cancel in the Metropolis--Hastings ratio. The acceptance probability is therefore
 \[
@@ -126,13 +140,19 @@ where $u \sim \operatorname{Uniform}(0,1)$.
 
 \subsection{Independent Metropolis--Hastings Algorithm}
 
-In Independent Metropolis--Hastings, the proposed value is generated from a fixed proposal distribution rather than by adding a random perturbation to the current state. The empirical analysis uses a multivariate normal proposal distribution:
+In Independent Metropolis--Hastings, the proposed value is generated from a fixed proposal distribution rather than by adding a random perturbation to the current state. The full-data Independent Metropolis--Hastings sampler uses
 \[
-\beta^{*} \sim q(\beta),
+\beta^{*} \sim N(\hat{\beta},\Sigma_{\mathrm{IMH}}),
 \]
-where $q(\beta)$ is a fixed multivariate normal density. The proposal mean is based on the frequentist logistic regression estimate, and the proposal covariance is based on the corresponding estimated covariance matrix with a tuning factor.
+where
+\[
+\Sigma_{\mathrm{IMH}}
+=
+c_{\mathrm{IMH}}^{2}\hat{\Sigma}.
+\]
+In this study, $c_{\mathrm{IMH}}=1.5$, $\hat{\beta}$ is the coefficient vector from the fitted frequentist logistic regression model, and $\hat{\Sigma}$ is the corresponding estimated covariance matrix.
 
-Because the proposal distribution is not a symmetric random walk, the proposal-density correction must be included in the acceptance probability. If the current value is $\beta^{(t-1)}$, then
+Because the proposal distribution is not a symmetric random walk, the proposal-density correction is included in the acceptance probability. If the current value is $\beta^{(t-1)}$, then
 \[
 \alpha
 =
@@ -159,7 +179,7 @@ Consensus Monte Carlo is used to approximate the full posterior distribution by 
 
 \subsection{Data Partitioning}
 
-Let the full dataset be partitioned into $K$ subsets, where $K$ denotes the number of data subsets. The response vector and design matrix for subset $m$ are denoted by $y_m$ and $X_m$, respectively, where $m=1,\ldots,K$. In the empirical analysis, observations are randomly assigned to subsets before the subset samplers are run. The value of $K$ is treated as an implementation setting and is reported with the computational results.
+Let the full dataset be partitioned into $K$ subsets, where $K$ denotes the number of data subsets. In this study, $K=4$. The response vector and design matrix for subset $m$ are denoted by $y_m$ and $X_m$, respectively, where $m=1,\ldots,K$. Observations are randomly assigned to subsets before the subset samplers are run.
 
 The full likelihood can be factorised across the subsets as
 \[
@@ -195,13 +215,37 @@ Therefore, under the likelihood factorisation, the product of the subposterior d
 
 Separate Metropolis--Hastings chains are run on each subset to obtain samples from the subposterior distributions. The empirical analysis applies both subset Random Walk Metropolis--Hastings and subset Independent Metropolis--Hastings. For each subset, the target density in the acceptance probability is the subposterior density $\pi_m(\beta \mid y_m, X_m)$ rather than the full posterior density.
 
-For subset Random Walk Metropolis--Hastings, the proposal is centred at the current value and uses a multivariate normal random walk proposal. For subset Independent Metropolis--Hastings, the proposal is generated from a fixed multivariate normal proposal distribution. In the independent proposal case, the proposal-density correction is included in the acceptance probability.
+For subset Random Walk Metropolis--Hastings, the proposal is centred at the current value and uses a multivariate normal random walk proposal. The proposal covariance is based on the full-data covariance estimate and is multiplied by $K$ to reflect the wider scale of the subset subposteriors:
+\[
+\Sigma_{\mathrm{CMC,RWMH}}
+=
+c_{\mathrm{CMC,RWMH}}^{2}
+\frac{2.38^{2}}{d}
+K\hat{\Sigma},
+\]
+where $c_{\mathrm{CMC,RWMH}}=0.75$.
+
+For subset Independent Metropolis--Hastings, a frequentist logistic regression model is fitted within each subset to obtain a subset-specific proposal mean and covariance matrix. If $\hat{\beta}_m$ and $\hat{\Sigma}_m$ denote the subset-specific coefficient estimate and covariance estimate, then the proposal for subset $m$ is
+\[
+\beta^{*} \sim N(\hat{\beta}_m,\Sigma_{\mathrm{CMC,IMH},m}),
+\]
+where
+\[
+\Sigma_{\mathrm{CMC,IMH},m}
+=
+c_{\mathrm{CMC,IMH}}^{2}\hat{\Sigma}_m.
+\]
+In this study, $c_{\mathrm{CMC,IMH}}=1.0$. Since this proposal is independent of the current state, the proposal-density correction is included in the Metropolis--Hastings acceptance probability.
 
 After burn-in is removed, the retained subposterior samples from each subset are used in the consensus combination step. The number of retained samples is aligned across subsets by using the same available sample length from each subset chain.
 
 \subsection{Consensus Posterior Combination}
 
-The subposterior samples are combined using a precision-weighted consensus method. Let $S$ denote the common number of retained posterior samples after burn-in, and let $\beta_m^{(s)}$ denote the $s$th retained sample from subset $m$, where $s=1,\ldots,S$. Let $W_m$ denote the estimated precision matrix for subset $m$, obtained as the inverse of the estimated covariance matrix of the subposterior samples from that subset. The consensus sample at index $s$ is defined as
+The subposterior samples are combined using a precision-weighted consensus method. Let $S$ denote the common number of retained posterior samples after burn-in, and let $\beta_m^{(s)}$ denote the $s$th retained sample from subset $m$, where $s=1,\ldots,S$. Let $\widehat{\operatorname{Cov}}_m$ denote the estimated covariance matrix of the retained subposterior samples from subset $m$. The corresponding precision matrix is
+\[
+W_m = \widehat{\operatorname{Cov}}_m^{-1}.
+\]
+The consensus sample at index $s$ is defined as
 \[
 \beta_{\mathrm{consensus}}^{(s)}
 =
@@ -214,7 +258,7 @@ This produces a sequence of consensus posterior samples
 \beta_{\mathrm{consensus}}^{(s)}
 \right\}_{s=1}^{S},
 \]
-where $S$ is the common number of retained samples used from the subset chains after burn-in. These samples are then summarised and compared with the full-data posterior samples.
+which is summarised and compared with the full-data posterior samples.
 
 \section{Posterior Summary and Evaluation Criteria}
 
@@ -223,13 +267,15 @@ The posterior samples obtained from full-data Metropolis--Hastings and Consensus
 \item posterior mean;
 \item posterior median;
 \item posterior standard deviation;
-\item 95\% credible interval;
 \item effective sample size;
-\item Monte Carlo standard error.
+\item Monte Carlo standard error;
+\item 95\% credible interval;
+\item odds ratio;
+\item 95\% odds-ratio interval.
 \end{enumerate}
 
-The empirical analysis estimates effective sample size using the autocorrelation structure of the sampled chain and computes the Monte Carlo standard error as the posterior standard deviation divided by the square root of the estimated effective sample size.
+The empirical analysis estimates effective sample size using the autocorrelation structure of the sampled values and computes the Monte Carlo standard error as the posterior standard deviation divided by the square root of the estimated effective sample size. Odds ratios are obtained by exponentiating the posterior mean, and the odds-ratio interval is obtained by exponentiating the endpoints of the 95\% credible interval.
 
-Additional evaluation criteria include acceptance rate, trace plots, and posterior histograms or density plots. The acceptance rate is used to assess the behaviour of the Metropolis--Hastings proposal mechanism. Trace plots are used to visually inspect the mixing behaviour and stability of the chains. Posterior histograms or density plots are used to compare the marginal posterior distributions produced by the full-data and consensus approaches.
+Additional evaluation criteria include acceptance rate, trace plots, posterior histograms, and consensus posterior density plots. The acceptance rate is used to assess the behaviour of the Metropolis--Hastings proposal mechanism. Trace plots are used to visually inspect the mixing behaviour and stability of the chains. Posterior histograms and density plots are used to compare the marginal posterior distributions produced by the full-data and consensus approaches.
 
-Computational efficiency is also considered if runtime information is available from the analysis output. In the results chapter, the comparison between full-data Metropolis--Hastings and Consensus Monte Carlo is based on the posterior summaries, credible intervals, diagnostic measures, graphical checks, and available computational timing results. No numerical conclusion is stated unless it is supported by the generated output.
+Computational efficiency is also considered through the runtime values recorded during the analysis. In Chapter 4, the comparison between full-data Metropolis--Hastings and Consensus Monte Carlo is based on posterior summaries, credible intervals, diagnostic measures, graphical checks, acceptance rates, and computational timing results.

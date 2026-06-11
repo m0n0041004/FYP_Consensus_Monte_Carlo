@@ -2,9 +2,9 @@
 
 \section{Data Summary}
 
-This chapter reports the empirical results from the Bayesian logistic regression analysis. The empirical analysis uses UK accident data with a binary accident severity response, where slight accidents are modelled against the other severity categories. The model uses Bayesian logistic regression with the predictors and preprocessing steps described in Chapter 3.
+This chapter reports the empirical results for Bayesian logistic regression applied to the UK accident dataset. The binary response is accident severity, where \texttt{serious\_fatal} is coded as 1 and is the event being modelled, while \texttt{slight} is coded as 0 and is the reference response class. The predictors are \texttt{road\_type} and \texttt{speed\_limit}. The reference category for \texttt{road\_type} is \texttt{single carriageway}, and the reference category for \texttt{speed\_limit} is \texttt{2}.
 
-Table \ref{tab:model_settings} summarises the computational settings used for the reported analysis. After preprocessing, the analysis contains 82,344 observations and 10 regression coefficients. The full-data samplers use 100,000 MCMC iterations, while the subset samplers for Consensus Monte Carlo use 50,000 MCMC iterations for each subset. The burn-in fraction is 0.2, and the Consensus Monte Carlo implementation uses $K=4$ subsets.
+Table \ref{tab:model_settings} summarises the main analysis settings. After preprocessing, the analysis contains 82,344 observations and 10 regression coefficients. The prior standard deviation for the normal prior is 2.5. Both the full-data and subset Metropolis--Hastings samplers use 100,000 iterations, with a burn-in fraction of 0.2. Consensus Monte Carlo uses four subsets of equal size.
 
 \begin{table}[htbp]
 \centering
@@ -14,169 +14,228 @@ Table \ref{tab:model_settings} summarises the computational settings used for th
 \hline
 Setting & Value \\
 \hline
+Original observations & 82570 \\
 Observations after preprocessing & 82344 \\
 Number of coefficients & 10 \\
+Prior standard deviation & 2.5 \\
 Full-data MCMC iterations & 100000 \\
-Burn-in fraction & 0.2 \\
+Full-data burn-in iterations & 20000 \\
 Number of subsets, $K$ & 4 \\
-Subset MCMC iterations & 50000 \\
+Subset MCMC iterations & 100000 \\
+Subset burn-in iterations & 20000 \\
 \hline
 \end{tabular}
 \end{table}
 
-The computational output does not contain a descriptive statistics table for the original variables or response distribution. Therefore, descriptive summaries by accident severity, road type, and speed limit are left for later inclusion.
+Table \ref{tab:response_distribution} shows the distribution of the binary response after preprocessing. Serious/fatal accidents account for 10,970 observations, corresponding to 13.32\% of the analysis data.
 
-TODO: add descriptive statistics table for the response and predictors when the output is available.
+\begin{table}[htbp]
+\centering
+\caption{Distribution of the binary accident severity response}
+\label{tab:response_distribution}
+\begin{tabular}{lrr}
+\hline
+Response category & Count & Proportion \\
+\hline
+\texttt{serious\_fatal} & 10970 & 0.1332 \\
+\texttt{slight} & 71374 & 0.8668 \\
+\hline
+\end{tabular}
+\end{table}
+
+Tables \ref{tab:road_type_distribution} and \ref{tab:speed_limit_distribution} report the distributions of the categorical predictors. Single carriageway is the largest road-type category, and speed limit category 2 is the largest speed-limit category.
+
+\begin{table}[htbp]
+\centering
+\caption{Distribution of road type after preprocessing}
+\label{tab:road_type_distribution}
+\begin{tabular}{lrr}
+\hline
+Road type & Count & Proportion \\
+\hline
+\texttt{dual carriageway} & 8439 & 0.1025 \\
+\texttt{one way street (from 2005)} & 1720 & 0.0209 \\
+\texttt{roundabout} & 9320 & 0.1132 \\
+\texttt{single carriageway} & 61862 & 0.7513 \\
+\texttt{slip road (from 2005)} & 1003 & 0.0122 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Distribution of speed limit after preprocessing}
+\label{tab:speed_limit_distribution}
+\begin{tabular}{lrr}
+\hline
+Speed limit category & Count & Proportion \\
+\hline
+\texttt{1} & 1588 & 0.0193 \\
+\texttt{2} & 61809 & 0.7506 \\
+\texttt{3} & 6971 & 0.0847 \\
+\texttt{4} & 2516 & 0.0306 \\
+\texttt{5} & 7066 & 0.0858 \\
+\texttt{6} & 2394 & 0.0291 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Frequentist Logistic Regression Results}
+
+A frequentist logistic regression model is fitted before the Bayesian simulation stage. This model provides a baseline set of coefficient estimates and is also used to construct starting values and proposal covariance matrices for the Metropolis--Hastings algorithms. The frequentist results are not treated as the main inferential output of the thesis.
+
+Table \ref{tab:frequentist_logistic} reports the coefficient estimates, standard errors, and odds ratios from the frequentist logistic regression. The coefficients are on the log-odds scale for serious/fatal accident severity relative to slight accident severity.
+
+\begin{table}[htbp]
+\centering
+\caption{Frequentist logistic regression estimates and odds ratios}
+\label{tab:frequentist_logistic}
+\scriptsize
+\begin{tabular}{lrrr}
+\hline
+Parameter & Estimate & Std. Error & Odds Ratio \\
+\hline
+(Intercept) & -1.8981 & 0.0129 & 0.1499 \\
+\texttt{road\_typedual carriageway} & -0.2250 & 0.0389 & 0.7985 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0109 & 0.0726 & 0.9891 \\
+\texttt{road\_typeroundabout} & -0.4106 & 0.0368 & 0.6632 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7557 & 0.1174 & 0.4697 \\
+\texttt{speed\_limit1} & 0.1732 & 0.0717 & 1.1891 \\
+\texttt{speed\_limit3} & 0.1825 & 0.0383 & 1.2002 \\
+\texttt{speed\_limit4} & 0.3853 & 0.0569 & 1.4701 \\
+\texttt{speed\_limit5} & 0.5384 & 0.0327 & 1.7132 \\
+\texttt{speed\_limit6} & 0.3925 & 0.0684 & 1.4806 \\
+\hline
+\end{tabular}
+\end{table}
 
 \section{Full-Data Metropolis--Hastings Results}
 
-The full-data analysis was performed using Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. The posterior summaries available for both full-data samplers include posterior mean, posterior median, posterior standard deviation, effective sample size, Monte Carlo standard error, 95\% credible interval, and odds-ratio summaries.
-
-The regression coefficients are interpreted relative to the reference categories used in the design matrix. The exact reference categories for road type and speed limit should be stated once the design matrix coding is documented. TODO: identify the exact reference category for road type. TODO: identify the exact reference category for speed limit.
-
-For logistic regression, exponentiating a coefficient gives the corresponding odds ratio. An odds ratio greater than one indicates higher posterior estimated odds of a slight accident relative to the relevant reference category or baseline condition, whereas an odds ratio less than one indicates lower posterior estimated odds. The odds-ratio summaries are available in the computational output, but separate odds-ratio tables are not added here to keep the main results tables compact.
+The full-data Bayesian analysis is performed using Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. The posterior summaries include posterior mean, posterior median, posterior standard deviation, 95\% credible interval, odds ratio, and 95\% odds-ratio interval.
 
 \subsection{Random Walk Metropolis--Hastings}
 
-The full-data Random Walk Metropolis--Hastings sampler has an acceptance rate of 0.39195. Table \ref{tab:full_rwmh_summary} reports selected posterior summaries for the regression coefficients. The posterior summaries are reported on the log-odds scale, while odds-ratio summaries are available in the computational output.
+Table \ref{tab:full_rwmh_summary} reports selected posterior summaries for the full-data Random Walk Metropolis--Hastings sampler. The posterior mean and median are close for all coefficients. The 95\% credible interval for \texttt{road\_typeone way street (from 2005)} includes zero, while the intervals for the other reported non-intercept coefficients do not include zero.
 
 \begin{table}[htbp]
 \centering
 \caption{Full-data Random Walk Metropolis--Hastings posterior summaries}
 \label{tab:full_rwmh_summary}
 \scriptsize
-\begin{tabular}{lrrrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrr}
 \hline
-Parameter & Mean & Median & SD & Lower 95\% CrI & Upper 95\% CrI \\
+Parameter & Mean & Median & Std. Dev. & Lower 95\% CrI & Upper 95\% CrI & Odds Ratio & Lower 95 OR & Upper 95 OR \\
 \hline
-Intercept & 1.9517 & 1.9507 & 0.0812 & 1.7955 & 2.1140 \\
-Road type: one-way street & -0.2126 & -0.2129 & 0.0817 & -0.3719 & -0.0515 \\
-Road type: roundabout & 0.1855 & 0.1856 & 0.0493 & 0.0900 & 0.2816 \\
-Road type: single carriageway & -0.2267 & -0.2263 & 0.0390 & -0.3038 & -0.1517 \\
-Road type: slip road & 0.5335 & 0.5306 & 0.1195 & 0.3062 & 0.7768 \\
-Speed limit 2 & 0.1730 & 0.1742 & 0.0717 & 0.0296 & 0.3082 \\
-Speed limit 3 & -0.0089 & -0.0088 & 0.0794 & -0.1645 & 0.1434 \\
-Speed limit 4 & -0.2127 & -0.2124 & 0.0908 & -0.3922 & -0.0370 \\
-Speed limit 5 & -0.3658 & -0.3648 & 0.0765 & -0.5195 & -0.2191 \\
-Speed limit 6 & -0.2205 & -0.2193 & 0.0985 & -0.4144 & -0.0310 \\
+(Intercept) & -1.8981 & -1.8982 & 0.0127 & -1.9228 & -1.8734 & 0.1498 & 0.1462 & 0.1536 \\
+\texttt{road\_typedual carriageway} & -0.2250 & -0.2251 & 0.0393 & -0.3012 & -0.1470 & 0.7985 & 0.7399 & 0.8633 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0123 & -0.0111 & 0.0731 & -0.1567 & 0.1284 & 0.9878 & 0.8550 & 1.1370 \\
+\texttt{road\_typeroundabout} & -0.4114 & -0.4114 & 0.0363 & -0.4839 & -0.3411 & 0.6627 & 0.6163 & 0.7110 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7574 & -0.7543 & 0.1174 & -0.9928 & -0.5332 & 0.4689 & 0.3705 & 0.5867 \\
+\texttt{speed\_limit1} & 0.1703 & 0.1711 & 0.0713 & 0.0296 & 0.3069 & 1.1856 & 1.0300 & 1.3591 \\
+\texttt{speed\_limit3} & 0.1822 & 0.1826 & 0.0384 & 0.1065 & 0.2566 & 1.1999 & 1.1123 & 1.2926 \\
+\texttt{speed\_limit4} & 0.3834 & 0.3848 & 0.0569 & 0.2708 & 0.4907 & 1.4673 & 1.3111 & 1.6335 \\
+\texttt{speed\_limit5} & 0.5376 & 0.5380 & 0.0324 & 0.4738 & 0.6008 & 1.7119 & 1.6060 & 1.8236 \\
+\texttt{speed\_limit6} & 0.3892 & 0.3899 & 0.0683 & 0.2542 & 0.5219 & 1.4758 & 1.2894 & 1.6852 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
-
-For this sampler, the posterior means and posterior medians are close for all reported coefficients. The 95\% credible interval for speed limit 3 includes zero, while the remaining reported intervals do not include zero.
 
 \subsection{Independent Metropolis--Hastings}
 
-The full-data Independent Metropolis--Hastings sampler has an acceptance rate of 0.21504. Table \ref{tab:full_imh_summary} reports selected posterior summaries. The posterior means from the two full-data samplers are very close, suggesting that the two full-data Metropolis--Hastings implementations produce similar posterior summaries for this output.
+Table \ref{tab:full_imh_summary} reports the corresponding full-data Independent Metropolis--Hastings posterior summaries. The results are very close to the full-data Random Walk Metropolis--Hastings summaries, which indicates that the two full-data samplers produce similar posterior estimates for this analysis.
 
 \begin{table}[htbp]
 \centering
 \caption{Full-data Independent Metropolis--Hastings posterior summaries}
 \label{tab:full_imh_summary}
 \scriptsize
-\begin{tabular}{lrrrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrr}
 \hline
-Parameter & Mean & Median & SD & Lower 95\% CrI & Upper 95\% CrI \\
+Parameter & Mean & Median & Std. Dev. & Lower 95\% CrI & Upper 95\% CrI & Odds Ratio & Lower 95 OR & Upper 95 OR \\
 \hline
-Intercept & 1.9500 & 1.9493 & 0.0797 & 1.7941 & 2.1116 \\
-Road type: one-way street & -0.2130 & -0.2142 & 0.0813 & -0.3701 & -0.0539 \\
-Road type: roundabout & 0.1867 & 0.1859 & 0.0486 & 0.0903 & 0.2824 \\
-Road type: single carriageway & -0.2246 & -0.2248 & 0.0388 & -0.3014 & -0.1509 \\
-Road type: slip road & 0.5370 & 0.5367 & 0.1187 & 0.3090 & 0.7746 \\
-Speed limit 2 & 0.1729 & 0.1751 & 0.0713 & 0.0297 & 0.3101 \\
-Speed limit 3 & -0.0091 & -0.0074 & 0.0789 & -0.1672 & 0.1425 \\
-Speed limit 4 & -0.2108 & -0.2102 & 0.0904 & -0.3887 & -0.0360 \\
-Speed limit 5 & -0.3652 & -0.3640 & 0.0769 & -0.5177 & -0.2172 \\
-Speed limit 6 & -0.2189 & -0.2182 & 0.0987 & -0.4152 & -0.0245 \\
+(Intercept) & -1.8981 & -1.8979 & 0.0132 & -1.9236 & -1.8723 & 0.1499 & 0.1461 & 0.1538 \\
+\texttt{road\_typedual carriageway} & -0.2250 & -0.2250 & 0.0391 & -0.3025 & -0.1490 & 0.7985 & 0.7390 & 0.8616 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0125 & -0.0127 & 0.0732 & -0.1583 & 0.1281 & 0.9875 & 0.8536 & 1.1367 \\
+\texttt{road\_typeroundabout} & -0.4107 & -0.4103 & 0.0366 & -0.4835 & -0.3403 & 0.6632 & 0.6166 & 0.7116 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7579 & -0.7579 & 0.1170 & -0.9922 & -0.5322 & 0.4686 & 0.3708 & 0.5873 \\
+\texttt{speed\_limit1} & 0.1717 & 0.1729 & 0.0717 & 0.0285 & 0.3106 & 1.1873 & 1.0289 & 1.3643 \\
+\texttt{speed\_limit3} & 0.1817 & 0.1820 & 0.0383 & 0.1043 & 0.2567 & 1.1993 & 1.1099 & 1.2926 \\
+\texttt{speed\_limit4} & 0.3842 & 0.3854 & 0.0573 & 0.2700 & 0.4945 & 1.4685 & 1.3099 & 1.6397 \\
+\texttt{speed\_limit5} & 0.5379 & 0.5378 & 0.0330 & 0.4731 & 0.6027 & 1.7125 & 1.6049 & 1.8271 \\
+\texttt{speed\_limit6} & 0.3901 & 0.3899 & 0.0680 & 0.2572 & 0.5241 & 1.4772 & 1.2933 & 1.6890 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \section{Consensus Monte Carlo Results}
 
-Consensus Monte Carlo was implemented using $K=4$ subsets. The computational output contains posterior summaries for Consensus Monte Carlo using Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. The subset acceptance rates are reported in Table \ref{tab:acceptance_rates}.
-
-\begin{table}[htbp]
-\centering
-\caption{Acceptance rates from the computational output}
-\label{tab:acceptance_rates}
-\begin{tabular}{lr}
-\hline
-Method & Acceptance rate \\
-\hline
-Full RWMH & 0.39195 \\
-Full IMH & 0.21504 \\
-CMC-RWMH subset 1 & 0.40850 \\
-CMC-RWMH subset 2 & 0.39748 \\
-CMC-RWMH subset 3 & 0.39106 \\
-CMC-RWMH subset 4 & 0.38446 \\
-CMC-IMH subset 1 & 0.02318 \\
-CMC-IMH subset 2 & 0.14236 \\
-CMC-IMH subset 3 & 0.03542 \\
-CMC-IMH subset 4 & 0.01420 \\
-\hline
-\end{tabular}
-\end{table}
+Consensus Monte Carlo is implemented using four subsets, each containing 20,586 observations. The subset response distributions are similar across subsets: the numbers of serious/fatal observations are 2,743, 2,796, 2,676, and 2,755 for subsets 1 to 4, respectively. This provides a balanced partition for the reported distributed analysis.
 
 \subsection{Consensus Monte Carlo using Random Walk Metropolis--Hastings}
 
-Table \ref{tab:cmc_rwmh_summary} reports the posterior summaries for Consensus Monte Carlo using Random Walk Metropolis--Hastings. The CMC-RWMH posterior summaries are generally close to the full-data posterior summaries, although small differences are present for some coefficients.
+Table \ref{tab:cmc_rwmh_summary} reports posterior summaries from Consensus Monte Carlo using subset Random Walk Metropolis--Hastings. The CMC-RWMH posterior means and credible intervals are generally close to the full-data posterior summaries.
 
 \begin{table}[htbp]
 \centering
 \caption{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior summaries}
 \label{tab:cmc_rwmh_summary}
 \scriptsize
-\begin{tabular}{lrrrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrr}
 \hline
-Parameter & Mean & Median & SD & Lower 95\% CrI & Upper 95\% CrI \\
+Parameter & Mean & Median & Std. Dev. & Lower 95\% CrI & Upper 95\% CrI & Odds Ratio & Lower 95 OR & Upper 95 OR \\
 \hline
-Intercept & 1.9485 & 1.9473 & 0.0807 & 1.7914 & 2.1085 \\
-Road type: one-way street & -0.2128 & -0.2132 & 0.0824 & -0.3742 & -0.0522 \\
-Road type: roundabout & 0.1790 & 0.1786 & 0.0497 & 0.0812 & 0.2757 \\
-Road type: single carriageway & -0.2334 & -0.2334 & 0.0389 & -0.3092 & -0.1569 \\
-Road type: slip road & 0.5123 & 0.5111 & 0.1219 & 0.2786 & 0.7513 \\
-Speed limit 2 & 0.1830 & 0.1832 & 0.0726 & 0.0409 & 0.3250 \\
-Speed limit 3 & 0.0010 & 0.0008 & 0.0799 & -0.1548 & 0.1576 \\
-Speed limit 4 & -0.2131 & -0.2130 & 0.0918 & -0.3953 & -0.0300 \\
-Speed limit 5 & -0.3590 & -0.3589 & 0.0780 & -0.5130 & -0.2076 \\
-Speed limit 6 & -0.2222 & -0.2241 & 0.0987 & -0.4152 & -0.0275 \\
+(Intercept) & -1.8978 & -1.8977 & 0.0127 & -1.9228 & -1.8732 & 0.1499 & 0.1462 & 0.1536 \\
+\texttt{road\_typedual carriageway} & -0.2255 & -0.2256 & 0.0394 & -0.3024 & -0.1487 & 0.7981 & 0.7390 & 0.8618 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0109 & -0.0107 & 0.0721 & -0.1531 & 0.1305 & 0.9892 & 0.8581 & 1.1394 \\
+\texttt{road\_typeroundabout} & -0.4145 & -0.4145 & 0.0373 & -0.4879 & -0.3428 & 0.6607 & 0.6139 & 0.7098 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7793 & -0.7783 & 0.1188 & -1.0147 & -0.5475 & 0.4587 & 0.3625 & 0.5784 \\
+\texttt{speed\_limit1} & 0.1772 & 0.1774 & 0.0727 & 0.0345 & 0.3191 & 1.1939 & 1.0351 & 1.3759 \\
+\texttt{speed\_limit3} & 0.1778 & 0.1778 & 0.0383 & 0.1034 & 0.2529 & 1.1945 & 1.1089 & 1.2878 \\
+\texttt{speed\_limit4} & 0.3856 & 0.3864 & 0.0569 & 0.2715 & 0.4960 & 1.4705 & 1.3120 & 1.6421 \\
+\texttt{speed\_limit5} & 0.5359 & 0.5360 & 0.0328 & 0.4715 & 0.6006 & 1.7091 & 1.6024 & 1.8231 \\
+\texttt{speed\_limit6} & 0.3885 & 0.3897 & 0.0702 & 0.2473 & 0.5239 & 1.4747 & 1.2806 & 1.6885 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
-
-The CMC-RWMH subset acceptance rates range from 0.38446 to 0.40850. These values are close to the full-data RWMH acceptance rate of 0.39195.
 
 \subsection{Consensus Monte Carlo using Independent Metropolis--Hastings}
 
-The computational output contains posterior summaries for Consensus Monte Carlo using Independent Metropolis--Hastings. Therefore, the CMC-IMH results are reported in Table \ref{tab:cmc_imh_summary}. The subset acceptance rates for CMC-IMH are lower and more variable than those for CMC-RWMH, with values ranging from 0.01420 to 0.14236. These low subset acceptance rates suggest that the CMC-IMH sampler may require further tuning before strong conclusions are drawn from this method.
+Table \ref{tab:cmc_imh_summary} reports posterior summaries from Consensus Monte Carlo using subset Independent Metropolis--Hastings. The CMC-IMH estimates are also close to the full-data estimates for most parameters. The acceptance rates reported later in this chapter are high for the CMC-IMH subset chains, so the numerical summaries should be interpreted together with the density plots and the comparison across methods.
 
 \begin{table}[htbp]
 \centering
 \caption{Consensus Monte Carlo using Independent Metropolis--Hastings posterior summaries}
 \label{tab:cmc_imh_summary}
 \scriptsize
-\begin{tabular}{lrrrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrr}
 \hline
-Parameter & Mean & Median & SD & Lower 95\% CrI & Upper 95\% CrI \\
+Parameter & Mean & Median & Std. Dev. & Lower 95\% CrI & Upper 95\% CrI & Odds Ratio & Lower 95 OR & Upper 95 OR \\
 \hline
-Intercept & 1.9546 & 1.9575 & 0.0782 & 1.7897 & 2.1005 \\
-Road type: one-way street & -0.1850 & -0.1838 & 0.0801 & -0.3413 & -0.0300 \\
-Road type: roundabout & 0.1833 & 0.1832 & 0.0486 & 0.0871 & 0.2786 \\
-Road type: single carriageway & -0.2300 & -0.2305 & 0.0387 & -0.3042 & -0.1542 \\
-Road type: slip road & 0.5223 & 0.5200 & 0.1145 & 0.3000 & 0.7563 \\
-Speed limit 2 & 0.1696 & 0.1687 & 0.0687 & 0.0376 & 0.3070 \\
-Speed limit 3 & -0.0043 & -0.0062 & 0.0792 & -0.1587 & 0.1590 \\
-Speed limit 4 & -0.2159 & -0.2191 & 0.0900 & -0.3886 & -0.0303 \\
-Speed limit 5 & -0.3534 & -0.3553 & 0.0757 & -0.4969 & -0.2040 \\
-Speed limit 6 & -0.2260 & -0.2265 & 0.0919 & -0.4070 & -0.0422 \\
+(Intercept) & -1.8982 & -1.8982 & 0.0130 & -1.9236 & -1.8729 & 0.1498 & 0.1461 & 0.1537 \\
+\texttt{road\_typedual carriageway} & -0.2260 & -0.2259 & 0.0390 & -0.3029 & -0.1496 & 0.7977 & 0.7387 & 0.8610 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0088 & -0.0083 & 0.0732 & -0.1537 & 0.1328 & 0.9912 & 0.8575 & 1.1420 \\
+\texttt{road\_typeroundabout} & -0.4109 & -0.4108 & 0.0369 & -0.4836 & -0.3391 & 0.6630 & 0.6166 & 0.7124 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7731 & -0.7710 & 0.1185 & -1.0107 & -0.5460 & 0.4616 & 0.3640 & 0.5793 \\
+\texttt{speed\_limit1} & 0.1793 & 0.1799 & 0.0722 & 0.0360 & 0.3194 & 1.1963 & 1.0366 & 1.3762 \\
+\texttt{speed\_limit3} & 0.1810 & 0.1812 & 0.0382 & 0.1056 & 0.2554 & 1.1984 & 1.1114 & 1.2910 \\
+\texttt{speed\_limit4} & 0.3884 & 0.3887 & 0.0570 & 0.2760 & 0.4989 & 1.4747 & 1.3178 & 1.6470 \\
+\texttt{speed\_limit5} & 0.5388 & 0.5388 & 0.0328 & 0.4744 & 0.6036 & 1.7140 & 1.6071 & 1.8286 \\
+\texttt{speed\_limit6} & 0.3934 & 0.3935 & 0.0686 & 0.2581 & 0.5269 & 1.4820 & 1.2944 & 1.6938 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \section{Comparison of Posterior Estimates}
 
-Table \ref{tab:posterior_mean_comparison} compares posterior means across the four methods. The posterior means from the two full-data samplers are very close. The CMC-RWMH posterior means are also generally close to the full-data posterior means. The CMC-IMH posterior means are broadly similar for most parameters, although the result for the one-way street coefficient differs more visibly from the full-data estimates than the corresponding CMC-RWMH estimate.
+Table \ref{tab:posterior_mean_comparison} compares posterior means across the four Bayesian methods. The two full-data samplers are very similar for all parameters. The CMC-RWMH and CMC-IMH posterior means are also close to the full-data posterior means for most coefficients. The more visible differences occur for \texttt{road\_typeslip road (from 2005)} and \texttt{speed\_limit1}, although the differences remain small on the log-odds scale.
 
 \begin{table}[htbp]
 \centering
@@ -187,52 +246,84 @@ Table \ref{tab:posterior_mean_comparison} compares posterior means across the fo
 \hline
 Parameter & Full RWMH & Full IMH & CMC-RWMH & CMC-IMH \\
 \hline
-Intercept & 1.9517 & 1.9500 & 1.9485 & 1.9546 \\
-Road type: one-way street & -0.2126 & -0.2130 & -0.2128 & -0.1850 \\
-Road type: roundabout & 0.1855 & 0.1867 & 0.1790 & 0.1833 \\
-Road type: single carriageway & -0.2267 & -0.2246 & -0.2334 & -0.2300 \\
-Road type: slip road & 0.5335 & 0.5370 & 0.5123 & 0.5223 \\
-Speed limit 2 & 0.1730 & 0.1729 & 0.1830 & 0.1696 \\
-Speed limit 3 & -0.0089 & -0.0091 & 0.0010 & -0.0043 \\
-Speed limit 4 & -0.2127 & -0.2108 & -0.2131 & -0.2159 \\
-Speed limit 5 & -0.3658 & -0.3652 & -0.3590 & -0.3534 \\
-Speed limit 6 & -0.2205 & -0.2189 & -0.2222 & -0.2260 \\
+(Intercept) & -1.8981 & -1.8981 & -1.8978 & -1.8982 \\
+\texttt{road\_typedual carriageway} & -0.2250 & -0.2250 & -0.2255 & -0.2260 \\
+\texttt{road\_typeone way street (from 2005)} & -0.0123 & -0.0125 & -0.0109 & -0.0088 \\
+\texttt{road\_typeroundabout} & -0.4114 & -0.4107 & -0.4145 & -0.4109 \\
+\texttt{road\_typeslip road (from 2005)} & -0.7574 & -0.7579 & -0.7793 & -0.7731 \\
+\texttt{speed\_limit1} & 0.1703 & 0.1717 & 0.1772 & 0.1793 \\
+\texttt{speed\_limit3} & 0.1822 & 0.1817 & 0.1778 & 0.1810 \\
+\texttt{speed\_limit4} & 0.3834 & 0.3842 & 0.3856 & 0.3884 \\
+\texttt{speed\_limit5} & 0.5376 & 0.5379 & 0.5359 & 0.5388 \\
+\texttt{speed\_limit6} & 0.3892 & 0.3901 & 0.3885 & 0.3934 \\
 \hline
 \end{tabular}
 \end{table}
 
-The credible intervals are broadly similar across methods for most parameters. For all four methods, the 95\% credible interval for speed limit 3 includes zero. For the remaining reported coefficients, the available 95\% credible intervals do not include zero. This statement is descriptive and should not be interpreted as an assessment of practical importance without further model checking and contextual interpretation.
+The odds-ratio summaries show the same pattern because they are obtained by exponentiating the log-odds scale posterior summaries. Across the four methods, the 95\% odds-ratio interval for \texttt{road\_typeone way street (from 2005)} includes 1, while the corresponding intervals for the other non-intercept coefficients do not include 1. This is a descriptive posterior summary and should be interpreted in relation to the model specification, reference categories, and diagnostic results.
 
-The effective sample size and Monte Carlo standard error are available in the posterior summaries. The full-data IMH output has larger effective sample sizes than the full-data RWMH output for the reported analysis. The CMC posterior summaries have smaller effective sample sizes than the corresponding full-data summaries in the computational output. These ESS values are not interpreted in isolation; they should be assessed together with trace plots, posterior plots, and other diagnostics.
+The effective sample size and Monte Carlo standard error outputs indicate that the full-data Independent Metropolis--Hastings sampler has larger effective sample sizes and smaller Monte Carlo standard errors than the full-data Random Walk Metropolis--Hastings sampler. The CMC-IMH effective sample size values are also large in the exported summaries. These values are not interpreted alone, because the Consensus Monte Carlo density plots are based on combined consensus samples rather than a single Markov chain, and diagnostic plots, acceptance rates, and runtime should be considered together.
 
-No conclusion about computational efficiency is made because runtime values are not available in the computational output.
+\section{Acceptance Rates and Computational Runtime}
+
+Table \ref{tab:acceptance_runtime} reports the acceptance rates and runtime values. The full-data RWMH acceptance rate is 0.3922, while the full-data IMH acceptance rate is 0.2199. For Consensus Monte Carlo, the mean CMC-RWMH subset acceptance rate is 0.3943 and the mean CMC-IMH subset acceptance rate is 0.9046.
+
+\begin{table}[htbp]
+\centering
+\caption{Acceptance rates and computational runtime}
+\label{tab:acceptance_runtime}
+\begin{tabular}{lrr}
+\hline
+Method & Acceptance rate & Runtime minutes \\
+\hline
+Full-data RWMH & 0.3922 & 19.30 \\
+Full-data IMH & 0.2199 & 14.25 \\
+Mean CMC-RWMH & 0.3943 & 17.18 \\
+Mean CMC-IMH & 0.9046 & 18.43 \\
+\hline
+\end{tabular}
+\end{table}
+
+The subset acceptance rates for CMC-RWMH are 0.3895, 0.3911, 0.4007, and 0.3960. The subset acceptance rates for CMC-IMH are 0.9071, 0.9050, 0.9025, and 0.9039. The runtime values indicate that, under the current sequential implementation, full-data IMH has the shortest recorded runtime, followed by CMC-RWMH, CMC-IMH, and full-data RWMH. These runtimes describe the present implementation and should not be interpreted as evidence of parallel speedup.
 
 \section{Diagnostic Plots}
 
-The computational output contains numerical posterior summaries and acceptance rates. However, trace plot files and posterior histogram or density plot files are not available.
+Figures \ref{fig:full_rwmh_hist_trace} and \ref{fig:full_imh_hist_trace} show posterior histograms and trace plots for the full-data Metropolis--Hastings samplers. These plots are used to visually assess the marginal posterior shapes and the stability of the sampled chains.
 
 \begin{figure}[htbp]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering TODO: insert trace plots for the full-data and Consensus Monte Carlo chains after the figure files are available.}}
-\caption{Placeholder for trace plots}
-\label{fig:trace_plots_placeholder}
+\includegraphics[width=\textwidth]{../Figure/full_rwmh_hist_trace.pdf}
+\caption{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots}
+\label{fig:full_rwmh_hist_trace}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering TODO: insert posterior histograms or density plots after the figure files are available.}}
-\caption{Placeholder for posterior histograms or density plots}
-\label{fig:posterior_plots_placeholder}
+\includegraphics[width=\textwidth]{../Figure/full_imh_hist_trace.pdf}
+\caption{Full-data Independent Metropolis--Hastings posterior histograms and trace plots}
+\label{fig:full_imh_hist_trace}
 \end{figure}
 
-Additional convergence diagnostics such as autocorrelation plots or potential scale reduction factors are not available in the computational output.
+Figures \ref{fig:cmc_rwmh_density} and \ref{fig:cmc_imh_density} show posterior density plots for the Consensus Monte Carlo results. These density plots are based on combined consensus samples and do not represent a single Markov chain. They are therefore used to compare marginal posterior shapes after posterior combination rather than to assess within-chain trace behaviour.
 
-TODO: compute or export additional convergence diagnostics if required.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../Figure/cmc_rwmh_density.pdf}
+\caption{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots}
+\label{fig:cmc_rwmh_density}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../Figure/cmc_imh_density.pdf}
+\caption{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots}
+\label{fig:cmc_imh_density}
+\end{figure}
 
 \section{Summary of Findings}
 
-Based on the computational output, the full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produce very similar posterior means, posterior standard deviations, and 95\% credible intervals. This agreement provides a useful baseline for comparing the Consensus Monte Carlo results.
+The empirical results show that the full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produce very similar posterior summaries for the Bayesian logistic regression model. This agreement provides a baseline for evaluating the Consensus Monte Carlo approximations.
 
-For Consensus Monte Carlo using Random Walk Metropolis--Hastings, the posterior summaries are generally close to the full-data posterior summaries. The CMC-RWMH subset acceptance rates are also close to the full-data RWMH acceptance rate. For Consensus Monte Carlo using Independent Metropolis--Hastings, posterior summaries are available, but the subset acceptance rates are lower and more variable than those from CMC-RWMH.
+The Consensus Monte Carlo posterior summaries are generally close to the full-data posterior summaries. The CMC-RWMH and CMC-IMH posterior means differ most visibly from the full-data estimates for \texttt{road\_typeslip road (from 2005)} and \texttt{speed\_limit1}, but the overall posterior summaries remain similar across methods. The credible intervals and odds-ratio intervals also show broadly consistent conclusions across the four methods.
 
-The results support a cautious descriptive conclusion that the Consensus Monte Carlo posterior summaries, especially those based on Random Walk Metropolis--Hastings, are broadly similar to the full-data posterior summaries for the computational output. However, no conclusion about computational efficiency is made because runtime values are not available. Further graphical diagnostics should be added after the trace plots and posterior histograms or density plots are exported.
+The acceptance-rate and runtime results should be interpreted descriptively. In the current sequential implementation, full-data IMH has the shortest recorded runtime, while CMC-RWMH and CMC-IMH do not demonstrate parallel speedup. Overall, the results suggest that Consensus Monte Carlo gives posterior summaries close to the full-data posterior summaries in this empirical analysis, but this conclusion is based on the reported posterior summaries, diagnostics, acceptance rates, and sequential runtime values rather than on an assumed computational advantage.
