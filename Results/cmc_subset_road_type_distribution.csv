@@ -1,0 +1,21 @@
+"Subset","Road_Type","Count"
+"1","single carriageway",15544
+"2","single carriageway",15400
+"3","single carriageway",15473
+"4","single carriageway",15445
+"1","dual carriageway",2075
+"2","dual carriageway",2150
+"3","dual carriageway",2123
+"4","dual carriageway",2091
+"1","one way street (from 2005)",439
+"2","one way street (from 2005)",442
+"3","one way street (from 2005)",408
+"4","one way street (from 2005)",431
+"1","roundabout",2278
+"2","roundabout",2364
+"3","roundabout",2323
+"4","roundabout",2355
+"1","slip road (from 2005)",250
+"2","slip road (from 2005)",230
+"3","slip road (from 2005)",259
+"4","slip road (from 2005)",264
