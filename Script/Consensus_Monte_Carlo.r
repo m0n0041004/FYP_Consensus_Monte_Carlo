@@ -232,7 +232,7 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
 
 hist_trace_plot <- function(samples,
                             param_names = colnames(samples),
-                            params_per_page = 4) {
+                            params_per_page = 2) {
   # Save current plotting settings
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
@@ -294,7 +294,7 @@ hist_trace_plot <- function(samples,
 # Density plot function for Consensus Monte Carlo samples
 consensus_density_plot <- function(samples,
                                    param_names = colnames(samples),
-                                   params_per_page = 4) {
+                                   params_per_page = 2) {
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
 
@@ -980,7 +980,7 @@ set.seed(4)
 # Tuning factor for subset-specific Independent MH proposal
 # A value of 1.0 is used because the subset-specific proposal covariance
 # is already matched to each subset posterior.
-cmc_imh_tuning_factor <- 1.0
+cmc_imh_tuning_factor <- 1.5
 
 # Independent MH sampler for one subset
 imh_subset_block <- function(start_value,
@@ -1182,6 +1182,7 @@ print(cmc_imh_post_stats_table)
 # Density plots for Consensus Monte Carlo samples
 # These are combined consensus samples, not one single Markov chain.
 consensus_density_plot(cmc_imh_samples)
+
 
 
 # 11. Compare all methods
