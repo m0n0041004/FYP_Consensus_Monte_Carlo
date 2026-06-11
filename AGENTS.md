@@ -2,7 +2,7 @@
 
 ## Project context
 
-This repository contains my undergraduate final year thesis project on **Consensus Monte Carlo**.
+This repository contains my undergraduate final year thesis project on **Consensus Monte Carlo using Metropolis--Hastings on distributed data**.
 
 The thesis is written in LaTeX using the XMUM thesis class file:
 
@@ -28,6 +28,28 @@ If information is missing, write `TODO:` clearly instead of guessing. This appli
 * computation time
 * conclusions
 
+## Current thesis implementation
+
+The current empirical implementation is based on the following setup:
+
+* Dataset: UK accident data from `Dataset/accident_2013.csv`.
+* Variables used: `road_type`, `speed_limit`, and `accident_severity`.
+* Response construction: `accident_severity` is recoded into a binary response.
+* Event coded as 1: `serious_fatal`, formed by combining serious and fatal accidents.
+* Reference response class coded as 0: `slight`.
+* Model: Bayesian logistic regression.
+* Predictors: categorical `road_type` and categorical `speed_limit`.
+* Reference category for `road_type`: `single carriageway`.
+* Reference category for `speed_limit`: `2`.
+* Prior: independent normal priors for regression coefficients, with prior standard deviation 2.5.
+* Full-data samplers: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings.
+* Consensus Monte Carlo samplers: subset Random Walk Metropolis--Hastings and subset Independent Metropolis--Hastings.
+* Consensus combination: precision-weighted combination of subposterior samples.
+* Current number of subsets: `K = 4`, unless updated in `Script/Consensus_Monte_Carlo.r` and exported results.
+* Runtime is recorded, but the current implementation is sequential. Do not claim true parallel speedup unless the code is changed to run in parallel and the results support that claim.
+
+The exported results in `Results/` and figures in `Figure/` are the source of truth for Chapter 4.
+
 ## Project structure
 
 Use the following folder structure:
@@ -35,7 +57,8 @@ Use the following folder structure:
 * `Dataset/`: raw dataset and variable documentation
 * `Figure/`: generated figures for the thesis
 * `Report/`: LaTeX report files
-* `Script/`: R scripts for data analysis and simulation
+* `Results/`: exported numerical results from the R analysis
+* `Script/`: R scripts for data analysis, simulation, and export
 
 Important files:
 
@@ -45,15 +68,16 @@ Important files:
 * `Report/Chapter3_Methodology.tex`: Chapter 3
 * `Report/Chapter4_Results.tex`: Chapter 4
 * `Report/Chapter5_Conclusion.tex`: Chapter 5
-* `Report/AppendixA.tex`: Appendix
+* `Report/Appendix.tex`: Appendix
 * `Report/refs.bib`: bibliography
-* `Script/Consensus_Monte_Carlo.r`: main R script
+* `Script/Consensus_Monte_Carlo.r`: main R analysis script
+* `Script/Export_Results.r`: result and figure export script
 * `Dataset/accident_2013.csv`: dataset
 * `Dataset/Variables for UK data.pdf`: variable documentation
 
 ## LaTeX file inclusion rule
 
-In `Report/main.tex`, chapter files should be included using the actual filenames:
+In `Report/main.tex`, chapter files should be included using the actual filenames in the `Report/` folder:
 
 ```latex
 \include{Chapter1_Introduction}
@@ -63,7 +87,7 @@ In `Report/main.tex`, chapter files should be included using the actual filename
 \include{Chapter5_Conclusion}
 
 \appendix
-\include{AppendixA}
+\include{Appendix}
 ```
 
 Do not use missing template filenames such as:
@@ -73,6 +97,7 @@ Do not use missing template filenames such as:
 \include{Chapter2}
 \include{Chapter3}
 \include{appendix}
+\include{AppendixA}
 ```
 
 unless those files actually exist.
@@ -103,34 +128,35 @@ The thesis should follow this structure:
 
 3. Chapter 2: Literature Review
 
-   * Bayesian inference
+   * Bayesian logistic regression and prior specification
    * Markov Chain Monte Carlo
    * Metropolis--Hastings algorithm
    * Distributed Bayesian computation
    * Consensus Monte Carlo
-   * Relevant applications or comparisons
+   * Relevant applications or methodological comparisons
 
 4. Chapter 3: Methodology
 
    * Data source
    * Data preprocessing
-   * Bayesian model specification
-   * Full-data MCMC method
-   * Consensus Monte Carlo method
+   * Bayesian logistic regression model
+   * Prior distribution
+   * Posterior distribution
+   * Full-data Metropolis--Hastings methods
+   * Consensus Monte Carlo methods
    * Posterior combination method
-   * Algorithm settings
-   * Evaluation criteria
+   * Posterior summaries and evaluation criteria
 
 5. Chapter 4: Results and Analysis
 
-   * Descriptive statistics
-   * Model setup
-   * Full-data MCMC results
+   * Data summary
+   * Frequentist logistic regression results
+   * Full-data Metropolis--Hastings results
    * Consensus Monte Carlo results
    * Comparison of posterior estimates
-   * Trace plots and posterior density plots
-   * Convergence diagnostics
-   * Runtime or computational efficiency comparison
+   * Acceptance rates and computational runtime
+   * Diagnostic plots
+   * Summary of findings
 
 6. Chapter 5: Conclusion
 
@@ -141,7 +167,7 @@ The thesis should follow this structure:
 
 7. Appendix
 
-   * R code
+   * R code or code summary
    * additional tables
    * additional figures
    * variable information
@@ -155,17 +181,39 @@ Use formal academic writing.
 
 Write in clear mathematical language. Avoid casual wording.
 
-Use proper notation consistently. Suggested notation:
+Avoid workflow-style phrases in the thesis, such as:
 
-* $\theta$: parameter vector
-* $y$: response variable
+* “the code is unfinished”
+* “terminal output”
+* “saved output files in the Results folder”
+* “if runtime output is available”
+* “final R script”
+
+Use thesis-style phrases instead, such as:
+
+* “the empirical analysis”
+* “the computational output”
+* “the reported results”
+* “the runtime values recorded during the analysis”
+
+Use proper notation consistently:
+
+* $\beta$: logistic regression coefficient vector
+* $y$: binary response variable
 * $X$: design matrix or predictor matrix
-* $\pi(\theta \mid y)$: posterior distribution
+* $p_i$: probability that observation $i$ has serious/fatal accident severity
 * $K$: number of data subsets
 * $m$: subset index
-* $\theta_m$: subposterior sample or subset-specific parameter draw
+* $\beta_m^{(s)}$: the $s$th subposterior sample from subset $m$
+* $W_m$: estimated precision matrix for subset $m$
+* $\pi(\beta \mid y, X)$: posterior distribution of $\beta$ given $y$ and $X$
+* $\pi_m(\beta \mid y_m, X_m)$: subposterior distribution for subset $m$
 
 Use the term **credible interval** for Bayesian posterior intervals, not confidence interval, unless discussing frequentist methods.
+
+Use `Metropolis--Hastings`, not `Metropolis-Hastings`.
+
+Use `serious/fatal accident severity` or `serious/fatal accidents` consistently when referring to the binary event. Do not write that slight accidents are the event being modelled.
 
 ## Citation rules
 
@@ -179,9 +227,11 @@ If a citation is needed but unavailable, write:
 TODO: add citation for this claim.
 ```
 
-Do not invent author names, paper titles, publication years, journals, or DOI numbers.
+Do not invent author names, paper titles, publication years, journals, publishers, page numbers, or DOI numbers.
 
-When adding a citation, check that the BibTeX entry exists in `refs.bib`.
+When adding a citation, check that the BibTeX entry exists in `Report/refs.bib`.
+
+Do not remove TODO citation markers unless the claim is either cited properly or rewritten so that the citation is no longer needed.
 
 ## Mathematical content rules
 
@@ -189,19 +239,52 @@ Use LaTeX notation for equations.
 
 Define all important terms before using them.
 
-For Bayesian inference, express the posterior generally as:
+For Bayesian logistic regression, use notation consistent with:
 
 ```latex
 \[
-\pi(\theta \mid y) \propto L(y \mid \theta)\pi(\theta).
+y_i \mid \beta \sim \operatorname{Bernoulli}(p_i),
+\]
+\[
+\operatorname{logit}(p_i)=x_i^T\beta.
+\]
+```
+
+For the posterior distribution, write:
+
+```latex
+\[
+\pi(\beta \mid y, X) \propto L(y \mid \beta, X)\pi(\beta).
 \]
 ```
 
 For Consensus Monte Carlo, clearly distinguish between:
 
 * the full posterior
+* the subset likelihood
 * the subposterior
 * the combined consensus posterior
+
+The subposterior should be written as:
+
+```latex
+\[
+\pi_m(\beta \mid y_m, X_m)
+\propto
+L(y_m \mid \beta, X_m)\pi(\beta)^{1/K}.
+\]
+```
+
+The precision-weighted consensus combination should be written as:
+
+```latex
+\[
+\beta_{\mathrm{consensus}}^{(s)}
+=
+\left(\sum_{m=1}^{K} W_m\right)^{-1}
+\sum_{m=1}^{K} W_m \beta_m^{(s)}.
+\]
+```
 
 Do not claim that Consensus Monte Carlo is better unless the results support it.
 
@@ -214,22 +297,55 @@ When editing R code:
 * use clear variable names
 * set a random seed for reproducibility
 * save generated figures into `Figure/`
-* save important numerical summaries into a results table if possible
+* save important numerical summaries into `Results/`
 * avoid hard-coded absolute paths
 * use relative paths from the project root
 
 Preferred output folders:
 
 * figures: `Figure/`
-* tables or CSV summaries: `Report/tables/` or `Results/`
+* tables or CSV summaries: `Results/`
 
 If a folder does not exist, create it before saving output.
 
-## Results rules
+Do not modify `Script/Consensus_Monte_Carlo.r` unless explicitly instructed.
 
-Do not manually invent results for Chapter 4.
+Do not rerun MCMC when only editing thesis text.
 
-Results must come from the R script or provided output.
+## Exported results rules
+
+Chapter 4 must be based only on exported results and figures, not on memory or guessed values.
+
+Use these files when available:
+
+* `Results/model_settings.csv`
+* `Results/response_distribution.csv`
+* `Results/road_type_distribution.csv`
+* `Results/speed_limit_distribution.csv`
+* `Results/reference_categories.csv`
+* `Results/frequentist_logistic_summary.csv`
+* `Results/frequentist_logistic_odds_ratios.csv`
+* `Results/full_rwmh_posterior_summary.csv`
+* `Results/full_imh_posterior_summary.csv`
+* `Results/cmc_rwmh_posterior_summary.csv`
+* `Results/cmc_imh_posterior_summary.csv`
+* `Results/posterior_mean_comparison.csv`
+* `Results/ess_mcse_comparison.csv`
+* `Results/odds_ratio_comparison.csv`
+* `Results/acceptance_rates.csv`
+* `Results/runtime_comparison.csv`
+* `Results/cmc_subset_sizes.csv`
+* `Results/cmc_subset_response_distribution.csv`
+* `Results/cmc_subset_road_type_distribution.csv`
+* `Results/cmc_subset_speed_limit_distribution.csv`
+* `Results/export_object_availability.csv`
+
+Use these figures when available:
+
+* `Figure/full_rwmh_hist_trace.pdf`
+* `Figure/full_imh_hist_trace.pdf`
+* `Figure/cmc_rwmh_density.pdf`
+* `Figure/cmc_imh_density.pdf`
 
 For each MCMC or Consensus Monte Carlo result, report relevant diagnostics where available:
 
@@ -237,17 +353,38 @@ For each MCMC or Consensus Monte Carlo result, report relevant diagnostics where
 * posterior median
 * posterior standard deviation
 * credible interval
+* odds ratio
+* effective sample size
+* Monte Carlo standard error
 * trace plot
 * posterior density plot
 * acceptance rate
 * runtime
-* convergence behavior
+* convergence behaviour
 
 If diagnostics are not available, insert:
 
 ```latex
 TODO: compute diagnostic.
 ```
+
+Do not claim true parallel speedup unless the code is changed to run in parallel and the exported runtime results support that claim.
+
+If runtime values are based on sequential execution, state that the reported runtime reflects the current sequential implementation.
+
+If CMC-IMH acceptance rates are low, discuss this cautiously as a possible tuning limitation. Do not treat low-acceptance CMC-IMH results as definitive without qualification.
+
+## Chapter editing priorities
+
+Current priority: rewrite and refine Chapters 1 to 4 before drafting Chapter 5.
+
+Recommended order:
+
+1. Refine Chapter 1 so that the introduction matches the current model, event definition, and thesis scope.
+2. Refine Chapter 3 so that the methodology exactly matches `Script/Consensus_Monte_Carlo.r`.
+3. Refine Chapter 4 so that every numerical statement is supported by exported files in `Results/` and figures in `Figure/`.
+4. Refine Chapter 2 after Chapters 1, 3, and 4 are stable, adding missing citations if needed.
+5. Draft Chapter 5 only after Chapters 1 to 4 are consistent.
 
 ## Editing rules
 
@@ -268,18 +405,10 @@ After modifying LaTeX files, check for:
 * syntax errors
 * inconsistent notation
 * unresolved TODOs
+* claims unsupported by the exported results
 
-## Current priority
+When editing Chapter 4, verify that table values match the corresponding exported CSV files.
 
-The current priority is to turn the template into a real first thesis draft.
+When editing Chapter 1 or Chapter 3, do not include Chapter 4 numerical results unless the section explicitly requires a high-level reference to evaluation criteria.
 
-Focus first on:
-
-1. fixing `main.tex` file inclusion;
-2. replacing template content in Chapter 1;
-3. replacing template content in Chapter 3;
-4. checking whether Chapter 4 exists and contains actual results;
-5. expanding the bibliography;
-6. adding real figures and tables generated from the R script.
-
-Do not draft the conclusion until Chapter 4 results are available.
+When editing Chapter 2, do not add papers unless their BibTeX entries are available or explicitly provided.
