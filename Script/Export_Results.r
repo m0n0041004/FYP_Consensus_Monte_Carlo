@@ -37,6 +37,22 @@ add_setting <- function(name, value) {
   )
 }
 
+residual_summary_table <- function(residuals) {
+  residuals <- as.numeric(residuals)
+  residuals <- residuals[is.finite(residuals)]
+
+  data.frame(
+    Minimum = min(residuals),
+    First_Quartile = as.numeric(quantile(residuals, probs = 0.25)),
+    Median = median(residuals),
+    Mean = mean(residuals),
+    Third_Quartile = as.numeric(quantile(residuals, probs = 0.75)),
+    Maximum = max(residuals),
+    Std_Dev = sd(residuals),
+    row.names = NULL
+  )
+}
+
 # -------------------------------------------------------------------
 # 1. Data summary exports
 # -------------------------------------------------------------------
@@ -160,6 +176,58 @@ if (exists("logistic_model")) {
   safe_write_csv(
     frequentist_logistic_summary,
     "Results/frequentist_logistic_summary.csv"
+  )
+}
+
+if (exists("g_square") && exists("g_square_df") && exists("p_value")) {
+  likelihood_ratio_test <- data.frame(
+    G_Square = g_square,
+    DF = g_square_df,
+    P_Value = p_value,
+    row.names = NULL
+  )
+
+  safe_write_csv(
+    likelihood_ratio_test,
+    "Results/frequentist_likelihood_ratio_test.csv"
+  )
+}
+
+if (exists("gvif_values")) {
+  frequentist_gvif <- as.data.frame(gvif_values)
+  frequentist_gvif <- data.frame(
+    Variable = rownames(frequentist_gvif),
+    frequentist_gvif,
+    row.names = NULL,
+    check.names = FALSE
+  )
+
+  if (all(c("GVIF", "Df") %in% names(frequentist_gvif))) {
+    frequentist_gvif$GVIF_Adjusted <-
+      frequentist_gvif$GVIF^(1 / (2 * frequentist_gvif$Df))
+  }
+
+  safe_write_csv(
+    frequentist_gvif,
+    "Results/frequentist_gvif.csv"
+  )
+}
+
+if (exists("pearson_resid_std")) {
+  pearson_residual_summary <- residual_summary_table(pearson_resid_std)
+
+  safe_write_csv(
+    pearson_residual_summary,
+    "Results/pearson_residual_summary.csv"
+  )
+}
+
+if (exists("deviance_resid_std")) {
+  deviance_residual_summary <- residual_summary_table(deviance_resid_std)
+
+  safe_write_csv(
+    deviance_residual_summary,
+    "Results/deviance_residual_summary.csv"
   )
 }
 
@@ -607,6 +675,24 @@ if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
   dev.off()
 }
 
+if (exists("pearson_resid_std")) {
+  png("Figure/pearson_residual_acf.png", width = 800, height = 600)
+  acf(
+    pearson_resid_std,
+    main = "Correlogram of Pearson Residuals"
+  )
+  dev.off()
+}
+
+if (exists("deviance_resid_std")) {
+  png("Figure/deviance_residual_acf.png", width = 800, height = 600)
+  acf(
+    deviance_resid_std,
+    main = "Correlogram of Deviance Residuals"
+  )
+  dev.off()
+}
+
 # -------------------------------------------------------------------
 # 11. Export object availability checklist
 # -------------------------------------------------------------------
@@ -615,6 +701,12 @@ object_names <- c(
   "accident_data",
   "data_used",
   "logistic_model",
+  "g_square",
+  "g_square_df",
+  "p_value",
+  "gvif_values",
+  "pearson_resid_std",
+  "deviance_resid_std",
   "cov_beta",
   "cor_beta",
   "y",
