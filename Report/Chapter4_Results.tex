@@ -4,7 +4,7 @@
 
 This chapter reports the empirical results for Bayesian logistic regression applied to the 2013 UK accident dataset. The response is binary accident severity, where serious/fatal accident severity is coded as 1 and is the event being modelled, while slight accident severity is coded as 0 and is the reference response class. The predictors are road type and speed limit.
 
-The analysis contains 82,344 observations after preprocessing. Serious/fatal accidents account for 10,970 observations, corresponding to 13.32\% of the analysis data, while slight accidents account for 71,374 observations, corresponding to 86.68\%. The response distribution is shown in Table \ref{tab:response_distribution}.
+The exported model settings report 82,570 original observations and 82,344 observations after preprocessing. Serious/fatal accidents account for 10,970 observations, corresponding to 13.32\% of the analysis data, while slight accidents account for 71,374 observations, corresponding to 86.68\%. The response distribution is shown in Table \ref{tab:response_distribution}.
 
 \begin{table}[htbp]
 \centering
@@ -59,9 +59,9 @@ Speed limit category & Count & Proportion \\
 
 \section{Frequentist Logistic Regression Results}
 
-A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline and supplies proposal mean and covariance information for the Metropolis--Hastings algorithms. The p-values are reported for completeness, but they are not treated as the main inferential output of the thesis because the primary analysis is Bayesian.
+A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline, diagnostic checks, and proposal mean and covariance information for the Metropolis--Hastings algorithms. The p-values are reported for completeness, but they are not treated as the main inferential output of the thesis because the primary analysis is Bayesian.
 
-Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimates, standard errors, z-values, and p-values. All non-intercept coefficients except Road type: one way street have p-values below 0.05 in the frequentist fit. This result is used only as a descriptive baseline for the later Bayesian posterior analysis.
+Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimates, standard errors, z-values, and p-values. Based on the reported p-values, all non-intercept coefficients except Road type: one way street are below 0.05 in the frequentist fit.
 
 \begin{table}[htbp]
 \centering
@@ -83,6 +83,56 @@ Speed limit: 3 & 0.1825 & 0.0383 & 4.76 & 1.91e-06 \\
 Speed limit: 4 & 0.3853 & 0.0569 & 6.77 & 1.27e-11 \\
 Speed limit: 5 & 0.5384 & 0.0327 & 16.48 & 4.88e-61 \\
 Speed limit: 6 & 0.3925 & 0.0684 & 5.74 & 9.61e-09 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+The likelihood-ratio G-square test compares the fitted logistic regression model with the intercept-only model. The exported result gives $G^2=432.0306$ with 9 degrees of freedom and p-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
+
+\begin{table}[htbp]
+\centering
+\caption{Likelihood-ratio G-square test}
+\label{tab:frequentist_lrt}
+\begin{tabular}{ccc}
+\hline
+$G^2$ & Degrees of freedom & p-value \\
+\hline
+432.0306 & 9 & $1.9855\times 10^{-87}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Table \ref{tab:frequentist_gvif} reports the adjusted GVIF values for the categorical predictors. The adjusted GVIF values are close to 1 for both predictors, so the exported diagnostic values do not suggest serious multicollinearity concerns in this fitted model.
+
+\begin{table}[htbp]
+\centering
+\caption{GVIF multicollinearity diagnostics}
+\label{tab:frequentist_gvif}
+\begin{tabular}{lccc}
+\hline
+Predictor & GVIF & Degrees of freedom & Adjusted GVIF \\
+\hline
+Road type & 1.3481 & 4 & 1.0380 \\
+Speed limit & 1.3481 & 5 & 1.0303 \\
+\hline
+\end{tabular}
+\end{table}
+
+Table \ref{tab:residual_summary} reports supplementary summaries of the standardised Pearson and deviance residuals. These summaries are descriptive diagnostics and should be interpreted together with the residual correlograms shown later in this chapter.
+
+\begin{table}[htbp]
+\centering
+\caption{Standardised residual summaries}
+\label{tab:residual_summary}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\hline
+Residual type & Minimum & First quartile & Median & Mean & Third quartile & Maximum & Std. Dev. \\
+\hline
+Pearson & -0.5067 & -0.3871 & -0.3871 & 0.0001 & -0.3459 & 3.7709 & 1.0005 \\
+Deviance & -0.6761 & -0.5285 & -0.5285 & -0.1945 & -0.4755 & 2.3341 & 0.8614 \\
 \hline
 \end{tabular}%
 }
@@ -185,7 +235,7 @@ Speed limit: 6 & 0.3885 & 0.3897 & 0.0702 & 2165.04 & 0.0015 & (0.2473, 0.5239) 
 
 \subsection{Consensus Monte Carlo using Independent Metropolis--Hastings}
 
-Table \ref{tab:cmc_imh_summary} reports posterior summaries from Consensus Monte Carlo using shard-level Independent Metropolis--Hastings. The posterior summaries are close to the corresponding full-data summaries for most parameters. The 95\% credible interval for Road type: one way street contains zero; the other non-intercept credible intervals exclude zero.
+Table \ref{tab:cmc_imh_summary} reports posterior summaries from Consensus Monte Carlo using shard-level Independent Metropolis--Hastings. The posterior means, medians, standard deviations, and credible intervals are close to the corresponding full-data summaries for most parameters. The 95\% credible interval for Road type: one way street contains zero; the other non-intercept credible intervals exclude zero.
 
 \begin{table}[htbp]
 \centering
@@ -197,16 +247,16 @@ Table \ref{tab:cmc_imh_summary} reports posterior summaries from Consensus Monte
 \hline
 Parameter & Mean & Median & Std. Dev. & ESS & MCSE & 95\% CrI \\
 \hline
-Intercept & -1.8982 & -1.8982 & 0.0130 & 66527.71 & 0.0001 & (-1.9236, -1.8729) \\
-Road type: dual carriageway & -0.2260 & -0.2259 & 0.0390 & 66683.02 & 0.0002 & (-0.3029, -0.1496) \\
-Road type: one way street & -0.0088 & -0.0083 & 0.0732 & 64904.98 & 0.0003 & (-0.1537, 0.1328) \\
-Road type: roundabout & -0.4109 & -0.4108 & 0.0369 & 66291.28 & 0.0001 & (-0.4836, -0.3391) \\
-Road type: slip road & -0.7731 & -0.7710 & 0.1185 & 56710.97 & 0.0005 & (-1.0107, -0.5460) \\
-Speed limit: 1 & 0.1793 & 0.1799 & 0.0722 & 65260.16 & 0.0003 & (0.0360, 0.3194) \\
-Speed limit: 3 & 0.1810 & 0.1812 & 0.0382 & 66196.08 & 0.0001 & (0.1056, 0.2554) \\
-Speed limit: 4 & 0.3884 & 0.3887 & 0.0570 & 66032.16 & 0.0002 & (0.2760, 0.4989) \\
-Speed limit: 5 & 0.5388 & 0.5388 & 0.0328 & 66759.77 & 0.0001 & (0.4744, 0.6036) \\
-Speed limit: 6 & 0.3934 & 0.3935 & 0.0686 & 65628.18 & 0.0003 & (0.2581, 0.5269) \\
+Intercept & -1.8985 & -1.8985 & 0.0130 & 9134.84 & 0.0001 & (-1.9240, -1.8731) \\
+Road type: dual carriageway & -0.2258 & -0.2258 & 0.0389 & 9598.99 & 0.0004 & (-0.3022, -0.1498) \\
+Road type: one way street & -0.0112 & -0.0111 & 0.0729 & 9183.07 & 0.0008 & (-0.1558, 0.1305) \\
+Road type: roundabout & -0.4101 & -0.4099 & 0.0367 & 8546.48 & 0.0004 & (-0.4825, -0.3376) \\
+Road type: slip road & -0.7831 & -0.7810 & 0.1182 & 9565.51 & 0.0012 & (-1.0203, -0.5572) \\
+Speed limit: 1 & 0.1807 & 0.1810 & 0.0722 & 9411.68 & 0.0007 & (0.0378, 0.3205) \\
+Speed limit: 3 & 0.1816 & 0.1815 & 0.0385 & 9199.49 & 0.0004 & (0.1058, 0.2570) \\
+Speed limit: 4 & 0.3881 & 0.3886 & 0.0570 & 9104.20 & 0.0006 & (0.2752, 0.4985) \\
+Speed limit: 5 & 0.5384 & 0.5382 & 0.0330 & 9082.96 & 0.0003 & (0.4732, 0.6028) \\
+Speed limit: 6 & 0.3978 & 0.3976 & 0.0679 & 9243.32 & 0.0007 & (0.2642, 0.5300) \\
 \hline
 \end{tabular}%
 }
@@ -214,7 +264,7 @@ Speed limit: 6 & 0.3934 & 0.3935 & 0.0686 & 65628.18 & 0.0003 & (0.2581, 0.5269)
 
 \section{Comparison of Posterior Estimates}
 
-Table \ref{tab:posterior_mean_comparison} compares posterior means across the four Bayesian methods. The two full-data samplers are very similar for all parameters. The CMC-RWMH and CMC-IMH posterior means are also close to the full-data posterior means for most coefficients. The more visible differences occur for Road type: slip road and Speed limit: 1, although the differences remain small on the log-odds scale. This comparison concerns approximation quality rather than causal interpretation.
+Table \ref{tab:posterior_mean_comparison} compares posterior means across the four Bayesian methods. The two full-data samplers are very similar for all parameters. The CMC-RWMH and CMC-IMH posterior means are also close to the full-data posterior means for most coefficients. The more visible differences occur for Road type: slip road, Speed limit: 1, and Speed limit: 6, although the differences remain small on the log-odds scale. This comparison concerns approximation quality rather than causal interpretation.
 
 \begin{table}[htbp]
 \centering
@@ -226,44 +276,47 @@ Table \ref{tab:posterior_mean_comparison} compares posterior means across the fo
 \hline
 Parameter & Full RWMH & Full IMH & CMC-RWMH & CMC-IMH \\
 \hline
-Intercept & -1.8981 & -1.8981 & -1.8978 & -1.8982 \\
-Road type: dual carriageway & -0.2250 & -0.2250 & -0.2255 & -0.2260 \\
-Road type: one way street & -0.0123 & -0.0125 & -0.0109 & -0.0088 \\
-Road type: roundabout & -0.4114 & -0.4107 & -0.4145 & -0.4109 \\
-Road type: slip road & -0.7574 & -0.7579 & -0.7793 & -0.7731 \\
-Speed limit: 1 & 0.1703 & 0.1717 & 0.1772 & 0.1793 \\
-Speed limit: 3 & 0.1822 & 0.1817 & 0.1778 & 0.1810 \\
-Speed limit: 4 & 0.3834 & 0.3842 & 0.3856 & 0.3884 \\
-Speed limit: 5 & 0.5376 & 0.5379 & 0.5359 & 0.5388 \\
-Speed limit: 6 & 0.3892 & 0.3901 & 0.3885 & 0.3934 \\
+Intercept & -1.8981 & -1.8981 & -1.8978 & -1.8985 \\
+Road type: dual carriageway & -0.2250 & -0.2250 & -0.2255 & -0.2258 \\
+Road type: one way street & -0.0123 & -0.0125 & -0.0109 & -0.0112 \\
+Road type: roundabout & -0.4114 & -0.4107 & -0.4145 & -0.4101 \\
+Road type: slip road & -0.7574 & -0.7579 & -0.7793 & -0.7831 \\
+Speed limit: 1 & 0.1703 & 0.1717 & 0.1772 & 0.1807 \\
+Speed limit: 3 & 0.1822 & 0.1817 & 0.1778 & 0.1816 \\
+Speed limit: 4 & 0.3834 & 0.3842 & 0.3856 & 0.3881 \\
+Speed limit: 5 & 0.5376 & 0.5379 & 0.5359 & 0.5384 \\
+Speed limit: 6 & 0.3892 & 0.3901 & 0.3885 & 0.3978 \\
 \hline
 \end{tabular}%
 }
 \end{table}
 
-The effective sample size and Monte Carlo standard error outputs indicate larger ESS values and smaller MCSE values for the full-data Independent Metropolis--Hastings sampler than for the full-data Random Walk Metropolis--Hastings sampler. The CMC-IMH ESS values are also large in the exported summaries. These values are not interpreted in isolation because the CMC density plots are based on combined consensus samples rather than a single Markov chain.
+The effective sample size and Monte Carlo standard error outputs indicate larger ESS values and smaller MCSE values for the full-data Independent Metropolis--Hastings sampler than for the full-data Random Walk Metropolis--Hastings sampler. The CMC-IMH ESS and MCSE values are close to the full-data Independent Metropolis--Hastings values in the exported summaries. These values are not interpreted in isolation because the CMC density plots are based on combined consensus samples rather than a single Markov chain.
 
 \section{Acceptance Rates and Computational Runtime}
 
-Table \ref{tab:acceptance_runtime} reports acceptance rates and runtime values. The full-data RWMH acceptance rate is 0.3922, and the full-data IMH acceptance rate is 0.2199. For Consensus Monte Carlo, the mean CMC-RWMH shard acceptance rate is 0.3943, and the mean CMC-IMH shard acceptance rate is 0.9046. The CMC-IMH acceptance rates are high in these exported results and should be interpreted together with posterior summaries and density plots.
+Table \ref{tab:acceptance_runtime} reports acceptance rates and runtime values. The full-data RWMH acceptance rate is 0.3922, and the full-data IMH acceptance rate is 0.2199. For Consensus Monte Carlo, the mean CMC-RWMH shard acceptance rate is 0.3943, and the mean CMC-IMH shard acceptance rate is 0.2172. Thus, the CMC-RWMH acceptance rate is close to the full-data RWMH acceptance rate, while the CMC-IMH acceptance rate is close to the full-data IMH acceptance rate.
 
 \begin{table}[htbp]
 \centering
 \caption{Acceptance rates and computational runtime}
 \label{tab:acceptance_runtime}
+\scriptsize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lccc}
 \hline
 Method & Acceptance rate & Total runtime minutes & Approx. per-shard runtime minutes \\
 \hline
-Full-data RWMH & 0.3922 & 16.21 & -- \\
-Full-data IMH & 0.2199 & 16.93 & -- \\
-Mean CMC-RWMH & 0.3943 & 15.90 & 3.98 \\
-Mean CMC-IMH & 0.9046 & 16.46 & 4.12 \\
+Full-data RWMH & 0.3922 & 18.90 & -- \\
+Full-data IMH & 0.2199 & 19.35 & -- \\
+Mean CMC-RWMH & 0.3943 & 18.19 & 4.55 \\
+Mean CMC-IMH & 0.2172 & 18.39 & 4.60 \\
 \hline
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-The shard acceptance rates for CMC-RWMH are 0.3895, 0.3911, 0.4007, and 0.3960. The shard acceptance rates for CMC-IMH are 0.9071, 0.9050, 0.9025, and 0.9039.
+The shard acceptance rates for CMC-RWMH are 0.3895, 0.3911, 0.4007, and 0.3960. The shard acceptance rates for CMC-IMH are 0.2178, 0.2154, 0.2170, and 0.2188.
 
 The implementation is sequential because no multi-machine computing environment is used. It is used to mimic the data-partitioning and subposterior-combination structure of Consensus Monte Carlo, not to measure actual parallel execution. Since CMC uses $K=4$ shards, Table \ref{tab:acceptance_runtime} also reports an approximate per-shard runtime, computed as total sequential CMC runtime divided by $K$. This approximation is used only to illustrate the potential computational advantage of distributed execution and does not represent an actual measured parallel runtime.
 
@@ -303,12 +356,28 @@ Figures \ref{fig:cmc_rwmh_density} and \ref{fig:cmc_imh_density} show posterior 
 \label{fig:cmc_imh_density}
 \end{figure}
 
+Figures \ref{fig:pearson_residual_acf} and \ref{fig:deviance_residual_acf} show correlograms for the standardised Pearson and deviance residuals. These residual ACF plots are supplementary diagnostics. They should be interpreted cautiously because a correlogram depends on whether the observation order has a meaningful temporal or spatial interpretation.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{../Figure/pearson_residual_acf.png}
+\caption{Correlogram of standardised Pearson residuals}
+\label{fig:pearson_residual_acf}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{../Figure/deviance_residual_acf.png}
+\caption{Correlogram of standardised deviance residuals}
+\label{fig:deviance_residual_acf}
+\end{figure}
+
 \section{Summary of Findings}
 
-The frequentist logistic regression provides an initial baseline and proposal information for the Metropolis--Hastings samplers. Its p-values are reported descriptively, but the main inferential comparison is based on Bayesian posterior summaries.
+The frequentist logistic regression provides an initial baseline, diagnostic checks, and proposal information for the Metropolis--Hastings samplers. Its p-values are reported descriptively, while the likelihood-ratio G-square test assesses improvement over the intercept-only model and the GVIF values assess multicollinearity among the categorical predictors.
 
 The full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produce similar posterior means, medians, standard deviations, and credible intervals. Across the Bayesian posterior summaries, the 95\% credible interval for Road type: one way street contains zero, while the intervals for the other non-intercept coefficients exclude zero. This provides posterior evidence that those coefficients are credibly different from zero under the fitted model.
 
-The Consensus Monte Carlo summaries are compared against the full-data methods as posterior approximations. CMC-RWMH and CMC-IMH are generally close to the full-data posterior summaries, with the more visible mean differences appearing for Road type: slip road and Speed limit: 1. The CMC-IMH acceptance rates are high in the exported results, but acceptance rates should still be interpreted together with posterior summaries, density plots, and runtime.
+The Consensus Monte Carlo summaries are compared against the full-data methods as posterior approximations. CMC-RWMH and CMC-IMH are generally close to the full-data posterior summaries, with the more visible mean differences appearing for Road type: slip road, Speed limit: 1, and Speed limit: 6. The acceptance rates for the CMC methods are similar to the corresponding full-data Metropolis--Hastings methods and should still be interpreted together with posterior summaries, density plots, and runtime.
 
 The runtime results reflect a sequential implementation and do not prove true parallel speedup. The approximate per-shard runtime is included only as an indicator of possible distributed computational advantage under a parallel implementation. Actual speedup would depend on the computing environment, communication overhead, posterior combination cost, implementation details, and statistical efficiency.
