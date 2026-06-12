@@ -2,6 +2,12 @@
 "accident_data",TRUE
 "data_used",TRUE
 "logistic_model",TRUE
+"g_square",FALSE
+"g_square_df",FALSE
+"p_value",FALSE
+"gvif_values",FALSE
+"pearson_resid_std",FALSE
+"deviance_resid_std",FALSE
 "cov_beta",TRUE
 "cor_beta",TRUE
 "y",TRUE
