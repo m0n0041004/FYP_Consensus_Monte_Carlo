@@ -1,2 +1,53 @@
 \chapter{Conclusion}
 
+\section{Summary of the Study}
+
+This thesis studied Consensus Monte Carlo using Metropolis--Hastings on distributed data. The main purpose was to examine how posterior summaries from a Consensus Monte Carlo approximation compare with posterior summaries from full-data Metropolis--Hastings sampling. The study was motivated by the computational burden of full-data Markov Chain Monte Carlo methods, where repeated likelihood evaluations over a large dataset can make posterior simulation expensive.
+
+The empirical application used the 2013 UK accident dataset. A Bayesian logistic regression model was fitted for binary accident severity, where serious/fatal accident severity was modelled relative to slight accident severity. The predictors were road type and speed limit. The Bayesian model assigned a weakly informative Cauchy prior with scale 2.5 to the regression coefficients.
+
+Four Bayesian computational approaches were compared: full-data Random Walk Metropolis--Hastings, full-data Independent Metropolis--Hastings, Consensus Monte Carlo using Random Walk Metropolis--Hastings, and Consensus Monte Carlo using Independent Metropolis--Hastings. In the Consensus Monte Carlo procedures, the data were divided into shards, shard-level subposterior samples were generated, and the samples were combined using a precision-weighted posterior combination method. The comparison focused on posterior summaries, credible intervals, diagnostic behaviour, acceptance rates, and runtime.
+
+\section{Main Findings}
+
+The frequentist logistic regression provided an initial baseline and supplied proposal mean and covariance information for the Metropolis--Hastings algorithms. The frequentist results were not treated as the main inferential output, but they were useful for preliminary model assessment and proposal construction. As reported in Chapter 4, the likelihood-ratio G-square test supported improvement over the intercept-only model. The adjusted GVIF values were close to 1 and did not indicate serious multicollinearity concerns.
+
+The full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produced broadly similar posterior summaries. Their posterior means, medians, standard deviations, and 95\% credible intervals were close across the regression coefficients, providing a full-data reference for assessing the Consensus Monte Carlo approximations.
+
+The Consensus Monte Carlo posterior summaries were compared with the full-data posterior summaries to assess approximation quality. The CMC-RWMH and CMC-IMH posterior means were generally close to the full-data posterior means for most coefficients, with more visible differences appearing for selected coefficients as discussed in Chapter 4. The results suggest that the Consensus Monte Carlo summaries were broadly comparable to the full-data summaries in this empirical analysis, but they do not establish a general superiority of Consensus Monte Carlo over full-data Metropolis--Hastings.
+
+Posterior credible intervals were used to assess whether coefficients were credibly different from zero. Across the Bayesian summaries in Chapter 4, the credible interval for Road type: one way street contained zero, while the intervals for the other non-intercept coefficients excluded zero. This interpretation is conditional on the fitted model, selected predictors, and posterior simulation output.
+
+The runtime results must be interpreted carefully. The implementation was sequential because no multi-machine computing environment was used, so the recorded runtime values should not be interpreted as evidence of actual parallel speedup. The approximate per-shard runtime was included to illustrate the potential computational advantage of distributed execution. The study does not claim that using $K$ shards automatically gives $K$-fold speedup, because actual speedup would depend on hardware, communication cost, posterior combination cost, implementation details, and statistical efficiency.
+
+\section{Limitations}
+
+Several limitations should be noted. First, the empirical analysis used one dataset, the 2013 UK accident dataset. The findings may depend on the structure, size, and variable composition of this dataset.
+
+Second, the regression model used only road type and speed limit as predictors. Accident severity may also be associated with other factors not included in the model.
+
+Third, the statistical model was limited to Bayesian logistic regression for a binary response. The study combined serious and fatal accidents into a single event category and compared this event with slight accidents, so other model specifications may be more appropriate for different inferential goals.
+
+Fourth, the Consensus Monte Carlo implementation mimicked the distributed structure sequentially rather than running on multiple machines. The runtime comparison therefore reflects sequential execution, and the approximate per-shard runtime is only an illustrative quantity.
+
+Fifth, only $K=4$ shards were considered. Different shard counts may affect subposterior approximation, sampler behaviour, posterior combination, and computational cost.
+
+Sixth, Metropolis--Hastings performance depends on proposal tuning. Different proposal choices could affect acceptance rates, effective sample sizes, and Monte Carlo standard errors.
+
+Finally, posterior diagnostics were limited to those reported in Chapter 4. The trace plots, posterior histograms, posterior density plots, effective sample sizes, Monte Carlo standard errors, and acceptance rates do not exhaust all possible convergence assessments. The residual correlograms are supplementary and depend on whether the observation order has a meaningful temporal or spatial interpretation.
+
+\section{Future Work}
+
+Future work could extend this study in several directions. First, the Consensus Monte Carlo procedures could be implemented in a true parallel computing environment. Running shard-level chains simultaneously would allow a direct assessment of wall-clock runtime, communication cost, and posterior combination overhead.
+
+Second, future studies could examine different values of $K$. Varying the number of shards would make it possible to study how data partitioning affects posterior approximation quality, acceptance rates, effective sample sizes, Monte Carlo standard errors, and runtime.
+
+Third, the empirical model could be expanded by including additional predictors or by testing alternative model specifications. Additional predictors may improve the accident severity model, while alternative Bayesian models could address different response structures or modelling assumptions.
+
+Fourth, other posterior combination methods could be compared with the precision-weighted Consensus Monte Carlo method used in this thesis. Such comparisons would help determine whether different combination strategies are more robust for non-normal posterior shapes or uneven shard-level information.
+
+Fifth, proposal tuning could be improved. Adaptive tuning strategies, alternative independent proposal distributions, or other Markov Chain Monte Carlo algorithms may improve sampling efficiency.
+
+Sixth, stronger convergence diagnostics could be added. Multiple-chain diagnostics, additional autocorrelation analysis, and posterior predictive checks would provide a broader assessment of posterior simulation quality.
+
+Finally, the method could be applied to other large datasets. Testing Consensus Monte Carlo across different empirical settings would help evaluate whether the patterns observed in this study are stable across datasets, models, and computational environments.
