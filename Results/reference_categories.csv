@@ -1,4 +1,4 @@
 "Variable","Reference_Category"
-"accident_severity_binary",NA
-"road_type",NA
-"speed_limit",NA
+"accident_severity_binary","slight"
+"road_type","single carriageway"
+"speed_limit","2"
