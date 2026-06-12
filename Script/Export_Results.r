@@ -154,20 +154,12 @@ if (exists("logistic_model")) {
     Std_Error = glm_summary[, "Std. Error"],
     Z_Value = glm_summary[, "z value"],
     P_Value = glm_summary[, "Pr(>|z|)"],
-    Odds_Ratio = exp(glm_summary[, "Estimate"]),
     row.names = NULL
   )
 
   safe_write_csv(
     frequentist_logistic_summary,
     "Results/frequentist_logistic_summary.csv"
-  )
-}
-
-if (exists("glm_odds_ratios")) {
-  safe_write_csv(
-    glm_odds_ratios,
-    "Results/frequentist_logistic_odds_ratios.csv"
   )
 }
 
@@ -314,42 +306,6 @@ if (length(posterior_summary_objects) > 0) {
   safe_write_csv(
     ess_mcse_comparison,
     "Results/ess_mcse_comparison.csv"
-  )
-}
-
-# Odds ratio comparison table
-if (length(posterior_summary_objects) > 0) {
-  odds_ratio_comparison <- NULL
-
-  for (method_name in names(posterior_summary_objects)) {
-    temp <- posterior_summary_objects[[method_name]][, c(
-      "Parameter",
-      "Odds_Ratio",
-      "Lower_95_OR",
-      "Upper_95_OR"
-    )]
-
-    names(temp)[2:4] <- paste(
-      method_name,
-      c("Odds_Ratio", "Lower_95_OR", "Upper_95_OR"),
-      sep = "_"
-    )
-
-    if (is.null(odds_ratio_comparison)) {
-      odds_ratio_comparison <- temp
-    } else {
-      odds_ratio_comparison <- merge(
-        odds_ratio_comparison,
-        temp,
-        by = "Parameter",
-        all = TRUE
-      )
-    }
-  }
-
-  safe_write_csv(
-    odds_ratio_comparison,
-    "Results/odds_ratio_comparison.csv"
   )
 }
 
@@ -502,10 +458,10 @@ if (exists("d")) {
   )
 }
 
-if (exists("prior_sd_value")) {
+if (exists("prior_scale_value")) {
   settings <- rbind(
     settings,
-    add_setting("Prior standard deviation", prior_sd_value)
+    add_setting("Cauchy prior scale", prior_scale_value)
   )
 }
 
@@ -625,28 +581,28 @@ if (exists("cmc_rwmh_proposal_cov")) {
 
 # Full-data RWMH histogram and trace plots
 if (exists("rwmh_post_samples") && exists("hist_trace_plot")) {
-  pdf("Figure/full_rwmh_hist_trace.pdf", width = 11, height = 7)
+  png("Figure/full_rwmh_hist_trace_%02d.png", width = 800, height = 600)
   hist_trace_plot(rwmh_post_samples, params_per_page = 2)
   dev.off()
 }
 
 # Full-data IMH histogram and trace plots
 if (exists("imh_post_samples") && exists("hist_trace_plot")) {
-  pdf("Figure/full_imh_hist_trace.pdf", width = 11, height = 7)
+  png("Figure/full_imh_hist_trace_%02d.png", width = 800, height = 600)
   hist_trace_plot(imh_post_samples, params_per_page = 2)
   dev.off()
 }
 
 # CMC-RWMH density plots
 if (exists("cmc_rwmh_samples") && exists("consensus_density_plot")) {
-  pdf("Figure/cmc_rwmh_density.pdf", width = 11, height = 5)
+  png("Figure/cmc_rwmh_density_%02d.png", width = 800, height = 600)
   consensus_density_plot(cmc_rwmh_samples, params_per_page = 2)
   dev.off()
 }
 
 # CMC-IMH density plots
 if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
-  pdf("Figure/cmc_imh_density.pdf", width = 11, height = 5)
+  png("Figure/cmc_imh_density_%02d.png", width = 800, height = 600)
   consensus_density_plot(cmc_imh_samples, params_per_page = 2)
   dev.off()
 }
@@ -659,13 +615,12 @@ object_names <- c(
   "accident_data",
   "data_used",
   "logistic_model",
-  "glm_odds_ratios",
   "cov_beta",
   "cor_beta",
   "y",
   "X",
   "param_names",
-  "prior_sd_value",
+  "prior_scale_value",
   "rwmh_result",
   "imh_result",
   "cmc_rwmh_acceptance_rates",
