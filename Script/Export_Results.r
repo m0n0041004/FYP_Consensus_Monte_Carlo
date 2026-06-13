@@ -658,36 +658,66 @@ if (exists("cmc_rwmh_proposal_cov")) {
 # 10. Figure exports
 # -------------------------------------------------------------------
 
+fig_width_px <- 800
+fig_height_px <- 600
+fig_dpi <- 100
+fig_width_in <- fig_width_px / fig_dpi
+fig_height_in <- fig_height_px / fig_dpi
+
 # Full-data RWMH histogram and trace plots
 if (exists("rwmh_post_samples") && exists("hist_trace_plot")) {
-  png("Figure/full_rwmh_hist_trace_%02d.png", width = 800, height = 600)
+  pdf(
+    "Figure/full_rwmh_hist_trace_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
   hist_trace_plot(rwmh_post_samples, params_per_page = 2)
   dev.off()
 }
 
 # Full-data IMH histogram and trace plots
 if (exists("imh_post_samples") && exists("hist_trace_plot")) {
-  png("Figure/full_imh_hist_trace_%02d.png", width = 800, height = 600)
+  pdf(
+    "Figure/full_imh_hist_trace_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
   hist_trace_plot(imh_post_samples, params_per_page = 2)
   dev.off()
 }
 
 # CMC-RWMH density plots
 if (exists("cmc_rwmh_samples") && exists("consensus_density_plot")) {
-  png("Figure/cmc_rwmh_density_%02d.png", width = 800, height = 600)
+  pdf(
+    "Figure/cmc_rwmh_density_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
   consensus_density_plot(cmc_rwmh_samples, params_per_page = 2)
   dev.off()
 }
 
 # CMC-IMH density plots
 if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
-  png("Figure/cmc_imh_density_%02d.png", width = 800, height = 600)
+  pdf(
+    "Figure/cmc_imh_density_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
   consensus_density_plot(cmc_imh_samples, params_per_page = 2)
   dev.off()
 }
 
 if (exists("pearson_resid_std")) {
-  png("Figure/pearson_residual_acf.png", width = 800, height = 600)
+  pdf(
+    "Figure/pearson_residual_acf.pdf",
+    width = fig_width_in,
+    height = fig_height_in
+  )
   acf(
     pearson_resid_std,
     main = "Correlogram of Pearson Residuals"
@@ -696,7 +726,11 @@ if (exists("pearson_resid_std")) {
 }
 
 if (exists("deviance_resid_std")) {
-  png("Figure/deviance_residual_acf.png", width = 800, height = 600)
+  pdf(
+    "Figure/deviance_residual_acf.pdf",
+    width = fig_width_in,
+    height = fig_height_in
+  )
   acf(
     deviance_resid_std,
     main = "Correlogram of Deviance Residuals"
