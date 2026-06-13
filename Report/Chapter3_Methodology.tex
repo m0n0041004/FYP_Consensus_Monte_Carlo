@@ -8,7 +8,17 @@ The dataset is used as an applied setting for studying Bayesian logistic regress
 
 \section{Data Preprocessing}
 
-The empirical analysis uses accident severity, road type, and speed limit as the main variables (accident\_severity, road\_type, and speed\_limit). According to the accompanying variable documentation, accident severity classifies accidents as fatal, serious, or slight; road type describes the road configuration at the accident location, including categories such as roundabout, one-way street, dual carriageway, single carriageway, slip road, and unknown; and speed limit records the permanent speed limit in miles per hour. Observations with missing values in these selected variables are removed by complete-case filtering.
+The empirical analysis uses accident severity, road type, and speed limit as the main variables. Accident severity records whether an accident is fatal, serious, or slight. In this study, fatal and serious accidents are combined into the serious/fatal class because both represent more severe outcomes than slight accidents. Slight accident severity is retained as the reference response class. Therefore, the binary response models serious/fatal accident severity relative to slight accident severity.
+
+Road type describes the road configuration at the accident location. The road-type categories used in the model are single carriageway, dual carriageway, one-way street, roundabout, and slip road. In plain terms, these categories distinguish ordinary single-carriageway roads, divided dual-carriageway roads, one-way roads, circular junction layouts, and slip roads used for entering or leaving a main road. The available variable documentation lists these road-type category labels but does not provide formal engineering definitions for each category. TODO: add formal definition from UK accident data documentation.
+
+Speed limit is the permanent speed limit category recorded for the accident location. The accompanying variable documentation describes speed limit as ``Speed Limit (permanent)'' in miles per hour. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement.
+
+% TODO: add road-type illustration Figure/road_type_roundabout.png.
+% TODO: add road-type illustration Figure/road_type_dual_carriageway.png.
+% TODO: add road-type illustration Figure/road_type_single_carriageway.png.
+
+Observations with missing values in these selected variables are removed by complete-case filtering.
 
 Observations with unknown road type are removed because ``unknown'' is not a valid interpretable road-type category for regression comparison and cannot provide a meaningful comparison with valid road types in the logistic regression model. The exported model settings report 82,570 original observations and 82,344 observations after preprocessing. Therefore, 226 observations are removed during preprocessing. This removal is small relative to the original dataset size and is expected to have minimal effect on the empirical analysis while improving interpretability and slightly reducing computational burden.
 
@@ -162,6 +172,8 @@ In log form, the proposal is accepted when
 \log \pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y}),
 \]
 where $u \sim \operatorname{Uniform}(0,1)$.
+
+If the proposal is accepted, $\boldsymbol{\beta}^{*}$ becomes the current value for the next iteration. If the proposal is rejected, the chain repeats the previous value, so the next stored state remains $\boldsymbol{\beta}^{(t-1)}$.
 
 \subsection{Independent Metropolis--Hastings Algorithm}
 

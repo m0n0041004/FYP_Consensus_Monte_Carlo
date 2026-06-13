@@ -20,7 +20,7 @@ Slight & 71374 & 0.8668 \\
 \end{tabular}
 \end{table}
 
-Tables \ref{tab:road_type_distribution} and \ref{tab:speed_limit_distribution} summarise the predictor distributions. Single carriageway is the most frequent road-type category, and speed limit category 2 is the most frequent speed-limit category. These categories are used as reference categories because they are the most frequent or usual baseline categories in the empirical analysis. Choosing a reference category does not change the fitted model as a whole, but it determines how the regression coefficients for the other categories are interpreted relative to the baseline.
+Tables \ref{tab:road_type_distribution} and \ref{tab:speed_limit_distribution} summarise the predictor distributions. These descriptive summaries help describe the empirical data before comparing posterior estimates from the full-data and Consensus Monte Carlo methods. Single carriageway is the most frequent road-type category, and speed limit category 2 is the most frequent speed-limit category. These categories are used as reference categories because they are the most frequent categories in the empirical analysis. Choosing a reference category does not change the fitted model as a whole, but it determines how the regression coefficients for the other categories are interpreted relative to the baseline.
 
 \begin{table}[htbp]
 \centering
@@ -56,6 +56,10 @@ Speed limit category & Count & Proportion \\
 \hline
 \end{tabular}
 \end{table}
+
+The lecturer requested road-type counts split by response class, with columns for slight accident severity and serious/fatal accident severity. The exported results include the marginal road-type distribution and shard-level road-type distributions, but they do not include the exact road-type by response-class count table. TODO: export road type by response-class count table.
+
+A corresponding speed-limit by response-class count table is also not available among the exported results. TODO: export speed limit by response-class count table.
 
 \section{Frequentist Logistic Regression Results}
 
