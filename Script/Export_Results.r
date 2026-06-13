@@ -384,29 +384,29 @@ if (length(posterior_summary_objects) > 0) {
 acceptance_list <- list()
 
 if (exists("rwmh_result")) {
-  acceptance_list[["Full RWMH"]] <- rwmh_result$acceptance_rate
+  acceptance_list[["Full-data RWMH"]] <- rwmh_result$acceptance_rate
 }
 
 if (exists("imh_result")) {
-  acceptance_list[["Full IMH"]] <- imh_result$acceptance_rate
+  acceptance_list[["Full-data IMH"]] <- imh_result$acceptance_rate
 }
 
 if (exists("cmc_rwmh_acceptance_rates")) {
   for (i in seq_along(cmc_rwmh_acceptance_rates)) {
-    acceptance_list[[paste0("CMC RWMH Subset ", i)]] <-
+    acceptance_list[[paste0("CMC-RWMH Shard ", i)]] <-
       cmc_rwmh_acceptance_rates[i]
   }
 
-  acceptance_list[["Mean CMC RWMH"]] <- mean(cmc_rwmh_acceptance_rates)
+  acceptance_list[["Mean CMC-RWMH"]] <- mean(cmc_rwmh_acceptance_rates)
 }
 
 if (exists("cmc_imh_acceptance_rates")) {
   for (i in seq_along(cmc_imh_acceptance_rates)) {
-    acceptance_list[[paste0("CMC IMH Subset ", i)]] <-
+    acceptance_list[[paste0("CMC-IMH Shard ", i)]] <-
       cmc_imh_acceptance_rates[i]
   }
 
-  acceptance_list[["Mean CMC IMH"]] <- mean(cmc_imh_acceptance_rates)
+  acceptance_list[["Mean CMC-IMH"]] <- mean(cmc_imh_acceptance_rates)
 }
 
 if (length(acceptance_list) > 0) {
@@ -427,71 +427,82 @@ if (length(acceptance_list) > 0) {
 # -------------------------------------------------------------------
 
 if (exists("runtime_table")) {
+  runtime_table_export <- runtime_table
+
+  if ("Method" %in% names(runtime_table_export)) {
+    runtime_table_export$Method <- sub(
+      "^Parallel ",
+      "",
+      runtime_table_export$Method,
+      perl = TRUE
+    )
+  }
+
   safe_write_csv(
-    runtime_table,
+    runtime_table_export,
     "Results/runtime_comparison.csv"
   )
 }
 
 # -------------------------------------------------------------------
-# 7. Consensus Monte Carlo subset diagnostics
+# 7. Consensus Monte Carlo shard diagnostics
 # -------------------------------------------------------------------
 
-if (exists("cmc_subset_id")) {
-  subset_sizes <- as.data.frame(table(cmc_subset_id))
-  names(subset_sizes) <- c("Subset", "Count")
+if (exists("cmc_shard_id")) {
+  shard_sizes <- as.data.frame(table(cmc_shard_id))
+  names(shard_sizes) <- c("Shard", "Count")
 
   safe_write_csv(
-    subset_sizes,
-    "Results/cmc_subset_sizes.csv"
+    shard_sizes,
+    "Results/cmc_shard_sizes.csv"
   )
 }
 
-if (exists("cmc_subset_id") && exists("y")) {
-  subset_response_distribution <- as.data.frame(
-    table(cmc_subset_id, y)
+if (exists("cmc_shard_id") && exists("y")) {
+  shard_response_distribution <- as.data.frame(
+    table(cmc_shard_id, y)
   )
-  names(subset_response_distribution) <- c(
-    "Subset",
+  names(shard_response_distribution) <- c(
+    "Shard",
     "Response",
     "Count"
   )
 
   safe_write_csv(
-    subset_response_distribution,
-    "Results/cmc_subset_response_distribution.csv"
+    shard_response_distribution,
+    "Results/cmc_shard_response_distribution.csv"
   )
 }
 
-if (exists("cmc_subset_id") && exists("data_used") && "road_type" %in% names(data_used)) {
-  subset_road_type_distribution <- as.data.frame(
-    table(cmc_subset_id, data_used$road_type)
+if (exists("cmc_shard_id") && exists("data_used") && "road_type" %in% names(data_used)) {
+  shard_road_type_distribution <- as.data.frame(
+    table(cmc_shard_id, data_used$road_type)
   )
-  names(subset_road_type_distribution) <- c(
-    "Subset",
+  names(shard_road_type_distribution) <- c(
+    "Shard",
     "Road_Type",
     "Count"
   )
 
   safe_write_csv(
-    subset_road_type_distribution,
-    "Results/cmc_subset_road_type_distribution.csv"
+    shard_road_type_distribution,
+    "Results/cmc_shard_road_type_distribution.csv"
   )
 }
 
-if (exists("cmc_subset_id") && exists("data_used") && "speed_limit" %in% names(data_used)) {
-  subset_speed_limit_distribution <- as.data.frame(
-    table(cmc_subset_id, data_used$speed_limit)
+if (exists("cmc_shard_id") && exists("data_used") && "speed_limit" %in% names(data_used)) {
+  shard_speed_limit_distribution <- as.data.frame(
+    table(cmc_shard_id, data_used$speed_limit)
   )
-  names(subset_speed_limit_distribution) <- c(
-    "Subset",
+  names(shard_speed_limit_distribution) <- c(
+    "Shard",
     "Speed_Limit",
     "Count"
   )
 
   safe_write_csv(
-    subset_speed_limit_distribution,
-    "Results/cmc_subset_speed_limit_distribution.csv"
+    shard_speed_limit_distribution,
+    "Results/cmc_shard_speed_limit_distribution.csv"
   )
 }
 
@@ -554,24 +565,24 @@ if (exists("burn_in")) {
   )
 }
 
-if (exists("cmc_num_subsets")) {
+if (exists("cmc_num_shards")) {
   settings <- rbind(
     settings,
-    add_setting("Number of subsets", cmc_num_subsets)
+    add_setting("Number of shards", cmc_num_shards)
   )
 }
 
 if (exists("cmc_iterations")) {
   settings <- rbind(
     settings,
-    add_setting("Subset MCMC iterations", cmc_iterations)
+    add_setting("CMC shard MCMC iterations", cmc_iterations)
   )
 }
 
 if (exists("cmc_burn_in")) {
   settings <- rbind(
     settings,
-    add_setting("Subset burn-in iterations", cmc_burn_in)
+    add_setting("CMC shard burn-in iterations", cmc_burn_in)
   )
 }
 
