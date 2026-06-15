@@ -225,24 +225,26 @@ Use thesis-style phrases instead, such as:
 * “the reported results”
 * “the runtime values recorded during the analysis”
 
-Use proper notation consistently:
+Use vector notation consistently:
 
-* $\beta$: logistic regression coefficient vector
-* $\beta_j$: the $j$th logistic regression coefficient
-* $y$: binary response variable
+* $\boldsymbol{\beta}$: logistic regression coefficient vector
+* $\beta_j$: the $j$th component of $\boldsymbol{\beta}$
+* $\mathbf{y}$: binary response vector
+* $y_i$: binary response for observation $i$
 * $X$: design matrix or predictor matrix
+* $\mathbf{x}_i$: predictor vector for observation $i$
 * $p_i$: probability that observation $i$ has serious/fatal accident severity
 * $K$: number of data shards or subsets
 * $m$: shard or subset index
-* $\beta_m^{(s)}$: the $s$th subposterior sample from shard $m$
-* $\Sigma_m$: estimated covariance matrix of shard $m$ subposterior samples
+* $\boldsymbol{\beta}_m^{(s)}$: the $s$th subposterior sample vector from shard $m$
+* $\Sigma_m$: estimated covariance matrix of shard $m$ subposterior sample vectors
 * $W_m = \Sigma_m^{-1}$: estimated precision matrix for shard $m$
-* $\pi(\beta)$: prior distribution or prior density of $\beta$
-* $L(y \mid \beta)$: likelihood function
-* $p(\beta \mid y)$: posterior distribution of $\beta$ given $y$
-* $p_m(\beta \mid y_m)$: subposterior distribution for shard $m$
+* $\pi(\boldsymbol{\beta})$: prior distribution or prior density of $\boldsymbol{\beta}$
+* $L(\mathbf{y} \mid \boldsymbol{\beta})$: likelihood function
+* $p(\boldsymbol{\beta} \mid \mathbf{y})$: posterior distribution of $\boldsymbol{\beta}$ given $\mathbf{y}$
+* $p_m(\boldsymbol{\beta} \mid \mathbf{y}_m)$: subposterior distribution for shard $m$
 * Use $\pi(\cdot)$ notation for priors, $L(\cdot)$ notation for likelihoods, and $p(\cdot \mid \cdot)$ notation for posterior and subposterior distributions.
-* Do not include design matrix notation as a conditioning argument in likelihood, posterior, or subposterior notation. The predictor information may be defined in the model statement through $x_i^T\beta$.
+* Do not include design matrix notation as a conditioning argument in likelihood, posterior, or subposterior notation. The predictor information may be defined in the model statement through $\mathbf{x}_i^T\boldsymbol{\beta}$.
 * Use `$P$-value`, not `p-value`.
 * Use `$z$-value` when referring to the standard normal test statistic.
 * Use `$G^2$` when referring to the likelihood-ratio test statistic.
@@ -284,10 +286,10 @@ For Bayesian logistic regression, use notation consistent with:
 
 ```latex
 \[
-y_i \mid \beta \sim \operatorname{Bernoulli}(p_i),
+y_i \mid \boldsymbol{\beta} \sim \operatorname{Bernoulli}(p_i),
 \]
 \[
-\operatorname{logit}(p_i)=x_i^T\beta.
+\operatorname{logit}(p_i)=\mathbf{x}_i^T\boldsymbol{\beta}.
 \]
 ```
 
@@ -303,7 +305,7 @@ For the posterior distribution, write:
 
 ```latex
 \[
-p(\beta \mid y) \propto L(y \mid \beta)\pi(\beta).
+p(\boldsymbol{\beta} \mid \mathbf{y}) \propto L(\mathbf{y} \mid \boldsymbol{\beta})\pi(\boldsymbol{\beta}).
 \]
 ```
 
@@ -318,9 +320,9 @@ The subposterior should be written as:
 
 ```latex
 \[
-p_m(\beta \mid y_m)
+p_m(\boldsymbol{\beta} \mid \mathbf{y}_m)
 \propto
-L(y_m \mid \beta)\pi(\beta)^{1/K}.
+L(\mathbf{y}_m \mid \boldsymbol{\beta})\pi(\boldsymbol{\beta})^{1/K}.
 \]
 ```
 
@@ -328,10 +330,10 @@ The precision-weighted consensus combination should be written as:
 
 ```latex
 \[
-\beta_{\mathrm{consensus}}^{(s)}
+\boldsymbol{\beta}_{\mathrm{consensus}}^{(s)}
 =
 \left(\sum_{m=1}^{K} W_m\right)^{-1}
-\sum_{m=1}^{K} W_m \beta_m^{(s)}.
+\sum_{m=1}^{K} W_m \boldsymbol{\beta}_m^{(s)}.
 \]
 ```
 
