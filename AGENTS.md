@@ -236,10 +236,11 @@ Use proper notation consistently:
 * $\Sigma_m$: estimated covariance matrix of shard $m$ subposterior samples
 * $W_m = \Sigma_m^{-1}$: estimated precision matrix for shard $m$
 * $\pi(\beta)$: prior distribution or prior density of $\beta$
-* $L(y \mid \beta, X)$: likelihood function
-* $p(\beta \mid y, X)$: posterior distribution of $\beta$ given $y$ and $X$
-* $p_m(\beta \mid y_m, X_m)$: subposterior distribution for shard $m$
+* $L(y \mid \beta)$: likelihood function
+* $p(\beta \mid y)$: posterior distribution of $\beta$ given $y$
+* $p_m(\beta \mid y_m)$: subposterior distribution for shard $m$
 * Use $\pi(\cdot)$ notation for priors, $L(\cdot)$ notation for likelihoods, and $p(\cdot \mid \cdot)$ notation for posterior and subposterior distributions.
+* Do not include design matrix notation as a conditioning argument in likelihood, posterior, or subposterior notation. The predictor information may be defined in the model statement through $x_i^T\beta$.
 * Use `$P$-value`, not `p-value`.
 * Use `$z$-value` when referring to the standard normal test statistic.
 * Use `$G^2$` when referring to the likelihood-ratio test statistic.
@@ -300,7 +301,7 @@ For the posterior distribution, write:
 
 ```latex
 \[
-p(\beta \mid y, X) \propto L(y \mid \beta, X)\pi(\beta).
+p(\beta \mid y) \propto L(y \mid \beta)\pi(\beta).
 \]
 ```
 
@@ -315,9 +316,9 @@ The subposterior should be written as:
 
 ```latex
 \[
-p_m(\beta \mid y_m, X_m)
+p_m(\beta \mid y_m)
 \propto
-L(y_m \mid \beta, X_m)\pi(\beta)^{1/K}.
+L(y_m \mid \beta)\pi(\beta)^{1/K}.
 \]
 ```
 
