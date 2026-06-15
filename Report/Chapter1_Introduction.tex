@@ -2,60 +2,55 @@
 
 \section{Background Study}
 
-Bayesian inference provides a probability-based framework for learning about unknown quantities from observed data. Let $\boldsymbol{\theta}$ denote a general parameter vector and let $\mathbf{y}$ denote the observed data. Prior information about $\boldsymbol{\theta}$ is represented by the prior distribution $\pi(\boldsymbol{\theta})$, while information contributed by the data is represented by the likelihood function $p(\mathbf{y}\mid \boldsymbol{\theta})$. The posterior distribution combines these two components and is written as
+Bayesian inference provides a probability-based framework for learning about unknown quantities from observed data. Let $\theta$ denote a general parameter vector and let $y$ denote the observed data. Prior information about $\theta$ is represented by the prior distribution $\pi(\theta)$, while information contributed by the data is represented by the likelihood function $p(y\mid \theta)$. The posterior distribution combines these two components and is written as
 \[
-\pi(\boldsymbol{\theta}\mid \mathbf{y})
+p(\theta\mid y)
 \propto
-p(\mathbf{y}\mid \boldsymbol{\theta})\pi(\boldsymbol{\theta}).
+p(y\mid \theta)\pi(\theta).
 \]
-The posterior distribution is the central object in Bayesian inference because it describes uncertainty about $\boldsymbol{\theta}$ after observing $\mathbf{y}$. Posterior summaries such as posterior means, posterior medians, posterior standard deviations, and credible intervals are commonly used to report this uncertainty. TODO: add citation for Bayesian inference.
+The posterior distribution is the central object in Bayesian inference because it describes uncertainty about $\theta$ after observing $y$. Posterior summaries such as posterior means, posterior medians, posterior standard deviations, and credible intervals are commonly used to report this uncertainty. TODO: add citation for Bayesian inference.
 
-For many statistical models, the posterior distribution cannot be evaluated or summarised in closed form. Markov Chain Monte Carlo (MCMC) methods provide a class of simulation methods for approximating expectations and posterior summaries by constructing a Markov chain whose stationary distribution is the target distribution. After an adequate simulation is obtained, the generated dependent samples can be used to approximate posterior means, posterior variances, quantiles, and credible intervals. Examples of MCMC methods include the Metropolis algorithm, the Metropolis--Hastings algorithm, Gibbs sampling, Hamiltonian Monte Carlo, slice sampling, and pseudo-marginal Metropolis--Hastings. TODO: add citation for Markov Chain Monte Carlo.
+A practical weakness of Bayesian inference is that the posterior distribution is often difficult to evaluate or summarise analytically. In many realistic models, the normalising constant of the posterior distribution is unavailable in closed form, and posterior expectations require integration over a possibly high-dimensional parameter space. As a result, direct analytical calculation of posterior summaries may be infeasible, and computational approximation becomes necessary.
 
-The Metropolis--Hastings algorithm is a general MCMC framework for sampling from a target distribution known up to a normalising constant. It is based on a proposal distribution and an accept--reject rule. At each iteration, the algorithm proposes a candidate value for the parameter vector and accepts or rejects it according to an acceptance probability determined by the target density and the proposal distribution. Because Bayesian posterior densities are often available only up to proportionality, Metropolis--Hastings is widely used in Bayesian computation. TODO: add citation for the Metropolis--Hastings algorithm.
+Markov Chain Monte Carlo (MCMC) methods provide a class of simulation methods for approximating expectations and posterior summaries by constructing a Markov chain whose stationary distribution is the target posterior distribution. After an adequate simulation is obtained, the generated dependent samples can be used to approximate posterior means, posterior variances, quantiles, and credible intervals. Examples of MCMC methods include the Metropolis algorithm, the Metropolis--Hastings algorithm, Gibbs sampling, Hamiltonian Monte Carlo, slice sampling, and pseudo-marginal Metropolis--Hastings. TODO: add citation for Markov Chain Monte Carlo.
+
+The Metropolis--Hastings algorithm is a general MCMC framework for sampling from a target distribution known up to a proportionality constant. It is based on a proposal distribution and an accept--reject rule. At each iteration, the algorithm proposes a candidate value for the parameter vector and accepts or rejects it according to an acceptance probability determined by the target density and the proposal distribution. Because Bayesian posterior densities are often available only up to proportionality, Metropolis--Hastings is widely used in Bayesian computation. TODO: add citation for the Metropolis--Hastings algorithm.
 
 This thesis focuses on two Metropolis--Hastings variants: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. In Random Walk Metropolis--Hastings, a proposed value is generated by perturbing the current value. If the proposed value is accepted, it becomes the current value for the next iteration; if it is rejected, the chain remains at the previous value. In Independent Metropolis--Hastings, proposals are generated from a fixed proposal distribution that does not depend on the current state. Since the proposal is not a symmetric random walk, a proposal-density correction is needed in the acceptance probability.
 
-MCMC is used in this thesis because the analysis requires Bayesian posterior simulation rather than only point estimation. Maximum likelihood estimation gives frequentist point estimates and standard errors, but it does not directly provide posterior distributions. Method-of-moments methods estimate parameters through moment equations and are not designed to approximate Bayesian posterior distributions. Robust estimation methods are useful for reducing sensitivity to outliers or model violations, but they do not replace posterior simulation when Bayesian posterior uncertainty is required. Since this thesis requires posterior samples, posterior credible intervals, and posterior comparison between full-data and consensus approaches, MCMC is an appropriate computational method.
+\section{Problem Statement}
 
-Despite its flexibility, full-data MCMC can become computationally expensive when the dataset is large. In a full-data Metropolis--Hastings algorithm, evaluating the acceptance probability typically requires repeated evaluation of the likelihood over the full dataset. As the number of observations increases, the cost of each iteration increases, and long Markov chains may require substantial computation. This computational burden motivates methods that reduce repeated full-data likelihood calculations while retaining a Bayesian posterior interpretation \cite{huang2005sampling}.
+Although MCMC methods are flexible, full-data Metropolis--Hastings sampling can become computationally demanding when the dataset is large. In a full-data Metropolis--Hastings algorithm, evaluating the acceptance probability typically requires repeated evaluation of the likelihood over the full dataset. As the number of observations increases, the cost of each iteration increases, and long Markov chains may require substantial computation. This computational burden motivates methods that reduce repeated full-data likelihood calculations while retaining a Bayesian posterior interpretation \cite{huang2005sampling}.
 
-Distributed Bayesian computation addresses this issue by dividing a large dataset into smaller parts and carrying out posterior simulation or approximation at the subset level. Such approaches are motivated by settings in which the full dataset is too large to process efficiently as a single object, or where separate computations can be organised across data partitions. However, distributed Bayesian computation introduces an additional statistical problem: the subset-level posterior information must be combined in a way that approximates the full posterior distribution.
+Distributed Bayesian computation addresses this issue by dividing a large dataset into smaller parts and carrying out posterior simulation or approximation at the shard level. Such approaches are motivated by settings in which the full dataset is too large to process efficiently as a single object, or where separate computations can be organised across data partitions. However, distributed Bayesian computation introduces an additional statistical problem: the shard-level posterior information must be combined in a way that approximates the full posterior distribution.
 
-Consensus Monte Carlo is one method for distributed Bayesian computation. The full dataset is divided into $K$ subsets, commonly referred to as shards. Let $\mathbf{y}_k$ denote the data in shard $k$, where $k=1,\ldots,K$. If the likelihood factorises across shards, then
+Consensus Monte Carlo is one method for distributed Bayesian computation. The full dataset is divided into $K$ shards. Let $y_m$ denote the data in shard $m$, where $m=1,\ldots,K$. If the likelihood factorises across shards, then
 \[
-p(\mathbf{y}\mid \boldsymbol{\theta})
+L(y\mid \theta)
 =
-\prod_{k=1}^{K}
-p(\mathbf{y}_k\mid \boldsymbol{\theta}).
+\prod_{m=1}^{K}
+L(y_m\mid \theta).
 \]
 Consensus Monte Carlo constructs a shard-level subposterior for each shard, simulates from these subposteriors, and combines the resulting samples to approximate the full posterior distribution \cite{scott2017comparing,scott2022bayes}. A standard shard-level subposterior construction is
 \[
-\pi_k(\boldsymbol{\theta}\mid \mathbf{y}_k)
+p_m(\theta\mid y_m)
 \propto
-p(\mathbf{y}_k\mid \boldsymbol{\theta})
-\pi(\boldsymbol{\theta})^{1/K}.
+L(y_m\mid \theta)\pi(\theta)^{1/K}.
 \]
-The factor $\pi(\boldsymbol{\theta})^{1/K}$ splits the prior contribution across the $K$ shards. This construction gives
+The factor $\pi(\theta)^{1/K}$ splits the prior contribution across the $K$ shards. This construction gives
 \[
-\prod_{k=1}^{K}
-\pi_k(\boldsymbol{\theta}\mid \mathbf{y}_k)
+\prod_{m=1}^{K}
+p_m(\theta\mid y_m)
 \propto
-p(\mathbf{y}\mid \boldsymbol{\theta})\pi(\boldsymbol{\theta}),
+L(y\mid \theta)\pi(\theta),
 \]
-so the product of the shard-level subposteriors has a kernel proportional to the full posterior. Several posterior combination strategies are possible, including simple averaging, precision-weighted averaging, density-based product approximations, and other distributed Bayesian posterior combination methods. This thesis uses the precision-weighted Consensus Monte Carlo approach. Consensus Monte Carlo is attractive for large-data Bayesian computation because shard-level computation can be run separately across data partitions, but the statistical approximation must be assessed rather than assumed.
+so the product of the shard-level subposterior kernels is proportional to the full posterior kernel.
 
-The empirical application in this thesis is Bayesian logistic regression for accident severity using UK accident data. The binary response distinguishes serious/fatal accidents from slight accidents, while the predictors are categorical road type and categorical speed limit. For the regression coefficient vector $\boldsymbol{\beta}$, the current implementation uses independent Cauchy priors with location 0 and scale 2.5, a weakly informative prior form commonly used for logistic regression coefficients \cite{gelman2008weakly}. The study compares full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings against their corresponding precision-weighted Consensus Monte Carlo approximations.
+Several posterior combination strategies may be used in Consensus Monte Carlo, including simple averaging, scalar weighted averaging, precision-weighted averaging, and density-based product approximations. The choice of combination method matters because the consensus sample is only an approximation to the full-data posterior sample. This thesis focuses on precision-weighted Consensus Monte Carlo, where subposterior samples are combined using estimated shard precision matrices so that shards with smaller posterior variance receive greater weight in the consensus combination.
 
-\section{Problem Statement}
+The main problem considered in this thesis is how full-data Metropolis--Hastings posterior summaries compare with posterior summaries obtained from a precision-weighted Consensus Monte Carlo approximation. The comparison must be made empirically rather than assumed, because the quality of the consensus approximation can depend on shard construction, shard-level sampler behaviour, and the posterior combination rule.
 
-Full-data Metropolis--Hastings sampling can be computationally demanding because each proposed parameter value may require evaluating the full likelihood. When the dataset is large, repeated full likelihood evaluations increase the cost of posterior simulation. This creates a practical challenge for Bayesian computation, especially when a long Markov chain is required to estimate posterior summaries with adequate precision.
-
-Dividing the data into shards provides a natural way to reduce the size of the likelihood evaluation used in each shard-level computation. In a Consensus Monte Carlo framework, each shard is used to define a subposterior distribution, and Metropolis--Hastings sampling is performed at the shard level. The statistical difficulty then shifts from sampling a single full posterior to combining subposterior samples so that the resulting consensus approximation is close to the full-data posterior.
-
-The main problem considered in this thesis is therefore how full-data Metropolis--Hastings posterior summaries compare with posterior summaries obtained from a Consensus Monte Carlo approximation. The comparison must be made empirically rather than assumed, because the quality of the consensus approximation can depend on the shard construction, the behaviour of the shard-level samplers, and the method used to combine subposterior samples.
-
-The current implementation evaluates this problem using Bayesian logistic regression for accident severity. The empirical analysis compares full-data and Consensus Monte Carlo posterior summaries, credible intervals, diagnostic measures, acceptance rates, and recorded runtime values. The CMC procedures are implemented using shard-level Metropolis--Hastings simulations and parallel worker execution, but any runtime comparison must be interpreted as specific to the current implementation, computing environment, and exported results rather than as a general claim of universal speedup.
+The current implementation evaluates this problem using Bayesian logistic regression for serious/fatal accident severity. The model uses categorical road type and categorical speed limit as predictors, with independent Cauchy priors for the regression coefficients. The empirical analysis compares full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings with their corresponding Consensus Monte Carlo approximations using $K=10$ shards. The CMC procedures are implemented using shard-level Metropolis--Hastings simulations and parallel worker execution, but any runtime comparison must be interpreted as specific to the current implementation, computing environment, and exported results rather than as a general claim of universal speedup.
 
 \section{Research Objectives}
 
@@ -64,7 +59,7 @@ The objectives of this project are as follows:
 \begin{enumerate}
 \item To study Bayesian inference and Metropolis--Hastings sampling as computational tools for posterior approximation.
 
-\item To formulate a Bayesian logistic regression model for serious/fatal accident severity using categorical road type and speed limit as predictors.
+\item To formulate a Bayesian logistic regression model for serious/fatal accident severity using categorical road type and speed limit as predictors, with independent Cauchy priors for the regression coefficients.
 
 \item To implement full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings sampling for Bayesian posterior estimation.
 
@@ -77,13 +72,13 @@ The objectives of this project are as follows:
 
 \section{Research Framework}
 
-The research framework begins with data preparation. The empirical data are arranged into a form suitable for Bayesian logistic regression, with the detailed preprocessing steps described in Chapter 3. This stage constructs the binary response variable $y$, where serious/fatal accident severity is coded as the event of interest, and forms the design matrix $X$ from the selected categorical predictors.
+The research framework begins with data preparation. The empirical data are arranged into a form suitable for Bayesian logistic regression, with the detailed preprocessing steps described in Chapter 3. This stage constructs the binary response variable $y$, where serious/fatal accident severity is coded as the event of interest, and forms the predictor matrix from the selected categorical predictors.
 
-The second stage is model specification. A Bayesian logistic regression model is defined by specifying the Bernoulli likelihood for the binary response and the prior distribution for the coefficient vector $\boldsymbol{\beta}$. The resulting posterior distribution $\pi(\boldsymbol{\beta}\mid y, X)$ is the target distribution for the full-data analysis.
+The second stage is model specification. A Bayesian logistic regression model is defined by specifying the Bernoulli likelihood for the binary response and the prior distribution for the coefficient vector $\beta$. The resulting posterior distribution $p(\beta\mid y)$ is the target distribution for the full-data analysis.
 
 The third stage is full-data Metropolis--Hastings sampling. Full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings are used to generate posterior samples based on the complete dataset. The retained post-burn-in samples are used to obtain full-data posterior summaries and provide the reference point for comparison.
 
-The fourth stage is data partitioning. The full dataset is divided into $K=10$ shards, denoted by $(y_1,X_1),\ldots,(y_K,X_K)$. In the current implementation, the shard allocation is stratified by the binary response class so that the response distribution is represented across the shards. Each shard defines a shard-level likelihood contribution and a corresponding subposterior distribution with the prior contribution split across shards.
+The fourth stage is data partitioning. The full dataset is divided into $K=10$ shards, denoted by $y_1,\ldots,y_K$. In the current implementation, the shard allocation is stratified by the binary response class so that the response distribution is represented across the shards. Each shard defines a shard-level likelihood contribution and a corresponding subposterior distribution with the prior contribution split across shards.
 
 The fifth stage is shard-level Metropolis--Hastings sampling. Separate Metropolis--Hastings simulations are carried out for the subposterior distributions. The current implementation runs the CMC shard computations using parallel workers, while the full-data samplers are run sequentially.
 
