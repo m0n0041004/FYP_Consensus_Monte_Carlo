@@ -235,8 +235,15 @@ Use proper notation consistently:
 * $\beta_m^{(s)}$: the $s$th subposterior sample from shard $m$
 * $\Sigma_m$: estimated covariance matrix of shard $m$ subposterior samples
 * $W_m = \Sigma_m^{-1}$: estimated precision matrix for shard $m$
-* $\pi(\beta \mid y, X)$: posterior distribution of $\beta$ given $y$ and $X$
-* $\pi_m(\beta \mid y_m, X_m)$: subposterior distribution for shard $m$
+* $\pi(\beta)$: prior distribution or prior density of $\beta$
+* $L(y \mid \beta, X)$: likelihood function
+* $p(\beta \mid y, X)$: posterior distribution of $\beta$ given $y$ and $X$
+* $p_m(\beta \mid y_m, X_m)$: subposterior distribution for shard $m$
+* Use $\pi(\cdot)$ notation for priors, $L(\cdot)$ notation for likelihoods, and $p(\cdot \mid \cdot)$ notation for posterior and subposterior distributions.
+* Use `$P$-value`, not `p-value`.
+* Use `$z$-value` when referring to the standard normal test statistic.
+* Use `$G^2$` when referring to the likelihood-ratio test statistic.
+* Use $\mathcal{N}_d$ for a $d$-dimensional multivariate normal distribution. If the dimension is already known or clear from context, use $\mathcal{N}$ only.
 
 Use the term **credible interval** for Bayesian posterior intervals, not confidence interval, unless discussing frequentist methods.
 
@@ -293,7 +300,7 @@ For the posterior distribution, write:
 
 ```latex
 \[
-\pi(\beta \mid y, X) \propto L(y \mid \beta, X)\pi(\beta).
+p(\beta \mid y, X) \propto L(y \mid \beta, X)\pi(\beta).
 \]
 ```
 
@@ -308,7 +315,7 @@ The subposterior should be written as:
 
 ```latex
 \[
-\pi_m(\beta \mid y_m, X_m)
+p_m(\beta \mid y_m, X_m)
 \propto
 L(y_m \mid \beta, X_m)\pi(\beta)^{1/K}.
 \]
