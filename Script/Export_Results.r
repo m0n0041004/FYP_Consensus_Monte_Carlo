@@ -17,15 +17,95 @@ if (!dir.exists("Figure")) {
 # Helper functions
 # -------------------------------------------------------------------
 
-safe_write_csv <- function(object, file_path) {
+report_artifact_manifest <- data.frame(
+  Artifact = character(),
+  File_Path = character(),
+  Report_Section = character(),
+  Description = character(),
+  stringsAsFactors = FALSE
+)
+
+infer_report_section <- function(file_path) {
+  file_name <- basename(file_path)
+
+  if (grepl("^data_preview|response_distribution|road_type_distribution|speed_limit_distribution|reference_categories|parameter_names|design_matrix_info|cmc_shard_", file_name)) {
+    return("Data and preprocessing")
+  }
+
+  if (grepl("^frequentist_|^pearson_residual|^deviance_residual", file_name)) {
+    return("Frequentist logistic regression")
+  }
+
+  if (grepl("^model_settings|^proposal_cov_", file_name)) {
+    return("Bayesian model settings")
+  }
+
+  if (grepl("posterior_summary|posterior_mean_comparison|ess_mcse_comparison|odds_ratio_comparison", file_name)) {
+    return("Posterior summaries")
+  }
+
+  if (grepl("acceptance_rates", file_name)) {
+    return("MCMC diagnostics")
+  }
+
+  if (grepl("^cmc_.*rmse|posterior_mean_error", file_name)) {
+    return("CMC approximation accuracy")
+  }
+
+  if (grepl("runtime_comparison", file_name)) {
+    return("Runtime comparison")
+  }
+
+  if (grepl("\\.pdf$", file_name)) {
+    return("Figures")
+  }
+
+  return("CMC diagnostics")
+}
+
+infer_artifact_description <- function(file_path) {
+  file_name <- basename(file_path)
+  description <- tools::file_path_sans_ext(file_name)
+  description <- gsub("_%02d$", "", description)
+  description <- gsub("_", " ", description)
+  description <- tools::toTitleCase(description)
+  description
+}
+
+register_artifact <- function(file_path, report_section = NULL, description = NULL) {
+  if (is.null(report_section)) {
+    report_section <- infer_report_section(file_path)
+  }
+
+  if (is.null(description)) {
+    description <- infer_artifact_description(file_path)
+  }
+
+  report_artifact_manifest <<- unique(
+    rbind(
+      report_artifact_manifest,
+      data.frame(
+        Artifact = tools::file_path_sans_ext(basename(file_path)),
+        File_Path = file_path,
+        Report_Section = report_section,
+        Description = description,
+        stringsAsFactors = FALSE
+      )
+    )
+  )
+}
+
+safe_write_csv <- function(object, file_path, report_section = NULL, description = NULL) {
   if (!is.null(object)) {
     write.csv(object, file_path, row.names = FALSE)
+    register_artifact(file_path, report_section, description)
   }
 }
 
-safe_write_matrix <- function(object, file_path) {
+safe_write_matrix <- function(object, file_path, report_section = NULL, description = NULL) {
   if (!is.null(object)) {
     write.csv(as.data.frame(object), file_path, row.names = TRUE)
+    register_artifact(file_path, report_section, description)
   }
 }
 
@@ -279,17 +359,17 @@ if (exists("X")) {
 # 4. Posterior summary exports
 # -------------------------------------------------------------------
 
-if (exists("rwmh_post_stats_table")) {
+if (exists("full_data_rwmh_post_stats_table")) {
   safe_write_csv(
-    rwmh_post_stats_table,
-    "Results/full_rwmh_posterior_summary.csv"
+    full_data_rwmh_post_stats_table,
+    "Results/full_data_rwmh_posterior_summary.csv"
   )
 }
 
-if (exists("imh_post_stats_table")) {
+if (exists("full_data_imh_post_stats_table")) {
   safe_write_csv(
-    imh_post_stats_table,
-    "Results/full_imh_posterior_summary.csv"
+    full_data_imh_post_stats_table,
+    "Results/full_data_imh_posterior_summary.csv"
   )
 }
 
@@ -310,12 +390,12 @@ if (exists("cmc_imh_post_stats_table")) {
 # Posterior mean comparison table
 posterior_summary_objects <- list()
 
-if (exists("rwmh_post_stats_table")) {
-  posterior_summary_objects[["Full_RWMH"]] <- rwmh_post_stats_table
+if (exists("full_data_rwmh_post_stats_table")) {
+  posterior_summary_objects[["Full_Data_RWMH"]] <- full_data_rwmh_post_stats_table
 }
 
-if (exists("imh_post_stats_table")) {
-  posterior_summary_objects[["Full_IMH"]] <- imh_post_stats_table
+if (exists("full_data_imh_post_stats_table")) {
+  posterior_summary_objects[["Full_Data_IMH"]] <- full_data_imh_post_stats_table
 }
 
 if (exists("cmc_rwmh_post_stats_table")) {
@@ -377,36 +457,85 @@ if (length(posterior_summary_objects) > 0) {
   )
 }
 
+# Consensus Monte Carlo approximation accuracy exports
+rmse_objects <- list()
+
+if (exists("cmc_rwmh_rmse_table")) {
+  safe_write_csv(
+    cmc_rwmh_rmse_table,
+    "Results/cmc_rwmh_rmse.csv"
+  )
+
+  rmse_objects[["CMC_RWMH"]] <- cmc_rwmh_rmse_table
+}
+
+if (exists("cmc_imh_rmse_table")) {
+  safe_write_csv(
+    cmc_imh_rmse_table,
+    "Results/cmc_imh_rmse.csv"
+  )
+
+  rmse_objects[["CMC_IMH"]] <- cmc_imh_rmse_table
+}
+
+if (length(rmse_objects) > 0) {
+  cmc_rmse_comparison <- do.call(rbind, rmse_objects)
+  row.names(cmc_rmse_comparison) <- NULL
+
+  safe_write_csv(
+    cmc_rmse_comparison,
+    "Results/cmc_rmse_comparison.csv"
+  )
+}
+
+if (exists("cmc_rwmh_posterior_mean_error_table")) {
+  safe_write_csv(
+    cmc_rwmh_posterior_mean_error_table,
+    "Results/cmc_rwmh_posterior_mean_error.csv"
+  )
+}
+
+if (exists("cmc_imh_posterior_mean_error_table")) {
+  safe_write_csv(
+    cmc_imh_posterior_mean_error_table,
+    "Results/cmc_imh_posterior_mean_error.csv"
+  )
+}
+
 # -------------------------------------------------------------------
 # 5. Acceptance rate exports
 # -------------------------------------------------------------------
 
 acceptance_list <- list()
 
-if (exists("rwmh_result")) {
-  acceptance_list[["Full-data RWMH"]] <- rwmh_result$acceptance_rate
+if (exists("full_data_rwmh_result")) {
+  acceptance_list[["Full-data RWMH"]] <-
+    full_data_rwmh_result$post_burn_in_acceptance_rate
 }
 
-if (exists("imh_result")) {
-  acceptance_list[["Full-data IMH"]] <- imh_result$acceptance_rate
+if (exists("full_data_imh_result")) {
+  acceptance_list[["Full-data IMH"]] <-
+    full_data_imh_result$post_burn_in_acceptance_rate
 }
 
-if (exists("cmc_rwmh_acceptance_rates")) {
-  for (i in seq_along(cmc_rwmh_acceptance_rates)) {
+if (exists("cmc_rwmh_post_burn_in_acceptance_rates")) {
+  for (i in seq_along(cmc_rwmh_post_burn_in_acceptance_rates)) {
     acceptance_list[[paste0("CMC-RWMH Shard ", i)]] <-
-      cmc_rwmh_acceptance_rates[i]
+      cmc_rwmh_post_burn_in_acceptance_rates[i]
   }
 
-  acceptance_list[["Mean CMC-RWMH"]] <- mean(cmc_rwmh_acceptance_rates)
+  acceptance_list[["Mean CMC-RWMH"]] <-
+    mean(cmc_rwmh_post_burn_in_acceptance_rates)
 }
 
-if (exists("cmc_imh_acceptance_rates")) {
-  for (i in seq_along(cmc_imh_acceptance_rates)) {
+if (exists("cmc_imh_post_burn_in_acceptance_rates")) {
+  for (i in seq_along(cmc_imh_post_burn_in_acceptance_rates)) {
     acceptance_list[[paste0("CMC-IMH Shard ", i)]] <-
-      cmc_imh_acceptance_rates[i]
+      cmc_imh_post_burn_in_acceptance_rates[i]
   }
 
-  acceptance_list[["Mean CMC-IMH"]] <- mean(cmc_imh_acceptance_rates)
+  acceptance_list[["Mean CMC-IMH"]] <-
+    mean(cmc_imh_post_burn_in_acceptance_rates)
 }
 
 if (length(acceptance_list) > 0) {
@@ -428,15 +557,6 @@ if (length(acceptance_list) > 0) {
 
 if (exists("runtime_table")) {
   runtime_table_export <- runtime_table
-
-  if ("Method" %in% names(runtime_table_export)) {
-    runtime_table_export$Method <- sub(
-      "^Parallel ",
-      "",
-      runtime_table_export$Method,
-      perl = TRUE
-    )
-  }
 
   safe_write_csv(
     runtime_table_export,
@@ -658,84 +778,226 @@ if (exists("cmc_rwmh_proposal_cov")) {
 # 10. Figure exports
 # -------------------------------------------------------------------
 
+graphics.off()
+
+fig_dpi <- 100
+
 fig_width_px <- 800
 fig_height_px <- 600
-fig_dpi <- 100
 fig_width_in <- fig_width_px / fig_dpi
 fig_height_in <- fig_height_px / fig_dpi
 
+fig_wide_width_px <- 800
+fig_wide_height_px <- 300
+fig_wide_width_in <- fig_wide_width_px / fig_dpi
+fig_wide_height_in <- fig_wide_height_px / fig_dpi
+
 # Full-data RWMH histogram and trace plots
-if (exists("rwmh_post_samples") && exists("hist_trace_plot")) {
+if (exists("full_data_rwmh_post_samples") && exists("hist_trace_plot")) {
   pdf(
-    "Figure/full_rwmh_hist_trace_%02d.pdf",
+    "Figure/full_data_rwmh_hist_trace_%02d.pdf",
     width = fig_width_in,
     height = fig_height_in,
     onefile = FALSE
   )
-  hist_trace_plot(rwmh_post_samples, params_per_page = 2)
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.80,
+    cex.lab = 0.85,
+    cex.axis = 0.85
+  )
+
+  hist_trace_plot(full_data_rwmh_post_samples, params_per_page = 2)
+
+  par(old_par)
   dev.off()
+
+  register_artifact(
+    "Figure/full_data_rwmh_hist_trace_%02d.pdf",
+    "Figures",
+    "Full-data RWMH posterior histograms and trace plots"
+  )
+}
+
+# Full-data RWMH ACF plots
+if (exists("full_data_rwmh_post_samples") && exists("acf_mcmc_plot")) {
+  pdf(
+    "Figure/full_data_rwmh_acf_%02d.pdf",
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.75,
+    cex.lab = 0.80,
+    cex.axis = 0.80
+  )
+
+  acf_mcmc_plot(full_data_rwmh_post_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/full_data_rwmh_acf_%02d.pdf",
+    "Figures",
+    "Full-data RWMH posterior autocorrelation plots"
+  )
 }
 
 # Full-data IMH histogram and trace plots
-if (exists("imh_post_samples") && exists("hist_trace_plot")) {
+if (exists("full_data_imh_post_samples") && exists("hist_trace_plot")) {
   pdf(
-    "Figure/full_imh_hist_trace_%02d.pdf",
+    "Figure/full_data_imh_hist_trace_%02d.pdf",
     width = fig_width_in,
     height = fig_height_in,
     onefile = FALSE
   )
-  hist_trace_plot(imh_post_samples, params_per_page = 2)
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.80,
+    cex.lab = 0.85,
+    cex.axis = 0.85
+  )
+
+  hist_trace_plot(full_data_imh_post_samples, params_per_page = 2)
+
+  par(old_par)
   dev.off()
+
+  register_artifact(
+    "Figure/full_data_imh_hist_trace_%02d.pdf",
+    "Figures",
+    "Full-data IMH posterior histograms and trace plots"
+  )
+}
+
+# Full-data IMH ACF plots
+if (exists("full_data_imh_post_samples") && exists("acf_mcmc_plot")) {
+  pdf(
+    "Figure/full_data_imh_acf_%02d.pdf",
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.75,
+    cex.lab = 0.80,
+    cex.axis = 0.80
+  )
+
+  acf_mcmc_plot(full_data_imh_post_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/full_data_imh_acf_%02d.pdf",
+    "Figures",
+    "Full-data IMH posterior autocorrelation plots"
+  )
 }
 
 # CMC-RWMH density plots
 if (exists("cmc_rwmh_samples") && exists("consensus_density_plot")) {
   pdf(
     "Figure/cmc_rwmh_density_%02d.pdf",
-    width = fig_width_in,
-    height = fig_height_in,
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
     onefile = FALSE
   )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.65,
+    cex.lab = 0.75,
+    cex.axis = 0.75,
+    mar = c(5, 4, 3, 1),
+    oma = c(0, 0, 0, 0)
+  )
+
   consensus_density_plot(cmc_rwmh_samples, params_per_page = 2)
+
+  par(old_par)
   dev.off()
+
+  register_artifact(
+    "Figure/cmc_rwmh_density_%02d.pdf",
+    "Figures",
+    "CMC-RWMH consensus posterior density plots"
+  )
 }
 
 # CMC-IMH density plots
 if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
   pdf(
     "Figure/cmc_imh_density_%02d.pdf",
-    width = fig_width_in,
-    height = fig_height_in,
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
     onefile = FALSE
   )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.65,
+    cex.lab = 0.75,
+    cex.axis = 0.75,
+    mar = c(5, 4, 3, 1),
+    oma = c(0, 0, 0, 0)
+  )
+
   consensus_density_plot(cmc_imh_samples, params_per_page = 2)
+
+  par(old_par)
   dev.off()
+
+  register_artifact(
+    "Figure/cmc_imh_density_%02d.pdf",
+    "Figures",
+    "CMC-IMH consensus posterior density plots"
+  )
 }
 
-if (exists("pearson_resid_std")) {
+if (exists("pearson_resid_std") && exists("deviance_resid_std")) {
   pdf(
-    "Figure/pearson_residual_acf.pdf",
-    width = fig_width_in,
-    height = fig_height_in
+    "Figure/residual_acf_correlograms.pdf",
+    width = fig_wide_width_in,
+    height = fig_wide_height_in
   )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    mfrow = c(1, 2),
+    mar = c(4, 4, 3, 1),
+    cex.main = 0.75,
+    cex.lab = 0.80,
+    cex.axis = 0.80
+  )
+
   acf(
     pearson_resid_std,
     main = "Correlogram of Pearson Residuals"
   )
-  dev.off()
-}
 
-if (exists("deviance_resid_std")) {
-  pdf(
-    "Figure/deviance_residual_acf.pdf",
-    width = fig_width_in,
-    height = fig_height_in
-  )
   acf(
     deviance_resid_std,
     main = "Correlogram of Deviance Residuals"
   )
+
+  par(old_par)
   dev.off()
+
+  register_artifact(
+    "Figure/residual_acf_correlograms.pdf",
+    "Figures",
+    "Residual autocorrelation correlograms"
+  )
 }
 
 # -------------------------------------------------------------------
@@ -758,19 +1020,36 @@ object_names <- c(
   "X",
   "param_names",
   "prior_scale_value",
-  "rwmh_result",
-  "imh_result",
-  "cmc_rwmh_acceptance_rates",
-  "cmc_imh_acceptance_rates",
-  "runtime_table",
-  "rwmh_post_stats_table",
-  "imh_post_stats_table",
+  "full_data_rwmh_result",
+  "full_data_imh_result",
+  "full_data_rwmh_chain",
+  "full_data_imh_chain",
+  "full_data_rwmh_post_samples",
+  "full_data_imh_post_samples",
+  "full_data_rwmh_post_stats_table",
+  "full_data_imh_post_stats_table",
+  "cmc_rwmh_results",
+  "cmc_imh_results",
+  "cmc_rwmh_subposterior_samples_list",
+  "cmc_imh_subposterior_samples_list",
+  "cmc_rwmh_post_burn_in_acceptance_rates",
+  "cmc_imh_post_burn_in_acceptance_rates",
+  "cmc_rwmh_samples",
+  "cmc_imh_samples",
   "cmc_rwmh_post_stats_table",
   "cmc_imh_post_stats_table",
-  "rwmh_post_samples",
-  "imh_post_samples",
-  "cmc_rwmh_samples",
-  "cmc_imh_samples"
+  "full_data_rwmh_posterior_mean",
+  "full_data_imh_posterior_mean",
+  "cmc_rwmh_posterior_mean",
+  "cmc_imh_posterior_mean",
+  "cmc_rwmh_rmse_table",
+  "cmc_imh_rmse_table",
+  "cmc_rwmh_posterior_mean_error_table",
+  "cmc_imh_posterior_mean_error_table",
+  "runtime_table",
+  "proposal_cov_rwmh",
+  "proposal_cov_imh",
+  "cmc_rwmh_proposal_cov"
 )
 
 object_availability <- data.frame(
@@ -782,6 +1061,18 @@ object_availability <- data.frame(
 safe_write_csv(
   object_availability,
   "Results/export_object_availability.csv"
+)
+
+register_artifact(
+  "Results/report_artifact_manifest.csv",
+  "Data and preprocessing",
+  "Manifest of report-ready tables and figures exported by the script"
+)
+
+write.csv(
+  report_artifact_manifest,
+  "Results/report_artifact_manifest.csv",
+  row.names = FALSE
 )
 
 cat("Export complete. Results saved in Results/ and figures saved in Figure/.\n")
