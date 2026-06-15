@@ -82,7 +82,6 @@ table(data_used$speed_limit)
 prop.table(table(data_used$speed_limit))
 
 
-
 # 2. Fit frequentist logistic regression
 
 # Fit frequentist logistic regression
@@ -137,13 +136,9 @@ acf(
 gvif_values <- car::vif(logistic_model)
 print(gvif_values)
 
-# Estimated coefficient covariance and correlation
+# Estimated coefficient covariance
 # Used later as a reference covariance matrix for MH proposal distributions.
 cov_beta <- vcov(logistic_model)
-cor_beta <- cov2cor(cov_beta)
-
-round(cor_beta, 3)
-
 
 
 # 3. Prepare response and design matrix
@@ -159,15 +154,11 @@ X <- model.matrix(logistic_model)
 param_names <- colnames(X)
 
 
-
 # 4. Define prior, likelihood, and posterior
 
-# Cauchy prior scale
-prior_scale_value <- 2.5
-
 # Log-prior
-# Each coefficient is assigned a Cauchy(0, prior_scale) prior.
-log_prior <- function(beta, prior_scale = prior_scale_value) {
+# Each coefficient is assigned a Cauchy(0, 2.5) prior.
+log_prior <- function(beta, prior_scale = 2.5) {
   sum(dcauchy(beta, location = 0, scale = prior_scale, log = TRUE))
 }
 
@@ -189,110 +180,24 @@ log_likelihood <- function(beta, y, X) {
 }
 
 # Log-posterior
-log_posterior <- function(beta, y, X, prior_scale = prior_scale_value) {
+log_posterior <- function(beta, y, X, prior_scale = 2.5) {
   log_prior(beta, prior_scale = prior_scale) +
     log_likelihood(beta, y, X)
 }
 
 
-
 # 5. General posterior summary function
 
 posterior_statistics <- function(post_samples, alpha = 0.05) {
-  # Function to estimate effective sample size
-  ess <- function(x, cap_at_n = TRUE) {
-    x <- as.numeric(x)
-    x <- x[is.finite(x)]
-
-    n <- length(x)
-
-    if (n < 3) {
-      return(n)
-    }
-
-    # Degenerate chain: ESS is not meaningful
-    if (stats::var(x) == 0) {
-      return(NA_real_)
-    }
-
-    # Autocorrelation values
-    acf_values <- as.numeric(
-      stats::acf(
-        x,
-        plot = FALSE,
-        lag.max = n - 1
-      )$acf
-    )
-
-    # Remove lag 0 autocorrelation
-    rho <- acf_values[-1]
-
-    # Number of complete autocorrelation pairs:
-    # Gamma_k = rho_{2k - 1} + rho_{2k}
-    n_pairs <- floor(length(rho) / 2)
-
-    if (n_pairs < 1) {
-      return(n)
-    }
-
-    gamma <- rho[2 * seq_len(n_pairs) - 1] +
-      rho[2 * seq_len(n_pairs)]
-
-    # Initial positive sequence:
-    # stop once paired autocorrelation becomes non-positive
-    first_nonpositive <- which(gamma <= 0)[1]
-
-    if (!is.na(first_nonpositive)) {
-      if (first_nonpositive == 1) {
-        return(n)
-      }
-
-      gamma <- gamma[seq_len(first_nonpositive - 1)]
-    }
-
-    if (length(gamma) == 0) {
-      return(n)
-    }
-
-    # Initial monotone sequence:
-    # force paired terms to be non-increasing
-    if (length(gamma) >= 2) {
-      for (i in 2:length(gamma)) {
-        if (gamma[i] > gamma[i - 1]) {
-          gamma[i] <- gamma[i - 1]
-        }
-      }
-    }
-
-    # Integrated autocorrelation time:
-    # tau = 1 + 2 * sum_{t >= 1} rho_t
-    tau <- 1 + 2 * sum(gamma)
-
-    if (!is.finite(tau) || tau <= 0) {
-      return(n)
-    }
-
-    ess_val <- n / tau
-
-    if (cap_at_n) {
-      ess_val <- min(n, ess_val)
-    }
-
-    ess_val
-  }
-
-  # Add parameter names if missing
-  if (is.null(colnames(post_samples))) {
-    colnames(post_samples) <- paste0("beta_", seq_len(ncol(post_samples)))
-  }
+  # Effective sample size
+  post_ess <- coda::effectiveSize(post_samples)
 
   # Posterior summaries on log-odds scale
   post_mean <- colMeans(post_samples)
   post_median <- apply(post_samples, 2, median)
   post_sd <- apply(post_samples, 2, sd)
 
-  # Effective sample size and Monte Carlo standard error
-  post_ess <- apply(post_samples, 2, ess)
+  # Monte Carlo standard error
   post_mcse <- post_sd / sqrt(post_ess)
 
   # Credible interval probabilities
@@ -325,7 +230,6 @@ posterior_statistics <- function(post_samples, alpha = 0.05) {
 }
 
 
-
 # 6. Functions
 
 hist_trace_plot <- function(samples,
@@ -334,11 +238,6 @@ hist_trace_plot <- function(samples,
   # Save current plotting settings
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
-
-  # Add parameter names if missing
-  if (is.null(param_names)) {
-    param_names <- paste0("beta_", seq_len(ncol(samples)))
-  }
 
   num_params <- length(param_names)
   post_means <- colMeans(samples, na.rm = TRUE)
@@ -396,10 +295,6 @@ acf_mcmc_plot <- function(samples,
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
 
-  if (is.null(param_names)) {
-    param_names <- paste0("beta_", seq_len(ncol(samples)))
-  }
-
   num_params <- length(param_names)
 
   for (start in seq(1, num_params, by = params_per_page)) {
@@ -411,7 +306,7 @@ acf_mcmc_plot <- function(samples,
     for (i in index) {
       acf(
         samples[, i],
-        main = paste("ACF plot of", param_names[i]),
+        main = paste("Correlogram of", param_names[i]),
         xlab = "Lag",
         ylab = "Autocorrelation"
       )
@@ -425,10 +320,6 @@ consensus_density_plot <- function(samples,
                                    params_per_page = 2) {
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
-
-  if (is.null(param_names)) {
-    param_names <- paste0("beta_", seq_len(ncol(samples)))
-  }
 
   num_params <- length(param_names)
   post_means <- colMeans(samples, na.rm = TRUE)
@@ -457,29 +348,6 @@ consensus_density_plot <- function(samples,
   }
 }
 
-# Optimized mahalanobis distance function for a fixed covariance matrix
-mahalanobis_opt <- function(mean, cov_matrix) {
-  d <- length(mean)
-
-  cov_chol <- chol(cov_matrix)
-  cov_precision <- chol2inv(cov_chol)
-  log_det <- 2 * sum(log(diag(cov_chol)))
-
-  function(x) {
-    centered_x <- x - mean
-
-    mahalanobis_distance_sq <- as.numeric(
-      t(centered_x) %*% cov_precision %*% centered_x
-    )
-
-    -0.5 * (
-      d * log(2 * pi) +
-        log_det +
-        mahalanobis_distance_sq
-    )
-  }
-}
-
 # Store runtimes
 runtime_table <- data.frame(
   Method = character(),
@@ -488,14 +356,16 @@ runtime_table <- data.frame(
 )
 
 
-
-# 7. Full-data RWMH
-
-set.seed(1)
+# 7. Number of iterations and burn-in for MCMC chains
 
 num_iterations <- 100000
 burn_in_fraction <- 0.2
 burn_in <- round(num_iterations * burn_in_fraction)
+
+
+# 8. Full-data RWMH
+
+set.seed(1)
 
 # Number of parameters
 d <- length(coef(logistic_model))
@@ -503,10 +373,7 @@ d <- length(coef(logistic_model))
 # Starting value from frequentist logistic regression
 start_value <- coef(logistic_model)
 
-# Replace any non-finite starting values with 0
-start_value[!is.finite(start_value)] <- 0
-
-# Tuning factor selected after tuning
+# Tuning factor for random-walk proposal
 rwmh_tuning_factor <- 0.75
 
 # Full covariance random-walk proposal
@@ -527,21 +394,24 @@ random_walk_proposal <- function(current_beta, proposal_chol) {
   )
 }
 
-rwmh_block <- function(start_value,
-                       iterations,
-                       y,
-                       X,
-                       proposal_chol,
-                       prior_scale = prior_scale_value,
-                       param_names = NULL) {
+full_data_rwmh <- function(start_value,
+                           iterations,
+                           y,
+                           X,
+                           proposal_chol,
+                           burn_in = 0,
+                           prior_scale = 2.5,
+                           param_names = NULL) {
+
+  num_parameters <- length(start_value)
+
   # Create matrix to store MCMC samples
   chain <- matrix(
     NA_real_,
     nrow = iterations + 1,
-    ncol = length(start_value)
+    ncol = num_parameters
   )
 
-  # Add parameter names if provided
   if (!is.null(param_names)) {
     colnames(chain) <- param_names
   }
@@ -549,10 +419,7 @@ rwmh_block <- function(start_value,
   # Store starting value
   chain[1, ] <- start_value
 
-  # Track number of accepted proposals
-  accept_count <- 0
-
-  # Store current beta and current log-posterior
+  # Store current state
   current <- start_value
 
   current_log_posterior <- log_posterior(
@@ -562,14 +429,16 @@ rwmh_block <- function(start_value,
     prior_scale = prior_scale
   )
 
+  # Track only post-burn-in acceptances
+  post_burn_in_acceptances <- 0L
+
   for (i in seq_len(iterations)) {
-    # Generate proposed beta
+    # Generate proposed beta from random-walk proposal distribution
     proposal <- random_walk_proposal(
       current_beta = current,
       proposal_chol = proposal_chol
     )
 
-    # Calculate log-posterior of proposed beta
     proposal_log_posterior <- log_posterior(
       beta = proposal,
       y = y,
@@ -577,32 +446,38 @@ rwmh_block <- function(start_value,
       prior_scale = prior_scale
     )
 
-    # Random Walk MH log acceptance probability
-    # No proposal-density correction is required because the proposal is symmetric.
+    # Random-walk MH log acceptance probability
     log_acceptance_prob <-
       proposal_log_posterior -
       current_log_posterior
 
-    # Accept or reject
-    if (is.finite(log_acceptance_prob) &&
+    # Accept or reject proposal
+    if (!is.na(log_acceptance_prob) &&
         log(runif(1)) < log_acceptance_prob) {
       current <- proposal
       current_log_posterior <- proposal_log_posterior
-      accept_count <- accept_count + 1
+
+      if (i > burn_in) {
+        post_burn_in_acceptances <- post_burn_in_acceptances + 1L
+      }
     }
 
-    # Store current beta
     chain[i + 1, ] <- current
   }
 
-  acceptance_rate <- accept_count / iterations
+  post_burn_in_acceptance_rate <-
+    post_burn_in_acceptances / (iterations - burn_in)
 
-  cat("Full-data RWMH acceptance rate:", acceptance_rate, "\n")
+  cat(
+    "Full-data RWMH post-burn-in acceptance rate:",
+    post_burn_in_acceptance_rate,
+    "\n"
+  )
 
   return(
     list(
       chain = chain,
-      acceptance_rate = acceptance_rate
+      post_burn_in_acceptance_rate = post_burn_in_acceptance_rate
     )
   )
 }
@@ -611,13 +486,14 @@ rwmh_block <- function(start_value,
 rwmh_start_time <- Sys.time()
 
 # Run Full-data RWMH
-rwmh_result <- rwmh_block(
+full_data_rwmh_result <- full_data_rwmh(
   start_value = start_value,
   iterations = num_iterations,
   y = y,
   X = X,
   proposal_chol = proposal_chol_rwmh,
-  prior_scale = prior_scale_value,
+  burn_in = burn_in,
+  prior_scale = 2.5,
   param_names = param_names
 )
 
@@ -638,34 +514,33 @@ runtime_table <- rbind(
 )
 
 # Extract the Full-data RWMH chain
-rwmh_chain <- rwmh_result$chain
+full_data_rwmh_chain <- full_data_rwmh_result$chain
 
 # Remove burn-in
-rwmh_post_samples <- rwmh_chain[-seq_len(burn_in + 1), , drop = FALSE]
+full_data_rwmh_post_samples <-
+  full_data_rwmh_chain[-seq_len(burn_in + 1), , drop = FALSE]
 
 # Posterior summary table
-rwmh_post_stats_table <- posterior_statistics(rwmh_post_samples)
+full_data_rwmh_post_stats_table <- posterior_statistics(full_data_rwmh_post_samples)
 
-print(rwmh_post_stats_table)
+print(full_data_rwmh_post_stats_table)
 
 # Histogram and trace plots
-hist_trace_plot(rwmh_post_samples)
+hist_trace_plot(full_data_rwmh_post_samples)
 
 # ACF plots
-acf_mcmc_plot(rwmh_post_samples)
+acf_mcmc_plot(full_data_rwmh_post_samples)
 
 # Print runtime so far
 print(runtime_table)
 
 
-
-# 8. Full-data IMH
+# 9. Full-data IMH
 
 set.seed(2)
 
 # Proposal mean from frequentist logistic regression
 proposal_mean_imh <- coef(logistic_model)
-proposal_mean_imh[!is.finite(proposal_mean_imh)] <- 0
 
 # Tuning factor for independent proposal
 imh_tuning_factor <- 1.5
@@ -674,8 +549,11 @@ imh_tuning_factor <- 1.5
 proposal_cov_imh <- imh_tuning_factor^2 * vcov(logistic_model)
 proposal_cov_imh <- as.matrix(proposal_cov_imh)
 
-# Cholesky decomposition is used to generate correlated multivariate normal proposals
+# Cholesky decomposition for proposal covariance
 proposal_chol_imh <- chol(proposal_cov_imh)
+
+# Precompute inverse proposal covariance for efficient log-density calculation
+proposal_cov_inv_imh <- chol2inv(proposal_chol_imh)
 
 # Independent proposal function
 independent_proposal <- function(proposal_mean, proposal_chol) {
@@ -684,29 +562,39 @@ independent_proposal <- function(proposal_mean, proposal_chol) {
   )
 }
 
-# Precompute the fixed independent proposal log-density function
-log_proposal_density_imh <- mahalanobis_opt(
-  mean = proposal_mean_imh,
-  cov_matrix = proposal_cov_imh
-)
+# Fixed independent proposal log-density
+# The normalizing constant is omitted because it cancels in the MH ratio.
+log_proposal_density_imh <- function(beta) {
+  as.numeric(
+    -0.5 * mahalanobis(
+      x = beta,
+      center = proposal_mean_imh,
+      cov = proposal_cov_inv_imh,
+      inverted = TRUE
+    )
+  )
+}
 
-imh_block <- function(start_value,
-                      iterations,
-                      y,
-                      X,
-                      proposal_mean,
-                      proposal_chol,
-                      log_proposal_density,
-                      prior_scale = prior_scale_value,
-                      param_names = NULL) {
+full_data_imh <- function(start_value,
+                          iterations,
+                          y,
+                          X,
+                          proposal_mean,
+                          proposal_chol,
+                          log_proposal_density,
+                          burn_in = 0,
+                          prior_scale = 2.5,
+                          param_names = NULL) {
+
+  num_parameters <- length(start_value)
+
   # Create matrix to store MCMC samples
   chain <- matrix(
     NA_real_,
     nrow = iterations + 1,
-    ncol = length(start_value)
+    ncol = num_parameters
   )
 
-  # Add parameter names if provided
   if (!is.null(param_names)) {
     colnames(chain) <- param_names
   }
@@ -714,10 +602,7 @@ imh_block <- function(start_value,
   # Store starting value
   chain[1, ] <- start_value
 
-  # Track number of accepted proposals
-  accept_count <- 0
-
-  # Store current beta and current log-posterior
+  # Store current state
   current <- start_value
 
   current_log_posterior <- log_posterior(
@@ -727,8 +612,10 @@ imh_block <- function(start_value,
     prior_scale = prior_scale
   )
 
-  # Store proposal density of current value
   current_log_proposal_density <- log_proposal_density(current)
+
+  # Track only post-burn-in acceptances
+  post_burn_in_acceptances <- 0L
 
   for (i in seq_len(iterations)) {
     # Generate proposed beta from fixed proposal distribution
@@ -737,7 +624,6 @@ imh_block <- function(start_value,
       proposal_chol = proposal_chol
     )
 
-    # Calculate log-posterior of proposed beta
     proposal_log_posterior <- log_posterior(
       beta = proposal,
       y = y,
@@ -745,38 +631,43 @@ imh_block <- function(start_value,
       prior_scale = prior_scale
     )
 
-    # Calculate proposal density of proposed beta
     proposal_log_proposal_density <- log_proposal_density(proposal)
 
     # Independent MH log acceptance probability
-    # Proposal-density correction is required because the proposal is not symmetric.
     log_acceptance_prob <-
       proposal_log_posterior -
       current_log_posterior +
       current_log_proposal_density -
       proposal_log_proposal_density
 
-    # Accept or reject
-    if (is.finite(log_acceptance_prob) &&
+    # Accept or reject proposal
+    if (!is.na(log_acceptance_prob) &&
         log(runif(1)) < log_acceptance_prob) {
       current <- proposal
       current_log_posterior <- proposal_log_posterior
       current_log_proposal_density <- proposal_log_proposal_density
-      accept_count <- accept_count + 1
+
+      if (i > burn_in) {
+        post_burn_in_acceptances <- post_burn_in_acceptances + 1L
+      }
     }
 
-    # Store current beta
     chain[i + 1, ] <- current
   }
 
-  acceptance_rate <- accept_count / iterations
+  post_burn_in_acceptance_rate <-
+    post_burn_in_acceptances / (iterations - burn_in)
 
-  cat("Full-data IMH acceptance rate:", acceptance_rate, "\n")
+  cat(
+    "Full-data IMH post-burn-in acceptance rate:",
+    post_burn_in_acceptance_rate,
+    "\n"
+  )
 
   return(
     list(
       chain = chain,
-      acceptance_rate = acceptance_rate
+      post_burn_in_acceptance_rate = post_burn_in_acceptance_rate
     )
   )
 }
@@ -785,7 +676,7 @@ imh_block <- function(start_value,
 imh_start_time <- Sys.time()
 
 # Run Full-data IMH
-imh_result <- imh_block(
+full_data_imh_result <- full_data_imh(
   start_value = start_value,
   iterations = num_iterations,
   y = y,
@@ -793,7 +684,8 @@ imh_result <- imh_block(
   proposal_mean = proposal_mean_imh,
   proposal_chol = proposal_chol_imh,
   log_proposal_density = log_proposal_density_imh,
-  prior_scale = prior_scale_value,
+  burn_in = burn_in,
+  prior_scale = 2.5,
   param_names = param_names
 )
 
@@ -814,154 +706,163 @@ runtime_table <- rbind(
 )
 
 # Extract the Full-data IMH chain
-imh_chain <- imh_result$chain
+full_data_imh_chain <- full_data_imh_result$chain
 
 # Remove burn-in
-imh_post_samples <- imh_chain[-seq_len(burn_in + 1), , drop = FALSE]
+full_data_imh_post_samples <-
+  full_data_imh_chain[-seq_len(burn_in + 1), , drop = FALSE]
 
 # Posterior summary table
-imh_post_stats_table <- posterior_statistics(imh_post_samples)
+full_data_imh_post_stats_table <- posterior_statistics(full_data_imh_post_samples)
 
-print(imh_post_stats_table)
+print(full_data_imh_post_stats_table)
 
 # Histogram and trace plots
-hist_trace_plot(imh_post_samples)
+hist_trace_plot(full_data_imh_post_samples)
 
 # ACF plots
-acf_mcmc_plot(imh_post_samples)
+acf_mcmc_plot(full_data_imh_post_samples)
 
 # Print runtime comparison so far
 print(runtime_table)
 
 
-
-# 9. Parallel CMC-RWMH
+# 10. CMC-RWMH
 
 library(parallel)
 
 set.seed(3)
 
 # Number of shards
-# K = 3 is chosen to divide the computation into three shards while keeping each shard large enough
-# for stable logistic regression inference.
-cmc_num_shards <- 3
+# K = 10 is used to divide the computation into ten shards.
+cmc_num_shards <- 10
 
 # Number of MCMC iterations for each shard chain
 # Use the same number of iterations as the full-data MCMC chains for comparability.
 cmc_iterations <- num_iterations
 cmc_burn_in <- round(cmc_iterations * burn_in_fraction)
 
-# Randomly split observations into shards
-cmc_shard_id <- sample(
-  rep(seq_len(cmc_num_shards), length.out = nrow(X))
-)
+# Stratified split by response class
+# Observations within each response class are assigned across the K shards.
+cmc_shard_id <- integer(length(y))
+
+for (response_class in sort(unique(y))) {
+  response_rows <- which(y == response_class)
+  shuffled_response_rows <- sample(response_rows)
+
+  response_shard_id <- rep(
+    seq_len(cmc_num_shards),
+    length.out = length(shuffled_response_rows)
+  )
+
+  cmc_shard_id[shuffled_response_rows] <- sample(response_shard_id)
+}
+
+cmc_shard_sizes <- table(cmc_shard_id)
+cmc_shard_response_counts <- table(cmc_shard_id, y)
 
 # Check shard balance
-table(cmc_shard_id)
+cmc_shard_sizes
 
 # Check response distribution within each shard
-table(cmc_shard_id, y)
+cmc_shard_response_counts
 
 # Check predictor distributions within each shard
 table(cmc_shard_id, data_used$road_type)
 table(cmc_shard_id, data_used$speed_limit)
 
-
 # Subposterior log-density
 # Each shard uses 1 / K of the prior so that multiplying all
 # subposteriors gives the full posterior structure.
 log_subposterior <- function(beta,
-                             y_subset,
-                             X_subset,
+                             y_shard,
+                             X_shard,
                              prior_scale,
-                             num_subsets) {
-  (1 / num_subsets) * log_prior(beta, prior_scale = prior_scale) +
-    log_likelihood(beta, y_subset, X_subset)
+                             num_shards) {
+  (1 / num_shards) * log_prior(beta, prior_scale = prior_scale) +
+    log_likelihood(beta, y_shard, X_shard)
 }
 
-
 # RWMH sampler for one shard
-rwmh_subset_block <- function(start_value,
-                              iterations,
-                              y_subset,
-                              X_subset,
-                              proposal_chol,
-                              prior_scale,
-                              num_subsets,
-                              param_names = NULL) {
-  # Create matrix to store MCMC samples
+cmc_rwmh_shard <- function(start_value,
+                           iterations,
+                           y_shard,
+                           X_shard,
+                           proposal_chol,
+                           burn_in = 0,
+                           prior_scale = 2.5,
+                           num_shards,
+                           param_names = NULL) {
+
+  num_parameters <- length(start_value)
+
   chain <- matrix(
     NA_real_,
     nrow = iterations + 1,
-    ncol = length(start_value)
+    ncol = num_parameters
   )
 
-  # Add parameter names if provided
   if (!is.null(param_names)) {
     colnames(chain) <- param_names
   }
 
-  # Store starting value
   chain[1, ] <- start_value
 
-  # Track accepted proposals
-  accept_count <- 0
-
-  # Store current beta and current log-subposterior
   current <- start_value
 
   current_log_subposterior <- log_subposterior(
     beta = current,
-    y_subset = y_subset,
-    X_subset = X_subset,
+    y_shard = y_shard,
+    X_shard = X_shard,
     prior_scale = prior_scale,
-    num_subsets = num_subsets
+    num_shards = num_shards
   )
 
+  # Track only post-burn-in acceptances
+  post_burn_in_acceptances <- 0L
+
   for (i in seq_len(iterations)) {
-    # Random walk proposal
     proposal <- random_walk_proposal(
       current_beta = current,
       proposal_chol = proposal_chol
     )
 
-    # Log-subposterior of proposed beta
     proposal_log_subposterior <- log_subposterior(
       beta = proposal,
-      y_subset = y_subset,
-      X_subset = X_subset,
+      y_shard = y_shard,
+      X_shard = X_shard,
       prior_scale = prior_scale,
-      num_subsets = num_subsets
+      num_shards = num_shards
     )
 
-    # Random Walk MH acceptance probability
-    # No proposal-density correction is needed because the proposal is symmetric.
+    # Random-walk MH log acceptance probability
     log_acceptance_prob <-
       proposal_log_subposterior -
       current_log_subposterior
 
-    # Accept or reject
-    if (is.finite(log_acceptance_prob) &&
+    if (!is.na(log_acceptance_prob) &&
         log(runif(1)) < log_acceptance_prob) {
       current <- proposal
       current_log_subposterior <- proposal_log_subposterior
-      accept_count <- accept_count + 1
+
+      if (i > burn_in) {
+        post_burn_in_acceptances <- post_burn_in_acceptances + 1L
+      }
     }
 
-    # Store current beta
     chain[i + 1, ] <- current
   }
 
-  acceptance_rate <- accept_count / iterations
+  post_burn_in_acceptance_rate <-
+    post_burn_in_acceptances / (iterations - burn_in)
 
   return(
     list(
       chain = chain,
-      acceptance_rate = acceptance_rate
+      post_burn_in_acceptance_rate = post_burn_in_acceptance_rate
     )
   )
 }
-
 
 # Proposal covariance for shard RWMH
 # Each shard contains roughly 1 / K of the full dataset.
@@ -980,119 +881,94 @@ cmc_rwmh_proposal_cov <- as.matrix(cmc_rwmh_proposal_cov)
 # Cholesky decomposition is used to generate correlated multivariate normal proposals
 cmc_rwmh_proposal_chol <- chol(cmc_rwmh_proposal_cov)
 
-
 # Start runtime measurement
 cmc_rwmh_start_time <- Sys.time()
 
-
-# Safe core detection
-available_cores <- detectCores()
-
-if (is.na(available_cores)) {
-  available_cores <- 2
-}
-
-num_cores <- max(
-  1,
-  min(cmc_num_shards, available_cores - 1)
-)
-
-cat(
-  "\nRunning Parallel CMC-RWMH shard chains across",
-  num_cores,
-  "cores...\n"
-)
-
-
 # Create cluster
+num_cores <- cmc_num_shards
 cl <- makeCluster(num_cores)
 
-# Run shard chains in parallel and always close the cluster afterward
-parallel_rwmh_results <- tryCatch(
-  {
-    # Reproducible random numbers across parallel workers
-    clusterSetRNGStream(cl, iseed = 3)
+# Reproducible random numbers across parallel workers
+clusterSetRNGStream(cl, iseed = 3)
 
-    # Export required objects and functions to worker processes
-    clusterExport(
-      cl,
-      varlist = c(
-        "X",
-        "y",
-        "cmc_shard_id",
-        "rwmh_subset_block",
-        "log_subposterior",
-        "log_prior",
-        "log_likelihood",
-        "random_walk_proposal",
-        "cmc_rwmh_proposal_chol",
-        "cmc_iterations",
-        "cmc_burn_in",
-        "prior_scale_value",
-        "cmc_num_shards",
-        "start_value",
-        "param_names"
-      ),
-      envir = environment()
+# Export required objects and functions to parallel workers
+clusterExport(
+  cl,
+  varlist = c(
+    "X",
+    "y",
+    "cmc_shard_id",
+    "cmc_rwmh_shard",
+    "log_subposterior",
+    "log_prior",
+    "log_likelihood",
+    "random_walk_proposal",
+    "cmc_rwmh_proposal_chol",
+    "cmc_iterations",
+    "cmc_burn_in",
+    "cmc_num_shards",
+    "start_value",
+    "param_names"
+  ),
+  envir = environment()
+)
+
+# Run shard chains on parallel workers
+cmc_rwmh_results <- parLapply(
+  cl,
+  seq_len(cmc_num_shards),
+  function(k) {
+    shard_rows <- which(cmc_shard_id == k)
+
+    shard_result <- cmc_rwmh_shard(
+      start_value = start_value,
+      iterations = cmc_iterations,
+      y_shard = y[shard_rows],
+      X_shard = X[shard_rows, , drop = FALSE],
+      proposal_chol = cmc_rwmh_proposal_chol,
+      burn_in = cmc_burn_in,
+      prior_scale = 2.5,
+      num_shards = cmc_num_shards,
+      param_names = param_names
     )
 
-    parLapply(
-      cl,
-      seq_len(cmc_num_shards),
-      function(k) {
-        subset_rows <- which(cmc_shard_id == k)
+    shard_chain <- shard_result$chain
 
-        subset_result <- rwmh_subset_block(
-          start_value = start_value,
-          iterations = cmc_iterations,
-          y_subset = y[subset_rows],
-          X_subset = X[subset_rows, , drop = FALSE],
-          proposal_chol = cmc_rwmh_proposal_chol,
-          prior_scale = prior_scale_value,
-          num_subsets = cmc_num_shards,
-          param_names = param_names
-        )
+    post_burn_in_chain <-
+      shard_chain[-seq_len(cmc_burn_in + 1), , drop = FALSE]
 
-        subset_chain <- subset_result$chain
-
-        post_burn_in_chain <-
-          subset_chain[-seq_len(cmc_burn_in + 1), , drop = FALSE]
-
-        return(
-          list(
-            chain = post_burn_in_chain,
-            acceptance_rate = subset_result$acceptance_rate
-          )
-        )
-      }
+    return(
+      list(
+        chain = post_burn_in_chain,
+        post_burn_in_acceptance_rate =
+          shard_result$post_burn_in_acceptance_rate
+      )
     )
-  },
-  finally = {
-    stopCluster(cl)
   }
 )
 
+# Close cluster
+stopCluster(cl)
 
-# Extract shard chains and acceptance rates
-cmc_rwmh_subset_samples_list <- lapply(
-  parallel_rwmh_results,
+# Extract shard chains and post-burn-in acceptance rates
+cmc_rwmh_subposterior_samples_list <- lapply(
+  cmc_rwmh_results,
   function(result) result$chain
 )
 
-cmc_rwmh_acceptance_rates <- sapply(
-  parallel_rwmh_results,
-  function(result) result$acceptance_rate
+cmc_rwmh_post_burn_in_acceptance_rates <- sapply(
+  cmc_rwmh_results,
+  function(result) result$post_burn_in_acceptance_rate
 )
 
 for (k in seq_len(cmc_num_shards)) {
   cat(
     "Shard", k,
-    "Parallel CMC-RWMH acceptance rate:",
-    cmc_rwmh_acceptance_rates[k],
+    "CMC-RWMH post-burn-in acceptance rate:",
+    cmc_rwmh_post_burn_in_acceptance_rates[k],
     "\n"
   )
 }
-
 
 # Function to combine subposterior samples using Consensus Monte Carlo
 combine_consensus_samples <- function(subposterior_samples_list, param_names) {
@@ -1133,8 +1009,6 @@ combine_consensus_samples <- function(subposterior_samples_list, param_names) {
   # Consensus covariance matrix
   consensus_cov <- solve(total_precision)
 
-  # Precision-weighted sum:
-  # sum_k W_k theta_ki
   weighted_sum <- matrix(
     0,
     nrow = num_params,
@@ -1148,8 +1022,7 @@ combine_consensus_samples <- function(subposterior_samples_list, param_names) {
       t(subposterior_samples_list[[k]])
   }
 
-  # Consensus samples:
-  # theta_i^CMC = (sum_k W_k)^(-1) sum_k W_k theta_ki
+  # Consensus samples
   consensus_samples <- t(consensus_cov %*% weighted_sum)
 
   colnames(consensus_samples) <- param_names
@@ -1157,13 +1030,11 @@ combine_consensus_samples <- function(subposterior_samples_list, param_names) {
   return(consensus_samples)
 }
 
-
-# Combine Parallel CMC-RWMH subposterior samples
+# Combine CMC-RWMH subposterior samples
 cmc_rwmh_samples <- combine_consensus_samples(
-  subposterior_samples_list = cmc_rwmh_subset_samples_list,
+  subposterior_samples_list = cmc_rwmh_subposterior_samples_list,
   param_names = param_names
 )
-
 
 # End runtime measurement
 cmc_rwmh_end_time <- Sys.time()
@@ -1175,23 +1046,56 @@ cmc_rwmh_runtime <- as.numeric(
 runtime_table <- rbind(
   runtime_table,
   data.frame(
-    Method = "Parallel CMC-RWMH",
+    Method = "CMC-RWMH",
     Runtime_Seconds = cmc_rwmh_runtime,
     Runtime_Minutes = cmc_rwmh_runtime / 60
   )
 )
 
-# Posterior summary for Parallel CMC-RWMH
+# Posterior summary for CMC-RWMH
 cmc_rwmh_post_stats_table <- posterior_statistics(cmc_rwmh_samples)
 
 print(cmc_rwmh_post_stats_table)
 
-# Density plots for Consensus Monte Carlo samples
-# These are combined consensus samples, not one single Markov chain.
+# RMSE of posterior mean
+# The Full-data RWMH posterior mean is used as the reference.
+full_data_rwmh_posterior_mean <- colMeans(full_data_rwmh_post_samples)
+cmc_rwmh_posterior_mean <- colMeans(cmc_rwmh_samples)
+
+cmc_rwmh_posterior_mean_error <-
+  cmc_rwmh_posterior_mean - full_data_rwmh_posterior_mean
+
+cmc_rwmh_posterior_mean_rmse <- sqrt(
+  mean(cmc_rwmh_posterior_mean_error^2)
+)
+
+cmc_rwmh_rmse_table <- data.frame(
+  Method = "CMC-RWMH",
+  Reference = "Full-data RWMH",
+  Posterior_Mean_RMSE = cmc_rwmh_posterior_mean_rmse
+)
+
+print(cmc_rwmh_rmse_table)
+
+# Parameter-wise posterior mean error
+cmc_rwmh_posterior_mean_error_table <- data.frame(
+  Parameter = param_names,
+  Full_Data_RWMH_Mean = full_data_rwmh_posterior_mean,
+  CMC_RWMH_Mean = cmc_rwmh_posterior_mean,
+  Error = cmc_rwmh_posterior_mean_error,
+  Squared_Error = cmc_rwmh_posterior_mean_error^2,
+  row.names = NULL
+)
+
+print(cmc_rwmh_posterior_mean_error_table)
+
+# Density plots for consensus samples
+# These samples are produced by combining shard subposterior samples,
+# not by running one single Markov chain.
 consensus_density_plot(cmc_rwmh_samples)
 
 
-# 10. Parallel CMC-IMH
+# 11. CMC-IMH
 
 set.seed(4)
 
@@ -1199,26 +1103,28 @@ set.seed(4)
 # A value of 1.5 is used to match the Full-data IMH tuning factor.
 cmc_imh_tuning_factor <- 1.5
 
-
 # IMH sampler for one shard
-imh_subset_block <- function(start_value,
-                             iterations,
-                             y_subset,
-                             X_subset,
-                             proposal_mean,
-                             proposal_chol,
-                             log_proposal_density,
-                             prior_scale,
-                             num_subsets,
-                             param_names = NULL) {
+cmc_imh_shard <- function(start_value,
+                          iterations,
+                          y_shard,
+                          X_shard,
+                          proposal_mean,
+                          proposal_chol,
+                          log_proposal_density,
+                          burn_in = 0,
+                          prior_scale = 2.5,
+                          num_shards,
+                          param_names = NULL) {
+
+  num_parameters <- length(start_value)
+
   # Create matrix to store MCMC samples
   chain <- matrix(
     NA_real_,
     nrow = iterations + 1,
-    ncol = length(start_value)
+    ncol = num_parameters
   )
 
-  # Add parameter names if provided
   if (!is.null(param_names)) {
     colnames(chain) <- param_names
   }
@@ -1226,231 +1132,207 @@ imh_subset_block <- function(start_value,
   # Store starting value
   chain[1, ] <- start_value
 
-  # Track accepted proposals
-  accept_count <- 0
-
-  # Store current beta and current log-subposterior
+  # Store current state
   current <- start_value
 
   current_log_subposterior <- log_subposterior(
     beta = current,
-    y_subset = y_subset,
-    X_subset = X_subset,
+    y_shard = y_shard,
+    X_shard = X_shard,
     prior_scale = prior_scale,
-    num_subsets = num_subsets
+    num_shards = num_shards
   )
 
-  # Proposal density of current beta
   current_log_proposal_density <- log_proposal_density(current)
 
+  # Track only post-burn-in acceptances
+  post_burn_in_acceptances <- 0L
+
   for (i in seq_len(iterations)) {
-    # Independent proposal from a shard-specific multivariate normal distribution
+    # Generate proposed beta from shard-specific independent proposal
     proposal <- independent_proposal(
       proposal_mean = proposal_mean,
       proposal_chol = proposal_chol
     )
 
-    # Log-subposterior of proposed beta
     proposal_log_subposterior <- log_subposterior(
       beta = proposal,
-      y_subset = y_subset,
-      X_subset = X_subset,
+      y_shard = y_shard,
+      X_shard = X_shard,
       prior_scale = prior_scale,
-      num_subsets = num_subsets
+      num_shards = num_shards
     )
 
-    # Proposal density of proposed beta
     proposal_log_proposal_density <- log_proposal_density(proposal)
 
-    # Independent MH acceptance probability
-    # Proposal-density correction is required because the proposal is not symmetric.
+    # Independent MH log acceptance probability
     log_acceptance_prob <-
       proposal_log_subposterior -
       current_log_subposterior +
       current_log_proposal_density -
       proposal_log_proposal_density
 
-    # Accept or reject
-    if (is.finite(log_acceptance_prob) &&
+    # Accept or reject proposal
+    if (!is.na(log_acceptance_prob) &&
         log(runif(1)) < log_acceptance_prob) {
       current <- proposal
       current_log_subposterior <- proposal_log_subposterior
       current_log_proposal_density <- proposal_log_proposal_density
-      accept_count <- accept_count + 1
+
+      if (i > burn_in) {
+        post_burn_in_acceptances <- post_burn_in_acceptances + 1L
+      }
     }
 
-    # Store current beta
     chain[i + 1, ] <- current
   }
 
-  acceptance_rate <- accept_count / iterations
+  post_burn_in_acceptance_rate <-
+    post_burn_in_acceptances / (iterations - burn_in)
 
   return(
     list(
       chain = chain,
-      acceptance_rate = acceptance_rate
+      post_burn_in_acceptance_rate = post_burn_in_acceptance_rate
     )
   )
 }
 
-
 # Start runtime measurement
 cmc_imh_start_time <- Sys.time()
 
-
-# Safe core detection
-available_cores <- detectCores()
-
-if (is.na(available_cores)) {
-  available_cores <- 2
-}
-
-num_cores <- max(
-  1,
-  min(cmc_num_shards, available_cores - 1)
-)
-
-cat(
-  "\nRunning Parallel CMC-IMH shard chains across",
-  num_cores,
-  "cores...\n"
-)
-
-
 # Create cluster
+num_cores <- cmc_num_shards
 cl <- makeCluster(num_cores)
 
-# Run shard chains in parallel and always close the cluster afterward
-parallel_imh_results <- tryCatch(
-  {
-    # Reproducible random numbers across parallel workers
-    clusterSetRNGStream(cl, iseed = 4)
+# Reproducible random numbers across parallel workers
+clusterSetRNGStream(cl, iseed = 4)
 
-    # Export required objects and functions to worker processes
-    clusterExport(
-      cl,
-      varlist = c(
-        "X",
-        "y",
-        "data_used",
-        "cmc_shard_id",
-        "imh_subset_block",
-        "log_subposterior",
-        "log_prior",
-        "log_likelihood",
-        "independent_proposal",
-        "mahalanobis_opt",
-        "cmc_iterations",
-        "cmc_burn_in",
-        "prior_scale_value",
-        "cmc_num_shards",
-        "param_names",
-        "cmc_imh_tuning_factor"
-      ),
-      envir = environment()
+# Export required objects and functions to parallel workers
+clusterExport(
+  cl,
+  varlist = c(
+    "X",
+    "y",
+    "data_used",
+    "cmc_shard_id",
+    "cmc_imh_shard",
+    "log_subposterior",
+    "log_prior",
+    "log_likelihood",
+    "independent_proposal",
+    "cmc_iterations",
+    "cmc_burn_in",
+    "cmc_num_shards",
+    "param_names",
+    "cmc_imh_tuning_factor"
+  ),
+  envir = environment()
+)
+
+# Run shard chains on parallel workers
+cmc_imh_results <- parLapply(
+  cl,
+  seq_len(cmc_num_shards),
+  function(k) {
+    shard_rows <- which(cmc_shard_id == k)
+
+    y_shard <- y[shard_rows]
+    X_shard <- X[shard_rows, , drop = FALSE]
+    shard_data <- data_used[shard_rows, , drop = FALSE]
+
+    # Fit logistic regression model on the current shard
+    shard_logistic_model <- glm(
+      accident_severity_binary ~ .,
+      data = shard_data,
+      family = binomial
     )
 
-    parLapply(
-      cl,
-      seq_len(cmc_num_shards),
-      function(k) {
-        subset_rows <- which(cmc_shard_id == k)
+    # Shard-specific proposal mean
+    shard_proposal_mean <- coef(shard_logistic_model)
 
-        y_subset <- y[subset_rows]
-        X_subset <- X[subset_rows, , drop = FALSE]
+    # Shard-specific proposal covariance
+    shard_proposal_cov <-
+      cmc_imh_tuning_factor^2 *
+      vcov(shard_logistic_model)
 
-        # Fit a logistic regression model on the current shard.
-        # This provides a shard-specific proposal mean and covariance.
-        subset_data <- data_used[subset_rows, , drop = FALSE]
+    shard_proposal_cov <- as.matrix(shard_proposal_cov)
 
-        subset_logistic_model <- glm(
-          accident_severity_binary ~ .,
-          data = subset_data,
-          family = binomial
+    # Cholesky decomposition for shard-specific proposal covariance
+    shard_proposal_chol <- chol(shard_proposal_cov)
+
+    # Precompute inverse proposal covariance
+    shard_proposal_cov_inv <- chol2inv(shard_proposal_chol)
+
+    # Shard-specific independent proposal log-density
+    shard_log_proposal_density <- function(beta) {
+      as.numeric(
+        -0.5 * mahalanobis(
+          x = beta,
+          center = shard_proposal_mean,
+          cov = shard_proposal_cov_inv,
+          inverted = TRUE
         )
+      )
+    }
 
-        # Shard-specific proposal mean
-        subset_proposal_mean <- coef(subset_logistic_model)
-        subset_proposal_mean[!is.finite(subset_proposal_mean)] <- 0
-
-        # Shard-specific proposal covariance
-        # No multiplication by cmc_num_shards is used here because
-        # This proposal covariance is already estimated from one shard.
-        subset_proposal_cov <-
-          cmc_imh_tuning_factor^2 *
-          vcov(subset_logistic_model)
-
-        subset_proposal_cov <- as.matrix(subset_proposal_cov)
-
-        # Cholesky decomposition is used to generate correlated multivariate normal proposals
-        subset_proposal_chol <- chol(subset_proposal_cov)
-
-        # Precompute shard-specific independent proposal log-density
-        subset_log_proposal_density <- mahalanobis_opt(
-          mean = subset_proposal_mean,
-          cov_matrix = subset_proposal_cov
-        )
-
-        subset_result <- imh_subset_block(
-          start_value = subset_proposal_mean,
-          iterations = cmc_iterations,
-          y_subset = y_subset,
-          X_subset = X_subset,
-          proposal_mean = subset_proposal_mean,
-          proposal_chol = subset_proposal_chol,
-          log_proposal_density = subset_log_proposal_density,
-          prior_scale = prior_scale_value,
-          num_subsets = cmc_num_shards,
-          param_names = param_names
-        )
-
-        subset_chain <- subset_result$chain
-
-        post_burn_in_chain <-
-          subset_chain[-seq_len(cmc_burn_in + 1), , drop = FALSE]
-
-        return(
-          list(
-            chain = post_burn_in_chain,
-            acceptance_rate = subset_result$acceptance_rate
-          )
-        )
-      }
+    shard_result <- cmc_imh_shard(
+      start_value = shard_proposal_mean,
+      iterations = cmc_iterations,
+      y_shard = y_shard,
+      X_shard = X_shard,
+      proposal_mean = shard_proposal_mean,
+      proposal_chol = shard_proposal_chol,
+      log_proposal_density = shard_log_proposal_density,
+      burn_in = cmc_burn_in,
+      prior_scale = 2.5,
+      num_shards = cmc_num_shards,
+      param_names = param_names
     )
-  },
-  finally = {
-    stopCluster(cl)
+
+    shard_chain <- shard_result$chain
+
+    post_burn_in_chain <-
+      shard_chain[-seq_len(cmc_burn_in + 1), , drop = FALSE]
+
+    return(
+      list(
+        chain = post_burn_in_chain,
+        post_burn_in_acceptance_rate =
+          shard_result$post_burn_in_acceptance_rate
+      )
+    )
   }
 )
 
+# Close cluster
+stopCluster(cl)
 
-# Extract shard chains and acceptance rates
-cmc_imh_subset_samples_list <- lapply(
-  parallel_imh_results,
+# Extract shard chains and post-burn-in acceptance rates
+cmc_imh_subposterior_samples_list <- lapply(
+  cmc_imh_results,
   function(result) result$chain
 )
 
-cmc_imh_acceptance_rates <- sapply(
-  parallel_imh_results,
-  function(result) result$acceptance_rate
+cmc_imh_post_burn_in_acceptance_rates <- sapply(
+  cmc_imh_results,
+  function(result) result$post_burn_in_acceptance_rate
 )
 
 for (k in seq_len(cmc_num_shards)) {
   cat(
     "Shard", k,
-    "Parallel CMC-IMH acceptance rate:",
-    cmc_imh_acceptance_rates[k],
+    "CMC-IMH post-burn-in acceptance rate:",
+    cmc_imh_post_burn_in_acceptance_rates[k],
     "\n"
   )
 }
 
-
-# Combine Parallel CMC-IMH subposterior samples
+# Combine CMC-IMH subposterior samples
 cmc_imh_samples <- combine_consensus_samples(
-  subposterior_samples_list = cmc_imh_subset_samples_list,
+  subposterior_samples_list = cmc_imh_subposterior_samples_list,
   param_names = param_names
 )
-
 
 # End runtime measurement
 cmc_imh_end_time <- Sys.time()
@@ -1462,75 +1344,106 @@ cmc_imh_runtime <- as.numeric(
 runtime_table <- rbind(
   runtime_table,
   data.frame(
-    Method = "Parallel CMC-IMH",
+    Method = "CMC-IMH",
     Runtime_Seconds = cmc_imh_runtime,
     Runtime_Minutes = cmc_imh_runtime / 60
   )
 )
 
-# Posterior summary for Parallel CMC-IMH
+# Posterior summary for CMC-IMH
 cmc_imh_post_stats_table <- posterior_statistics(cmc_imh_samples)
 
 print(cmc_imh_post_stats_table)
 
-# Density plots for Consensus Monte Carlo samples
-# These are combined consensus samples, not one single Markov chain.
+# RMSE of posterior mean
+# The Full-data IMH posterior mean is used as the reference.
+full_data_imh_posterior_mean <- colMeans(full_data_imh_post_samples)
+cmc_imh_posterior_mean <- colMeans(cmc_imh_samples)
+
+cmc_imh_posterior_mean_error <-
+  cmc_imh_posterior_mean - full_data_imh_posterior_mean
+
+cmc_imh_posterior_mean_rmse <- sqrt(
+  mean(cmc_imh_posterior_mean_error^2)
+)
+
+cmc_imh_rmse_table <- data.frame(
+  Method = "CMC-IMH",
+  Reference = "Full-data IMH",
+  Posterior_Mean_RMSE = cmc_imh_posterior_mean_rmse
+)
+
+print(cmc_imh_rmse_table)
+
+# Parameter-wise posterior mean error
+cmc_imh_posterior_mean_error_table <- data.frame(
+  Parameter = param_names,
+  Full_Data_IMH_Mean = full_data_imh_posterior_mean,
+  CMC_IMH_Mean = cmc_imh_posterior_mean,
+  Error = cmc_imh_posterior_mean_error,
+  Squared_Error = cmc_imh_posterior_mean_error^2,
+  row.names = NULL
+)
+
+print(cmc_imh_posterior_mean_error_table)
+
+# Density plots for consensus samples
+# These samples are produced by combining shard subposterior samples,
+# not by running one single Markov chain.
 consensus_density_plot(cmc_imh_samples)
 
 
+# 12. Compare all methods
 
-# 11. Compare all methods
+cat("\nFull-data RWMH post-burn-in acceptance rate:\n")
+print(full_data_rwmh_result$post_burn_in_acceptance_rate)
 
-cat("\nFull-data RWMH acceptance rate:\n")
-print(rwmh_result$acceptance_rate)
+cat("\nFull-data IMH post-burn-in acceptance rate:\n")
+print(full_data_imh_result$post_burn_in_acceptance_rate)
 
-cat("\nFull-data IMH acceptance rate:\n")
-print(imh_result$acceptance_rate)
+cat("\nCMC-RWMH shard post-burn-in acceptance rates:\n")
+print(cmc_rwmh_post_burn_in_acceptance_rates)
 
-cat("\nParallel CMC-RWMH shard acceptance rates:\n")
-print(cmc_rwmh_acceptance_rates)
+cat("\nMean CMC-RWMH post-burn-in acceptance rate:\n")
+print(mean(cmc_rwmh_post_burn_in_acceptance_rates))
 
-cat("\nMean Parallel CMC-RWMH acceptance rate:\n")
-print(mean(cmc_rwmh_acceptance_rates))
+cat("\nCMC-IMH shard post-burn-in acceptance rates:\n")
+print(cmc_imh_post_burn_in_acceptance_rates)
 
-cat("\nParallel CMC-IMH shard acceptance rates:\n")
-print(cmc_imh_acceptance_rates)
-
-cat("\nMean Parallel CMC-IMH acceptance rate:\n")
-print(mean(cmc_imh_acceptance_rates))
-
+cat("\nMean CMC-IMH post-burn-in acceptance rate:\n")
+print(mean(cmc_imh_post_burn_in_acceptance_rates))
 
 cat("\nFull-data RWMH ESS and MCSE:\n")
 print(
-  rwmh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
+  full_data_rwmh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
 )
 
 cat("\nFull-data IMH ESS and MCSE:\n")
 print(
-  imh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
+  full_data_imh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
 )
 
-cat("\nParallel CMC-RWMH ESS and MCSE:\n")
+cat("\nCMC-RWMH ESS and MCSE:\n")
 print(
   cmc_rwmh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
 )
 
-cat("\nParallel CMC-IMH ESS and MCSE:\n")
+cat("\nCMC-IMH ESS and MCSE:\n")
 print(
   cmc_imh_post_stats_table[, c("Parameter", "ESS", "MCSE")]
 )
 
 
 cat("\nPosterior Summary: Full-data RWMH\n")
-print(rwmh_post_stats_table)
+print(full_data_rwmh_post_stats_table)
 
 cat("\nPosterior Summary: Full-data IMH\n")
-print(imh_post_stats_table)
+print(full_data_imh_post_stats_table)
 
-cat("\nPosterior Summary: Parallel CMC-RWMH\n")
+cat("\nPosterior Summary: CMC-RWMH\n")
 print(cmc_rwmh_post_stats_table)
 
-cat("\nPosterior Summary: Parallel CMC-IMH\n")
+cat("\nPosterior Summary: CMC-IMH\n")
 print(cmc_imh_post_stats_table)
 
 
