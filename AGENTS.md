@@ -208,6 +208,8 @@ Use formal academic writing.
 
 Write in clear mathematical language. Avoid casual wording.
 
+Do not use LaTeX `\texttt{}` in thesis writing because it gives prose an informal code-style appearance. Avoid code-style formatting in chapter prose; reserve code formatting for code listings, appendix code excerpts, or cases where the literal command syntax is essential.
+
 Avoid workflow-style phrases in the thesis, such as:
 
 * “the code is unfinished”
