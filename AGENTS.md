@@ -30,25 +30,51 @@ If information is missing, write `TODO:` clearly instead of guessing. This appli
 
 ## Current thesis implementation
 
-The current empirical implementation is based on the following setup:
+The current empirical implementation is based on the following setup. Treat `Script/Consensus_Monte_Carlo.r`, the exported files in `Results/`, and the generated figures in `Figure/` as the source of truth.
 
 * Dataset: UK accident data from `Dataset/accident_2013.csv`.
 * Variables used: `road_type`, `speed_limit`, and `accident_severity`.
-* Response construction: `accident_severity` is recoded into a binary response.
-* Event coded as 1: `serious_fatal`, formed by combining serious and fatal accidents.
-* Reference response class coded as 0: `slight`.
+* Data preprocessing:
+  * missing rows are removed with `na.omit()`;
+  * `accident_severity` is recoded into a binary response;
+  * observations with `road_type == "unknown"` are removed;
+  * factor reference categories are set after removing the unknown road type.
+* Response construction:
+  * event coded as 1: `serious_fatal`, formed by combining serious and fatal accidents;
+  * reference response class coded as 0: `slight`.
 * Model: Bayesian logistic regression.
 * Predictors: categorical `road_type` and categorical `speed_limit`.
 * Reference category for `road_type`: `single carriageway`.
 * Reference category for `speed_limit`: `2`.
-* Prior: independent normal priors for regression coefficients, with prior standard deviation 2.5.
-* Full-data samplers: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings.
-* Consensus Monte Carlo samplers: subset Random Walk Metropolis--Hastings and subset Independent Metropolis--Hastings.
-* Consensus combination: precision-weighted combination of subposterior samples.
-* Current number of subsets: `K = 4`, unless updated in `Script/Consensus_Monte_Carlo.r` and exported results.
-* Runtime is recorded, but the current implementation is sequential. Do not claim true parallel speedup unless the code is changed to run in parallel and the results support that claim.
+* Prior: independent Cauchy priors for regression coefficients, with location 0 and scale 2.5.
+* Full-data samplers:
+  * full-data Random Walk Metropolis--Hastings (RWMH);
+  * full-data Independent Metropolis--Hastings (IMH).
+* Consensus Monte Carlo samplers:
+  * subset or shard RWMH;
+  * subset or shard IMH.
+* Current number of shards: `K = 10`, as set by `cmc_num_shards <- 10`, unless later changed in `Script/Consensus_Monte_Carlo.r` and reflected in `Results/model_settings.csv`.
+* Current MCMC settings from the script and exported model settings:
+  * full-data MCMC iterations: 100000;
+  * burn-in fraction: 0.2;
+  * full-data burn-in iterations: 20000;
+  * CMC shard MCMC iterations: 100000;
+  * CMC shard burn-in iterations: 20000;
+  * full-data RWMH tuning factor: 0.75;
+  * full-data IMH tuning factor: 1.5;
+  * CMC-RWMH tuning factor: 0.75;
+  * CMC-IMH tuning factor: 1.5.
+* Data partitioning for CMC: stratified random assignment by binary response class, so each shard receives a roughly balanced response-class allocation.
+* Subposterior construction: each shard uses the shard likelihood and `1 / K` of the prior contribution, so that the product of subposteriors corresponds to the full-posterior structure.
+* Consensus combination: precision-weighted combination of subposterior samples, using estimated shard covariance matrices and their inverse precision matrices.
+* Runtime:
+  * full-data RWMH and full-data IMH are run sequentially;
+  * CMC-RWMH and CMC-IMH use `parallel::makeCluster()`, `clusterSetRNGStream()`, and `parallel::parLapply()` with the number of workers set to `cmc_num_shards`;
+  * runtime values include the recorded execution time and any cluster overhead;
+  * do not claim universal or hardware-independent speedup;
+  * only claim speedup if the exported runtime results support it, and qualify that the runtime depends on the current machine and parallel backend.
 
-The exported results in `Results/` and figures in `Figure/` are the source of truth for Chapter 4.
+Do not describe the current implementation as a purely sequential CMC implementation. Do not describe the current prior as normal unless the R script is changed accordingly.
 
 ## Project structure
 
@@ -74,6 +100,7 @@ Important files:
 * `Script/Export_Results.r`: result and figure export script
 * `Dataset/accident_2013.csv`: dataset
 * `Dataset/Variables for UK data.pdf`: variable documentation
+* `Results/report_artifact_manifest.csv`: manifest of exported report-ready tables and figures, when available
 
 ## LaTeX file inclusion rule
 
@@ -199,21 +226,25 @@ Use thesis-style phrases instead, such as:
 Use proper notation consistently:
 
 * $\beta$: logistic regression coefficient vector
+* $\beta_j$: the $j$th logistic regression coefficient
 * $y$: binary response variable
 * $X$: design matrix or predictor matrix
 * $p_i$: probability that observation $i$ has serious/fatal accident severity
-* $K$: number of data subsets
-* $m$: subset index
-* $\beta_m^{(s)}$: the $s$th subposterior sample from subset $m$
-* $W_m$: estimated precision matrix for subset $m$
+* $K$: number of data shards or subsets
+* $m$: shard or subset index
+* $\beta_m^{(s)}$: the $s$th subposterior sample from shard $m$
+* $\Sigma_m$: estimated covariance matrix of shard $m$ subposterior samples
+* $W_m = \Sigma_m^{-1}$: estimated precision matrix for shard $m$
 * $\pi(\beta \mid y, X)$: posterior distribution of $\beta$ given $y$ and $X$
-* $\pi_m(\beta \mid y_m, X_m)$: subposterior distribution for subset $m$
+* $\pi_m(\beta \mid y_m, X_m)$: subposterior distribution for shard $m$
 
 Use the term **credible interval** for Bayesian posterior intervals, not confidence interval, unless discussing frequentist methods.
 
 Use `Metropolis--Hastings`, not `Metropolis-Hastings`.
 
 Use `serious/fatal accident severity` or `serious/fatal accidents` consistently when referring to the binary event. Do not write that slight accidents are the event being modelled.
+
+Prefer `shard` when describing the current R implementation because the script uses `cmc_num_shards`, `cmc_shard_id`, and shard-specific objects. `Subset` is acceptable in general methodological explanation, but do not mix the two terms inconsistently within the same section.
 
 ## Citation rules
 
@@ -250,6 +281,14 @@ y_i \mid \beta \sim \operatorname{Bernoulli}(p_i),
 \]
 ```
 
+For the Cauchy prior currently used in the R script, write:
+
+```latex
+\[
+\beta_j \sim \operatorname{Cauchy}(0, 2.5), \qquad j=1,\ldots,d.
+\]
+```
+
 For the posterior distribution, write:
 
 ```latex
@@ -261,7 +300,7 @@ For the posterior distribution, write:
 For Consensus Monte Carlo, clearly distinguish between:
 
 * the full posterior
-* the subset likelihood
+* the shard likelihood
 * the subposterior
 * the combined consensus posterior
 
@@ -288,6 +327,8 @@ The precision-weighted consensus combination should be written as:
 
 Do not claim that Consensus Monte Carlo is better unless the results support it.
 
+Do not claim that the consensus samples are generated by a single Markov chain. The consensus samples are produced by combining post-burn-in subposterior samples from shard-specific Markov chains.
+
 ## R script rules
 
 Do not overwrite the original dataset.
@@ -312,40 +353,64 @@ Do not modify `Script/Consensus_Monte_Carlo.r` unless explicitly instructed.
 
 Do not rerun MCMC when only editing thesis text.
 
+If the R script is edited, rerun `Script/Export_Results.r` after the main script completes so that `Results/` and `Figure/` remain synchronized with the implementation.
+
 ## Exported results rules
 
 Chapter 4 must be based only on exported results and figures, not on memory or guessed values.
 
+Prefer `Results/report_artifact_manifest.csv` when available because it records the exported report-ready artifacts and their intended report sections.
+
 Use these files when available:
 
 * `Results/model_settings.csv`
+* `Results/data_preview.csv`
 * `Results/response_distribution.csv`
 * `Results/road_type_distribution.csv`
 * `Results/speed_limit_distribution.csv`
 * `Results/reference_categories.csv`
 * `Results/frequentist_logistic_summary.csv`
-* `Results/frequentist_logistic_odds_ratios.csv`
-* `Results/full_rwmh_posterior_summary.csv`
-* `Results/full_imh_posterior_summary.csv`
+* `Results/frequentist_likelihood_ratio_test.csv`
+* `Results/frequentist_gvif.csv`
+* `Results/pearson_residual_summary.csv`
+* `Results/deviance_residual_summary.csv`
+* `Results/frequentist_coefficient_covariance.csv`
+* `Results/parameter_names.csv`
+* `Results/design_matrix_info.csv`
+* `Results/full_data_rwmh_posterior_summary.csv`
+* `Results/full_data_imh_posterior_summary.csv`
 * `Results/cmc_rwmh_posterior_summary.csv`
 * `Results/cmc_imh_posterior_summary.csv`
 * `Results/posterior_mean_comparison.csv`
 * `Results/ess_mcse_comparison.csv`
-* `Results/odds_ratio_comparison.csv`
+* `Results/cmc_rwmh_rmse.csv`
+* `Results/cmc_imh_rmse.csv`
+* `Results/cmc_rmse_comparison.csv`
+* `Results/cmc_rwmh_posterior_mean_error.csv`
+* `Results/cmc_imh_posterior_mean_error.csv`
 * `Results/acceptance_rates.csv`
 * `Results/runtime_comparison.csv`
-* `Results/cmc_subset_sizes.csv`
-* `Results/cmc_subset_response_distribution.csv`
-* `Results/cmc_subset_road_type_distribution.csv`
-* `Results/cmc_subset_speed_limit_distribution.csv`
+* `Results/cmc_shard_sizes.csv`
+* `Results/cmc_shard_response_distribution.csv`
+* `Results/cmc_shard_road_type_distribution.csv`
+* `Results/cmc_shard_speed_limit_distribution.csv`
+* `Results/proposal_cov_full_rwmh.csv`
+* `Results/proposal_cov_full_imh.csv`
+* `Results/proposal_cov_cmc_rwmh.csv`
 * `Results/export_object_availability.csv`
+* `Results/report_artifact_manifest.csv`
 
 Use these figures when available:
 
-* `Figure/full_rwmh_hist_trace.pdf`
-* `Figure/full_imh_hist_trace.pdf`
-* `Figure/cmc_rwmh_density.pdf`
-* `Figure/cmc_imh_density.pdf`
+* `Figure/full_data_rwmh_hist_trace_*.pdf`
+* `Figure/full_data_rwmh_acf_*.pdf`
+* `Figure/full_data_imh_hist_trace_*.pdf`
+* `Figure/full_data_imh_acf_*.pdf`
+* `Figure/cmc_rwmh_density_*.pdf`
+* `Figure/cmc_imh_density_*.pdf`
+* `Figure/residual_acf_correlograms.pdf`
+
+The export script uses filename patterns such as `Figure/full_data_rwmh_hist_trace_%02d.pdf`. In the thesis, reference the actual generated numbered files, such as `_01.pdf`, `_02.pdf`, and so on, after verifying that the files exist.
 
 For each MCMC or Consensus Monte Carlo result, report relevant diagnostics where available:
 
@@ -357,10 +422,13 @@ For each MCMC or Consensus Monte Carlo result, report relevant diagnostics where
 * effective sample size
 * Monte Carlo standard error
 * trace plot
+* autocorrelation plot
 * posterior density plot
 * acceptance rate
 * runtime
 * convergence behaviour
+* posterior mean RMSE for CMC methods, when available
+* parameter-wise posterior mean error for CMC methods, when available
 
 If diagnostics are not available, insert:
 
@@ -368,9 +436,9 @@ If diagnostics are not available, insert:
 TODO: compute diagnostic.
 ```
 
-Do not claim true parallel speedup unless the code is changed to run in parallel and the exported runtime results support that claim.
+Do not claim true parallel or computational speedup unless the exported runtime results support the claim. Because CMC-RWMH and CMC-IMH currently use parallel workers, any runtime discussion should state that the reported CMC runtime reflects the current parallel implementation and includes cluster setup and worker overhead.
 
-If runtime values are based on sequential execution, state that the reported runtime reflects the current sequential implementation.
+If runtime values are based on sequential execution for a method, state that the reported runtime reflects the current sequential implementation of that method.
 
 If CMC-IMH acceptance rates are low, discuss this cautiously as a possible tuning limitation. Do not treat low-acceptance CMC-IMH results as definitive without qualification.
 
@@ -380,7 +448,7 @@ Current priority: rewrite and refine Chapters 1 to 4 before drafting Chapter 5.
 
 Recommended order:
 
-1. Refine Chapter 1 so that the introduction matches the current model, event definition, and thesis scope.
+1. Refine Chapter 1 so that the introduction matches the current model, event definition, prior, shard count, and thesis scope.
 2. Refine Chapter 3 so that the methodology exactly matches `Script/Consensus_Monte_Carlo.r`.
 3. Refine Chapter 4 so that every numerical statement is supported by exported files in `Results/` and figures in `Figure/`.
 4. Refine Chapter 2 after Chapters 1, 3, and 4 are stable, adding missing citations if needed.
@@ -406,6 +474,7 @@ After modifying LaTeX files, check for:
 * inconsistent notation
 * unresolved TODOs
 * claims unsupported by the exported results
+* outdated references to normal priors, `K = 4`, purely sequential CMC, or old result filenames
 
 When editing Chapter 4, verify that table values match the corresponding exported CSV files.
 
