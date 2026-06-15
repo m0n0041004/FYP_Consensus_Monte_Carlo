@@ -1,0 +1,51 @@
+"Shard","Road_Type","Count"
+"1","single carriageway",6215
+"2","single carriageway",6146
+"3","single carriageway",6218
+"4","single carriageway",6231
+"5","single carriageway",6162
+"6","single carriageway",6148
+"7","single carriageway",6173
+"8","single carriageway",6236
+"9","single carriageway",6149
+"10","single carriageway",6184
+"1","dual carriageway",844
+"2","dual carriageway",840
+"3","dual carriageway",845
+"4","dual carriageway",800
+"5","dual carriageway",882
+"6","dual carriageway",860
+"7","dual carriageway",856
+"8","dual carriageway",822
+"9","dual carriageway",873
+"10","dual carriageway",817
+"1","one way street (from 2005)",154
+"2","one way street (from 2005)",185
+"3","one way street (from 2005)",178
+"4","one way street (from 2005)",186
+"5","one way street (from 2005)",174
+"6","one way street (from 2005)",176
+"7","one way street (from 2005)",169
+"8","one way street (from 2005)",180
+"9","one way street (from 2005)",153
+"10","one way street (from 2005)",165
+"1","roundabout",936
+"2","roundabout",970
+"3","roundabout",893
+"4","roundabout",918
+"5","roundabout",919
+"6","roundabout",941
+"7","roundabout",926
+"8","roundabout",894
+"9","roundabout",950
+"10","roundabout",973
+"1","slip road (from 2005)",86
+"2","slip road (from 2005)",94
+"3","slip road (from 2005)",101
+"4","slip road (from 2005)",100
+"5","slip road (from 2005)",97
+"6","slip road (from 2005)",109
+"7","slip road (from 2005)",110
+"8","slip road (from 2005)",102
+"9","slip road (from 2005)",109
+"10","slip road (from 2005)",95
