@@ -44,7 +44,7 @@ infer_report_section <- function(file_path) {
     return("Posterior summaries")
   }
 
-  if (grepl("acceptance_rates", file_name)) {
+  if (grepl("acceptance_rates|gelman|rhat|ess|chain_dimension|chain_posterior_summary|diagnostic", file_name)) {
     return("MCMC diagnostics")
   }
 
@@ -107,6 +107,250 @@ safe_write_matrix <- function(object, file_path, report_section = NULL, descript
     write.csv(as.data.frame(object), file_path, row.names = TRUE)
     register_artifact(file_path, report_section, description)
   }
+}
+
+safe_save_rds <- function(object, file_path, report_section = NULL, description = NULL) {
+  if (!is.null(object)) {
+    saveRDS(object, file_path)
+    register_artifact(file_path, report_section, description)
+  }
+}
+
+object_exists <- function(object_name) {
+  exists(object_name, inherits = TRUE)
+}
+
+object_value <- function(object_name) {
+  if (object_exists(object_name)) {
+    get(object_name, inherits = TRUE)
+  } else {
+    NULL
+  }
+}
+
+valid_sample_matrix <- function(samples) {
+  is.matrix(samples) &&
+    nrow(samples) > 0 &&
+    ncol(samples) > 0 &&
+    all(is.finite(samples))
+}
+
+valid_sample_list <- function(samples_list) {
+  if (!is.list(samples_list) || length(samples_list) == 0) {
+    return(FALSE)
+  }
+
+  matrix_check <- vapply(samples_list, valid_sample_matrix, logical(1))
+
+  if (!all(matrix_check)) {
+    return(FALSE)
+  }
+
+  ncols <- vapply(samples_list, ncol, integer(1))
+  identical_dimensions <- length(unique(ncols)) == 1
+
+  colname_check <- vapply(
+    samples_list,
+    function(samples) {
+      identical(colnames(samples), colnames(samples_list[[1]]))
+    },
+    logical(1)
+  )
+
+  identical_dimensions && all(colname_check)
+}
+
+ensure_valid_sample_list <- function(samples_list, object_name) {
+  if (!valid_sample_list(samples_list)) {
+    warning(
+      object_name,
+      " is missing, empty, non-finite, or has inconsistent chain dimensions.",
+      call. = FALSE
+    )
+    return(FALSE)
+  }
+
+  TRUE
+}
+
+chain_dimension_table <- function(samples_list, method_name) {
+  if (!valid_sample_list(samples_list)) {
+    return(NULL)
+  }
+
+  data.frame(
+    Method = method_name,
+    Chain = seq_along(samples_list),
+    Iterations = vapply(samples_list, nrow, integer(1)),
+    Parameters = vapply(samples_list, ncol, integer(1)),
+    stringsAsFactors = FALSE
+  )
+}
+
+chain_posterior_summary_table <- function(samples_list, method_name) {
+  if (!valid_sample_list(samples_list)) {
+    return(NULL)
+  }
+
+  summaries <- lapply(
+    seq_along(samples_list),
+    function(chain_id) {
+      samples <- samples_list[[chain_id]]
+
+      data.frame(
+        Method = method_name,
+        Chain = chain_id,
+        Parameter = colnames(samples),
+        Mean = colMeans(samples),
+        Median = apply(samples, 2, median),
+        Std_Dev = apply(samples, 2, sd),
+        CrI_95_Lower = apply(samples, 2, quantile, probs = 0.025),
+        CrI_95_Upper = apply(samples, 2, quantile, probs = 0.975),
+        Odds_Ratio = exp(colMeans(samples)),
+        row.names = NULL
+      )
+    }
+  )
+
+  do.call(rbind, summaries)
+}
+
+gelman_table_from_object <- function(gelman_object, method_name) {
+  if (is.null(gelman_object)) {
+    return(NULL)
+  }
+
+  if (exists("gelman_psrf_table")) {
+    return(gelman_psrf_table(gelman_object, method_name))
+  }
+
+  if (is.null(gelman_object$psrf)) {
+    warning("Gelman-Rubin object for ", method_name, " does not contain psrf.", call. = FALSE)
+    return(NULL)
+  }
+
+  psrf <- as.data.frame(gelman_object$psrf)
+  psrf$Parameter <- rownames(psrf)
+  rownames(psrf) <- NULL
+
+  point_col <- grep("^Point", names(psrf), value = TRUE)
+  upper_col <- grep("^Upper", names(psrf), value = TRUE)
+
+  if (length(point_col) != 1 || length(upper_col) != 1) {
+    warning("Gelman-Rubin object for ", method_name, " has an unexpected column structure.", call. = FALSE)
+    return(NULL)
+  }
+
+  data.frame(
+    Method = method_name,
+    Parameter = psrf$Parameter,
+    Rhat = psrf[[point_col]],
+    Rhat_Upper_CI = psrf[[upper_col]],
+    row.names = NULL
+  )
+}
+
+gelman_table_from_list <- function(gelman_list, method_name) {
+  if (!is.list(gelman_list) || length(gelman_list) == 0) {
+    return(NULL)
+  }
+
+  tables <- lapply(
+    seq_along(gelman_list),
+    function(index) {
+      gelman_table_from_object(
+        gelman_list[[index]],
+        paste0(method_name, " Shard ", index)
+      )
+    }
+  )
+
+  tables <- Filter(Negate(is.null), tables)
+
+  if (length(tables) == 0) {
+    return(NULL)
+  }
+
+  do.call(rbind, tables)
+}
+
+ess_table_from_vector <- function(ess_vector, method_name) {
+  if (is.null(ess_vector)) {
+    return(NULL)
+  }
+
+  data.frame(
+    Method = method_name,
+    Parameter = names(ess_vector),
+    ESS = as.numeric(ess_vector),
+    row.names = NULL
+  )
+}
+
+acceptance_vector_table <- function(values, method_name, level = "Chain") {
+  if (is.null(values)) {
+    return(NULL)
+  }
+
+  values <- as.numeric(values)
+
+  data.frame(
+    Method = method_name,
+    Level = level,
+    Shard = NA_integer_,
+    Chain = seq_along(values),
+    Acceptance_Rate = values,
+    row.names = NULL
+  )
+}
+
+acceptance_matrix_table <- function(values, method_name) {
+  if (is.null(values)) {
+    return(NULL)
+  }
+
+  values <- as.matrix(values)
+
+  output <- expand.grid(
+    Shard = seq_len(nrow(values)),
+    Chain = seq_len(ncol(values))
+  )
+
+  output$Method <- method_name
+  output$Level <- "Shard-chain"
+  output$Acceptance_Rate <- as.numeric(values[cbind(output$Shard, output$Chain)])
+
+  output[, c("Method", "Level", "Shard", "Chain", "Acceptance_Rate")]
+}
+
+representative_samples <- function(samples_list_name,
+                                   pooled_samples_name,
+                                   chain_id_name = NULL) {
+  samples_list <- object_value(samples_list_name)
+
+  if (valid_sample_list(samples_list)) {
+    chain_id <- 1
+
+    if (!is.null(chain_id_name) && object_exists(chain_id_name)) {
+      candidate_id <- as.integer(object_value(chain_id_name)[1])
+
+      if (!is.na(candidate_id) &&
+          candidate_id >= 1 &&
+          candidate_id <= length(samples_list)) {
+        chain_id <- candidate_id
+      }
+    }
+
+    return(samples_list[[chain_id]])
+  }
+
+  pooled_samples <- object_value(pooled_samples_name)
+
+  if (valid_sample_matrix(pooled_samples)) {
+    return(pooled_samples)
+  }
+
+  NULL
 }
 
 add_setting <- function(name, value) {
@@ -387,6 +631,73 @@ if (exists("cmc_imh_post_stats_table")) {
   )
 }
 
+# Multi-chain posterior summaries. Pooled sample matrices are exported in
+# compact RDS format, while CSV files contain report-ready chain summaries.
+multi_chain_sample_objects <- list(
+  Full_Data_RWMH = list(
+    samples_list = "full_data_rwmh_post_samples_list",
+    pooled_samples = "full_data_rwmh_post_samples",
+    description = "Full-data RWMH"
+  ),
+  Full_Data_IMH = list(
+    samples_list = "full_data_imh_post_samples_list",
+    pooled_samples = "full_data_imh_post_samples",
+    description = "Full-data IMH"
+  ),
+  CMC_RWMH = list(
+    samples_list = "cmc_rwmh_consensus_samples_list",
+    pooled_samples = "cmc_rwmh_samples",
+    description = "CMC-RWMH final consensus"
+  ),
+  CMC_IMH = list(
+    samples_list = "cmc_imh_consensus_samples_list",
+    pooled_samples = "cmc_imh_samples",
+    description = "CMC-IMH final consensus"
+  )
+)
+
+for (method_key in names(multi_chain_sample_objects)) {
+  sample_info <- multi_chain_sample_objects[[method_key]]
+  samples_list <- object_value(sample_info$samples_list)
+  file_prefix <- tolower(method_key)
+
+  if (!is.null(samples_list)) {
+    if (ensure_valid_sample_list(samples_list, sample_info$samples_list)) {
+      safe_write_csv(
+        chain_dimension_table(samples_list, sample_info$description),
+        file.path("Results", paste0(file_prefix, "_chain_dimensions.csv")),
+        "MCMC diagnostics",
+        paste(sample_info$description, "chain dimensions")
+      )
+
+      safe_write_csv(
+        chain_posterior_summary_table(samples_list, sample_info$description),
+        file.path("Results", paste0(file_prefix, "_chain_posterior_summary.csv")),
+        "Posterior summaries",
+        paste(sample_info$description, "chain-specific posterior summaries")
+      )
+
+      safe_save_rds(
+        samples_list,
+        file.path("Results", paste0(file_prefix, "_post_samples_list.rds")),
+        "MCMC diagnostics",
+        paste(sample_info$description, "post-burn-in samples by chain")
+      )
+    }
+  }
+
+  pooled_samples <- object_value(sample_info$pooled_samples)
+
+  if (valid_sample_matrix(pooled_samples)) {
+    safe_save_rds(
+      pooled_samples,
+      file.path("Results", paste0(file_prefix, "_pooled_post_samples.rds")),
+      "Posterior summaries",
+      paste(sample_info$description, "pooled posterior samples")
+    )
+  }
+}
+
 # Posterior mean comparison table
 posterior_summary_objects <- list()
 
@@ -457,6 +768,122 @@ if (length(posterior_summary_objects) > 0) {
   )
 }
 
+# Gelman-Rubin and ESS diagnostics for multi-chain workflows
+gelman_tables <- list(
+  gelman_table_from_object(
+    object_value("full_data_rwmh_gelman_diag"),
+    "Full-data RWMH"
+  ),
+  gelman_table_from_object(
+    object_value("full_data_imh_gelman_diag"),
+    "Full-data IMH"
+  ),
+  gelman_table_from_object(
+    object_value("cmc_rwmh_consensus_gelman_diag"),
+    "CMC-RWMH"
+  ),
+  gelman_table_from_object(
+    object_value("cmc_imh_consensus_gelman_diag"),
+    "CMC-IMH"
+  )
+)
+
+gelman_tables <- Filter(Negate(is.null), gelman_tables)
+
+if (length(gelman_tables) > 0) {
+  safe_write_csv(
+    do.call(rbind, gelman_tables),
+    "Results/gelman_rubin_diagnostics.csv",
+    "MCMC diagnostics",
+    "Gelman-Rubin Rhat diagnostics for final multi-chain posterior samples"
+  )
+}
+
+shard_gelman_tables <- list(
+  gelman_table_from_list(
+    object_value("cmc_rwmh_gelman_diag_list"),
+    "CMC-RWMH"
+  ),
+  gelman_table_from_list(
+    object_value("cmc_imh_gelman_diag_list"),
+    "CMC-IMH"
+  )
+)
+
+shard_gelman_tables <- Filter(Negate(is.null), shard_gelman_tables)
+
+if (length(shard_gelman_tables) > 0) {
+  safe_write_csv(
+    do.call(rbind, shard_gelman_tables),
+    "Results/cmc_shard_gelman_rubin_diagnostics.csv",
+    "MCMC diagnostics",
+    "CMC shard-level Gelman-Rubin Rhat diagnostics"
+  )
+}
+
+ess_tables <- list(
+  object_value("full_data_rwmh_ess_table"),
+  object_value("full_data_imh_ess_table"),
+  object_value("cmc_rwmh_ess_table"),
+  object_value("cmc_imh_ess_table")
+)
+
+if (is.null(ess_tables[[1]])) {
+  ess_tables[[1]] <- ess_table_from_vector(
+    object_value("full_data_rwmh_ess_by_parameter"),
+    "Full-data RWMH"
+  )
+}
+
+if (is.null(ess_tables[[2]])) {
+  ess_tables[[2]] <- ess_table_from_vector(
+    object_value("full_data_imh_ess_by_parameter"),
+    "Full-data IMH"
+  )
+}
+
+if (is.null(ess_tables[[3]])) {
+  ess_tables[[3]] <- ess_table_from_vector(
+    object_value("cmc_rwmh_ess_by_parameter"),
+    "CMC-RWMH"
+  )
+}
+
+if (is.null(ess_tables[[4]])) {
+  ess_tables[[4]] <- ess_table_from_vector(
+    object_value("cmc_imh_ess_by_parameter"),
+    "CMC-IMH"
+  )
+}
+
+ess_tables <- Filter(Negate(is.null), ess_tables)
+
+if (length(ess_tables) > 0) {
+  safe_write_csv(
+    do.call(rbind, ess_tables),
+    "Results/effective_sample_size.csv",
+    "MCMC diagnostics",
+    "Effective sample size by method and parameter"
+  )
+}
+
+shard_ess_tables <- Filter(
+  Negate(is.null),
+  list(
+    object_value("cmc_rwmh_shard_ess_table"),
+    object_value("cmc_imh_shard_ess_table")
+  )
+)
+
+if (length(shard_ess_tables) > 0) {
+  safe_write_csv(
+    do.call(rbind, shard_ess_tables),
+    "Results/cmc_shard_effective_sample_size.csv",
+    "MCMC diagnostics",
+    "CMC shard-level effective sample size by parameter"
+  )
+}
+
 # Consensus Monte Carlo approximation accuracy exports
 rmse_objects <- list()
 
@@ -508,17 +935,39 @@ if (exists("cmc_imh_posterior_mean_error_table")) {
 
 acceptance_list <- list()
 
-if (exists("full_data_rwmh_result")) {
+acceptance_tables <- list(
+  acceptance_vector_table(
+    object_value("full_data_rwmh_post_burn_in_acceptance_rates"),
+    "Full-data RWMH"
+  ),
+  acceptance_vector_table(
+    object_value("full_data_imh_post_burn_in_acceptance_rates"),
+    "Full-data IMH"
+  ),
+  acceptance_matrix_table(
+    object_value("cmc_rwmh_post_burn_in_acceptance_rates_by_shard"),
+    "CMC-RWMH"
+  ),
+  acceptance_matrix_table(
+    object_value("cmc_imh_post_burn_in_acceptance_rates_by_shard"),
+    "CMC-IMH"
+  )
+)
+
+acceptance_tables <- Filter(Negate(is.null), acceptance_tables)
+
+# Backward-compatible exports for the previous single-chain object structure.
+if (length(acceptance_tables) == 0 && exists("full_data_rwmh_result")) {
   acceptance_list[["Full-data RWMH"]] <-
     full_data_rwmh_result$post_burn_in_acceptance_rate
 }
 
-if (exists("full_data_imh_result")) {
+if (length(acceptance_tables) == 0 && exists("full_data_imh_result")) {
   acceptance_list[["Full-data IMH"]] <-
     full_data_imh_result$post_burn_in_acceptance_rate
 }
 
-if (exists("cmc_rwmh_post_burn_in_acceptance_rates")) {
+if (length(acceptance_tables) == 0 && exists("cmc_rwmh_post_burn_in_acceptance_rates")) {
   for (i in seq_along(cmc_rwmh_post_burn_in_acceptance_rates)) {
     acceptance_list[[paste0("CMC-RWMH Shard ", i)]] <-
       cmc_rwmh_post_burn_in_acceptance_rates[i]
@@ -528,7 +977,7 @@ if (exists("cmc_rwmh_post_burn_in_acceptance_rates")) {
     mean(cmc_rwmh_post_burn_in_acceptance_rates)
 }
 
-if (exists("cmc_imh_post_burn_in_acceptance_rates")) {
+if (length(acceptance_tables) == 0 && exists("cmc_imh_post_burn_in_acceptance_rates")) {
   for (i in seq_along(cmc_imh_post_burn_in_acceptance_rates)) {
     acceptance_list[[paste0("CMC-IMH Shard ", i)]] <-
       cmc_imh_post_burn_in_acceptance_rates[i]
@@ -538,7 +987,28 @@ if (exists("cmc_imh_post_burn_in_acceptance_rates")) {
     mean(cmc_imh_post_burn_in_acceptance_rates)
 }
 
-if (length(acceptance_list) > 0) {
+if (length(acceptance_tables) > 0) {
+  acceptance_rates <- do.call(rbind, acceptance_tables)
+  acceptance_rates$Summary <- FALSE
+
+  acceptance_summary <- aggregate(
+    Acceptance_Rate ~ Method,
+    data = acceptance_rates,
+    FUN = mean
+  )
+  acceptance_summary$Level <- "Mean"
+  acceptance_summary$Shard <- NA_integer_
+  acceptance_summary$Chain <- NA_integer_
+  acceptance_summary$Summary <- TRUE
+  acceptance_summary <- acceptance_summary[, names(acceptance_rates)]
+
+  acceptance_rates <- rbind(acceptance_rates, acceptance_summary)
+
+  safe_write_csv(
+    acceptance_rates,
+    "Results/acceptance_rates.csv"
+  )
+} else if (length(acceptance_list) > 0) {
   acceptance_rates <- data.frame(
     Method = names(acceptance_list),
     Acceptance_Rate = as.numeric(acceptance_list),
@@ -662,6 +1132,11 @@ if (exists("prior_scale_value")) {
     settings,
     add_setting("Cauchy prior scale", prior_scale_value)
   )
+} else if (exists("log_prior")) {
+  settings <- rbind(
+    settings,
+    add_setting("Cauchy prior scale", 2.5)
+  )
 }
 
 if (exists("num_iterations")) {
@@ -682,6 +1157,13 @@ if (exists("burn_in")) {
   settings <- rbind(
     settings,
     add_setting("Full-data burn-in iterations", burn_in)
+  )
+}
+
+if (exists("num_chains")) {
+  settings <- rbind(
+    settings,
+    add_setting("Number of independent chains", num_chains)
   )
 }
 
@@ -792,8 +1274,15 @@ fig_wide_height_px <- 300
 fig_wide_width_in <- fig_wide_width_px / fig_dpi
 fig_wide_height_in <- fig_wide_height_px / fig_dpi
 
-# Full-data RWMH histogram and trace plots
-if (exists("full_data_rwmh_post_samples") && exists("hist_trace_plot")) {
+# Full-data RWMH histogram and trace plots. In the multi-chain workflow,
+# a representative chain is plotted because pooled samples are not one chain.
+full_data_rwmh_plot_samples <- representative_samples(
+  "full_data_rwmh_post_samples_list",
+  "full_data_rwmh_post_samples",
+  "full_data_rwmh_plot_chain_id"
+)
+
+if (!is.null(full_data_rwmh_plot_samples) && exists("hist_trace_plot")) {
   pdf(
     "Figure/full_data_rwmh_hist_trace_%02d.pdf",
     width = fig_width_in,
@@ -808,7 +1297,7 @@ if (exists("full_data_rwmh_post_samples") && exists("hist_trace_plot")) {
     cex.axis = 0.85
   )
 
-  hist_trace_plot(full_data_rwmh_post_samples, params_per_page = 2)
+  hist_trace_plot(full_data_rwmh_plot_samples, params_per_page = 2)
 
   par(old_par)
   dev.off()
@@ -821,7 +1310,7 @@ if (exists("full_data_rwmh_post_samples") && exists("hist_trace_plot")) {
 }
 
 # Full-data RWMH ACF plots
-if (exists("full_data_rwmh_post_samples") && exists("acf_mcmc_plot")) {
+if (!is.null(full_data_rwmh_plot_samples) && exists("acf_mcmc_plot")) {
   pdf(
     "Figure/full_data_rwmh_acf_%02d.pdf",
     width = fig_wide_width_in,
@@ -836,7 +1325,7 @@ if (exists("full_data_rwmh_post_samples") && exists("acf_mcmc_plot")) {
     cex.axis = 0.80
   )
 
-  acf_mcmc_plot(full_data_rwmh_post_samples, params_per_page = 2)
+  acf_mcmc_plot(full_data_rwmh_plot_samples, params_per_page = 2)
 
   par(old_par)
   dev.off()
@@ -849,7 +1338,13 @@ if (exists("full_data_rwmh_post_samples") && exists("acf_mcmc_plot")) {
 }
 
 # Full-data IMH histogram and trace plots
-if (exists("full_data_imh_post_samples") && exists("hist_trace_plot")) {
+full_data_imh_plot_samples <- representative_samples(
+  "full_data_imh_post_samples_list",
+  "full_data_imh_post_samples",
+  "full_data_imh_plot_chain_id"
+)
+
+if (!is.null(full_data_imh_plot_samples) && exists("hist_trace_plot")) {
   pdf(
     "Figure/full_data_imh_hist_trace_%02d.pdf",
     width = fig_width_in,
@@ -864,7 +1359,7 @@ if (exists("full_data_imh_post_samples") && exists("hist_trace_plot")) {
     cex.axis = 0.85
   )
 
-  hist_trace_plot(full_data_imh_post_samples, params_per_page = 2)
+  hist_trace_plot(full_data_imh_plot_samples, params_per_page = 2)
 
   par(old_par)
   dev.off()
@@ -877,7 +1372,7 @@ if (exists("full_data_imh_post_samples") && exists("hist_trace_plot")) {
 }
 
 # Full-data IMH ACF plots
-if (exists("full_data_imh_post_samples") && exists("acf_mcmc_plot")) {
+if (!is.null(full_data_imh_plot_samples) && exists("acf_mcmc_plot")) {
   pdf(
     "Figure/full_data_imh_acf_%02d.pdf",
     width = fig_wide_width_in,
@@ -892,7 +1387,7 @@ if (exists("full_data_imh_post_samples") && exists("acf_mcmc_plot")) {
     cex.axis = 0.80
   )
 
-  acf_mcmc_plot(full_data_imh_post_samples, params_per_page = 2)
+  acf_mcmc_plot(full_data_imh_plot_samples, params_per_page = 2)
 
   par(old_par)
   dev.off()
@@ -934,6 +1429,67 @@ if (exists("cmc_rwmh_samples") && exists("consensus_density_plot")) {
   )
 }
 
+# CMC-RWMH representative final consensus chain histogram and trace plots
+cmc_rwmh_plot_samples <- representative_samples(
+  "cmc_rwmh_consensus_samples_list",
+  "cmc_rwmh_samples",
+  "cmc_rwmh_plot_chain_id"
+)
+
+if (!is.null(cmc_rwmh_plot_samples) && exists("hist_trace_plot")) {
+  pdf(
+    "Figure/cmc_rwmh_hist_trace_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.80,
+    cex.lab = 0.85,
+    cex.axis = 0.85
+  )
+
+  hist_trace_plot(cmc_rwmh_plot_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/cmc_rwmh_hist_trace_%02d.pdf",
+    "Figures",
+    "CMC-RWMH representative final consensus chain histograms and trace plots"
+  )
+}
+
+if (!is.null(cmc_rwmh_plot_samples) && exists("acf_mcmc_plot")) {
+  pdf(
+    "Figure/cmc_rwmh_acf_%02d.pdf",
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.75,
+    cex.lab = 0.80,
+    cex.axis = 0.80
+  )
+
+  acf_mcmc_plot(cmc_rwmh_plot_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/cmc_rwmh_acf_%02d.pdf",
+    "Figures",
+    "CMC-RWMH representative final consensus chain autocorrelation plots"
+  )
+}
+
 # CMC-IMH density plots
 if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
   pdf(
@@ -961,6 +1517,67 @@ if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
     "Figure/cmc_imh_density_%02d.pdf",
     "Figures",
     "CMC-IMH consensus posterior density plots"
+  )
+}
+
+# CMC-IMH representative final consensus chain histogram and trace plots
+cmc_imh_plot_samples <- representative_samples(
+  "cmc_imh_consensus_samples_list",
+  "cmc_imh_samples",
+  "cmc_imh_plot_chain_id"
+)
+
+if (!is.null(cmc_imh_plot_samples) && exists("hist_trace_plot")) {
+  pdf(
+    "Figure/cmc_imh_hist_trace_%02d.pdf",
+    width = fig_width_in,
+    height = fig_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.80,
+    cex.lab = 0.85,
+    cex.axis = 0.85
+  )
+
+  hist_trace_plot(cmc_imh_plot_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/cmc_imh_hist_trace_%02d.pdf",
+    "Figures",
+    "CMC-IMH representative final consensus chain histograms and trace plots"
+  )
+}
+
+if (!is.null(cmc_imh_plot_samples) && exists("acf_mcmc_plot")) {
+  pdf(
+    "Figure/cmc_imh_acf_%02d.pdf",
+    width = fig_wide_width_in,
+    height = fig_wide_height_in,
+    onefile = FALSE
+  )
+
+  old_par <- par(no.readonly = TRUE)
+  par(
+    cex.main = 0.75,
+    cex.lab = 0.80,
+    cex.axis = 0.80
+  )
+
+  acf_mcmc_plot(cmc_imh_plot_samples, params_per_page = 2)
+
+  par(old_par)
+  dev.off()
+
+  register_artifact(
+    "Figure/cmc_imh_acf_%02d.pdf",
+    "Figures",
+    "CMC-IMH representative final consensus chain autocorrelation plots"
   )
 }
 
@@ -1020,20 +1637,51 @@ object_names <- c(
   "X",
   "param_names",
   "prior_scale_value",
+  "num_chains",
   "full_data_rwmh_result",
   "full_data_imh_result",
+  "full_data_rwmh_results",
+  "full_data_imh_results",
   "full_data_rwmh_chain",
   "full_data_imh_chain",
+  "full_data_rwmh_post_samples_list",
+  "full_data_imh_post_samples_list",
   "full_data_rwmh_post_samples",
   "full_data_imh_post_samples",
   "full_data_rwmh_post_stats_table",
   "full_data_imh_post_stats_table",
+  "full_data_rwmh_post_burn_in_acceptance_rates",
+  "full_data_imh_post_burn_in_acceptance_rates",
+  "full_data_rwmh_gelman_diag",
+  "full_data_imh_gelman_diag",
+  "full_data_rwmh_ess_by_parameter",
+  "full_data_imh_ess_by_parameter",
+  "full_data_rwmh_ess_table",
+  "full_data_imh_ess_table",
   "cmc_rwmh_results",
   "cmc_imh_results",
+  "cmc_rwmh_shard_post_samples_by_chain_list",
+  "cmc_imh_shard_post_samples_by_chain_list",
   "cmc_rwmh_subposterior_samples_list",
   "cmc_imh_subposterior_samples_list",
   "cmc_rwmh_post_burn_in_acceptance_rates",
   "cmc_imh_post_burn_in_acceptance_rates",
+  "cmc_rwmh_post_burn_in_acceptance_rates_by_shard",
+  "cmc_imh_post_burn_in_acceptance_rates_by_shard",
+  "cmc_rwmh_mean_post_burn_in_acceptance_rates",
+  "cmc_imh_mean_post_burn_in_acceptance_rates",
+  "cmc_rwmh_gelman_diag_list",
+  "cmc_imh_gelman_diag_list",
+  "cmc_rwmh_shard_ess_table",
+  "cmc_imh_shard_ess_table",
+  "cmc_rwmh_consensus_samples_list",
+  "cmc_imh_consensus_samples_list",
+  "cmc_rwmh_consensus_gelman_diag",
+  "cmc_imh_consensus_gelman_diag",
+  "cmc_rwmh_ess_by_parameter",
+  "cmc_imh_ess_by_parameter",
+  "cmc_rwmh_ess_table",
+  "cmc_imh_ess_table",
   "cmc_rwmh_samples",
   "cmc_imh_samples",
   "cmc_rwmh_post_stats_table",
