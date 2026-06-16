@@ -1,23 +1,123 @@
 \chapter{Literature Review}
 
+\section{Bayesian Modelling for Binary Response Data}
 
-\section{A Weakly Informative Default Prior Distribution for Logistic and Other Regression Models}
-Gelman et al.'s paper addresses an important practical problem in logistic regression and related regression models: the instability of coefficient estimates when data are sparse, predictors are highly imbalanced, or separation occurs. In such cases, classical maximum likelihood estimation may produce very large or undefined coefficient estimates, making inference unreliable. The authors argue that fully informative priors may be difficult to specify in routine applied work, while completely noninformative priors may fail to regularise unstable likelihoods. Their contribution is therefore motivated by the need for a default Bayesian prior that is weak enough to allow the data to dominate when the data are informative, but strong enough to prevent implausibly large coefficient estimates in poorly identified logistic regression problems.
+Bayesian inference provides a probabilistic framework for estimating unknown model parameters by combining information from the likelihood with prior information. For a parameter vector $\boldsymbol{\beta}$ and observed data $(\mathbf{y},\mathbf{X})$, the posterior distribution is proportional to
+\[
+\pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X})
+\propto
+L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})\pi(\boldsymbol{\beta}).
+\]
+The posterior distribution is therefore the central object of inference because it describes uncertainty about the regression coefficients after observing the data. In this study, posterior inference is required for a binary accident-severity response, so Bayesian logistic regression provides the modelling foundation for the subsequent Metropolis--Hastings and Consensus Monte Carlo procedures.
 
-The main methodological contribution of the paper is the proposal of weakly informative Student-\(t\) prior distributions for coefficients in logistic and related regression models. In particular, the authors recommend a default Cauchy prior with centre \(0\) and scale \(2.5\) for regression coefficients after nonbinary predictors have been scaled appropriately. This paper is relevant to the present thesis because the methodology uses Bayesian logistic regression, and the choice of prior distribution affects posterior estimation before applying Metropolis--Hastings sampling and Consensus Monte Carlo on distributed data subsets. However, the paper is not primarily concerned with distributed Bayesian computation or posterior aggregation. Its role in this literature review is therefore to justify the Bayesian logistic regression and prior specification component of the methodology, rather than to provide a direct method for Consensus Monte Carlo. \cite{gelman2008weakly}
+Logistic regression is appropriate when the response variable is binary. Let $y_i\in\{0,1\}$ denote the response for observation $i$, where $y_i=1$ represents a serious/fatal accident and $y_i=0$ represents a slight accident. The Bayesian logistic regression model assumes
+\[
+y_i\mid \boldsymbol{\beta}\sim \operatorname{Bernoulli}(p_i),
+\qquad
+\operatorname{logit}(p_i)=\mathbf{x}_i^T\boldsymbol{\beta}.
+\]
+Here, $p_i$ is the probability of serious/fatal accident severity and $\mathbf{x}_i$ contains the intercept and encoded predictor values. Because road type and speed limit are categorical predictors, one category must be treated as the reference category. The coefficients for the remaining categories are then interpreted as changes in log-odds relative to the reference category, holding other predictors fixed. This reference-category interpretation is important because the empirical implementation models road type and speed limit through indicator variables.
 
-\section{Comparing Consensus Monte Carlo Strategies for Distributed Bayesian Computation}
-This paper by Steven L. Scott reviews and compares methods for distributed Bayesian computation, focusing on how to combine posterior samples generated separately on different data partitions. Its main concern is the consensus Monte Carlo setting, where large datasets are split across machines to reduce computational burden and communication costs. Scott evaluates three main aggregation strategies already discussed in the literature: averaging methods, sequential resampling approaches, and density-estimation methods. The paper shows that simple weighted averaging performs very well when subposteriors are close to Gaussian, which often happens in large-sample settings, making it a strong practical baseline despite its simplicity.
+\section{Prior Specification in Bayesian Logistic Regression}
 
-A major contribution of the paper is its critical comparison of these methods and the proposal of a mixture-based consensus Monte Carlo approach, which uses Gaussian mixtures to better capture non-Gaussian posterior shapes. Scott finds that while more flexible methods such as kernel-based and sequential approaches are attractive in theory, they tend to perform poorly as dimension increases, whereas averaging remains stable and computationally efficient. The paper therefore concludes that in distributed Bayesian inference, the main challenge is not generating local posterior samples but combining them accurately without losing scalability. Overall, the study is important because it gives a balanced assessment of the trade-off between statistical accuracy and computational practicality in scalable Bayesian analysis. \cite{scott2017comparing}
+Prior specification is an important part of Bayesian regression modelling. In logistic regression, coefficient estimates may become unstable when the data are sparse, when predictors are imbalanced, or when separation occurs. Weakly informative priors are designed to regularise estimation without imposing strong prior beliefs. Gelman et al. proposed weakly informative Student-$t$ prior distributions for logistic and related regression models and recommended a Cauchy prior with centre $0$ and scale $2.5$ as a default prior choice after suitable scaling of predictors \cite{gelman2008weakly}.
 
-\section{Bayes and Big Data: The Consensus Monte Carlo Algorithm}
-Scott et al.’s Bayes and Big Data: The Consensus Monte Carlo Algorithm sits in the early literature on scalable Bayesian computation, addressing the problem of inference when data are too large for a single machine. The paper argues that existing parallel approaches based on multicore CPUs or GPUs reduce processor bottlenecks but do not solve memory and disk limits, while multi-machine settings introduce severe communication costs that make standard synchronized MCMC inefficient. In positioning their method, the authors connect their work to several adjacent strands: averaging frequentist estimators in distributed settings, the “bag of little bootstraps,” earlier Bayesian consensus ideas by Huang and Gelman, and deterministic Bayesian approximations such as INLA and variational Bayes. Their literature framing is therefore important because it shows consensus Monte Carlo not as an isolated algorithm, but as one response within a broader effort to make inference feasible under big-data constraints while still preserving access to the full posterior distribution.
+Following this motivation, the present study assigns independent Cauchy priors to the regression coefficients,
+\[
+\beta_j \sim \operatorname{Cauchy}(0,2.5),
+\qquad j=0,\ldots,p.
+\]
+The prior is centred at zero, representing no strong prior direction for the coefficient, while its heavy tails allow large coefficient values when supported by the data. This makes the prior weakly informative rather than strongly restrictive. However, the heavy-tailed nature of the Cauchy prior also requires care. Ghosh, Li and Mitra examined theoretical and computational issues associated with Cauchy priors in Bayesian logistic regression, particularly under separation, and showed that posterior behaviour may be problematic in some cases \cite{ghosh2015cauchy}. Thus, the Cauchy prior is useful as a weakly informative default, but its computational implications should be acknowledged when interpreting posterior simulation output.
 
-The paper’s main contribution is to propose consensus Monte Carlo, where data are split into shards, each worker runs an independent Monte Carlo simulation on its local subproblem, and the resulting draws are combined through averaging rules to approximate the full posterior. In the examples, the method performs well not only in Gaussian settings but also in some non-Gaussian cases, including beta-binomial models, hierarchical models, and BART, which supports the authors’ claim that simple averaging can be surprisingly effective in distributed Bayesian analysis. At the same time, the paper is careful about limitations: the method is best suited to fixed-dimensional continuous parameter spaces, and the authors explicitly note that performance away from Gaussianity remains an open question, with more sophisticated consensus mechanisms still needing development. As a result, this paper is best read as a foundational contribution that establishes the practicality of low-communication Bayesian aggregation, while also defining the main theoretical and methodological issues that later distributed MCMC research would need to resolve.
-\cite{scott2022bayes}
+\section{Markov Chain Monte Carlo and Metropolis--Hastings}
 
-\section{Sampling for Bayesian computation with large datasets}
-Huang and Gelman’s Sampling for Bayesian Computation with Large Datasets is an early contribution to the literature on scalable Bayesian inference for hierarchical models. The paper begins from the observation that Bayesian multilevel modeling had already become important across fields such as health, education, environment, and business, but that standard Gibbs and related MCMC methods became difficult to use once datasets were too large for convenient storage and repeated full-data iteration. In that context, the authors position their work against earlier data-subsetting approaches, especially sequential and importance-sampling based methods such as Chopin (2002) and Ridgeway and Madigan (2002), arguing that their own strategy extends this line of work by using random partitioning and cluster sampling so that each subset preserves the hierarchical structure of the original data. This framing is important because it treats big-data Bayes not as a completely new problem, but as an extension of existing work on approximate posterior computation under computational constraints.
+For many Bayesian models, posterior summaries cannot be obtained analytically because the posterior normalising constant is unavailable or posterior expectations require high-dimensional integration. Markov Chain Monte Carlo methods address this problem by constructing a Markov chain whose stationary distribution is the target posterior distribution. After burn-in, simulated draws from the chain can be used to approximate posterior means, posterior standard deviations, quantiles, credible intervals, and other summaries. Tierney provided a general theoretical treatment of using Markov chains to explore posterior distributions \cite{tierney1994markov}.
 
-The paper’s main methodological contribution is a consensus-style posterior combination strategy: divide the data into disjoint subsets, fit the Bayesian model separately on each subset, and then combine the resulting inferences using a normal approximation, with possible refinement through importance sampling. In the literature, this paper is therefore best understood as a precursor to later consensus Monte Carlo methods, because it already identifies the central ideas that would define that area: subset-based inference, low communication cost, and the statistical problem of how to recombine local posterior information into a global approximation. The authors are also careful to state the unresolved issues, including the lack of a full theoretical justification, the choice of the number of subsets K, and the question of which aggregation rule is best. As a result, the paper is significant less for providing a final solution than for establishing the basic research agenda for distributed Bayesian computation in large hierarchical datasets. \cite{huang2005sampling}
+The Metropolis algorithm was introduced by Metropolis et al. for simulation-based computation \cite{metropolis1953equation}, and Hastings later generalized it to allow more general proposal distributions \cite{hastings1970monte}. The resulting Metropolis--Hastings algorithm is a flexible MCMC method for sampling from a target distribution known up to a proportionality constant. Chib and Greenberg provide a clear exposition of the algorithm and its practical implementation \cite{chib1995understanding}.
+
+At iteration $t$, a candidate value $\boldsymbol{\beta}^{*}$ is generated from a proposal density $q(\boldsymbol{\beta}^{*}\mid\boldsymbol{\beta}^{(t-1)})$. The candidate is accepted with probability
+\[
+\alpha
+=
+\min\left\{
+1,
+\frac{
+\pi(\boldsymbol{\beta}^{*}\mid \mathbf{y},\mathbf{X})
+q(\boldsymbol{\beta}^{(t-1)}\mid\boldsymbol{\beta}^{*})
+}{
+\pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y},\mathbf{X})
+q(\boldsymbol{\beta}^{*}\mid\boldsymbol{\beta}^{(t-1)})
+}
+\right\}.
+\]
+This general form covers both Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. In Random Walk Metropolis--Hastings, the proposal is centred at the current state, so the proposal is symmetric when a multivariate normal random-walk proposal is used. In Independent Metropolis--Hastings, candidates are generated from a fixed proposal distribution independent of the current state, so the proposal-density correction must be retained in the acceptance probability.
+
+\section{Proposal Design and MCMC Accuracy}
+
+The efficiency of Metropolis--Hastings sampling depends strongly on the proposal distribution. If the proposal variance is too small, the chain may have a high acceptance rate but move slowly through the posterior distribution. If the proposal variance is too large, many proposed values may be rejected. Therefore, proposal scaling is a central practical issue in Random Walk Metropolis--Hastings.
+
+For multivariate random-walk proposals, Roberts, Gelman and Gilks developed optimal-scaling results that motivate proposal covariance matrices proportional to
+\[
+\frac{2.38^2}{d}\widehat{\boldsymbol{\Sigma}},
+\]
+where $d$ is the parameter dimension and $\widehat{\boldsymbol{\Sigma}}$ is an estimate of the target covariance structure \cite{roberts1997weak}. In the present implementation, this scaling is combined with a tuning factor and an estimated covariance matrix from a preliminary frequentist logistic regression fit. Cholesky decomposition is used as a computational device for generating correlated multivariate normal proposal draws. If $\boldsymbol{\Sigma}=\mathbf{L}\mathbf{L}^{T}$, where $\mathbf{L}$ is a Cholesky factor, then correlated normal proposals can be generated by transforming independent standard normal random variables using $\mathbf{L}$.
+
+The Independent Metropolis--Hastings sampler uses a fixed multivariate normal proposal centred at the frequentist logistic regression estimate. Its proposal covariance is also based on the estimated covariance matrix from the frequentist fit, multiplied by a tuning factor. This design uses the frequentist approximation to provide a proposal distribution with a plausible centre and scale, while the Metropolis--Hastings acceptance probability corrects for the difference between the proposal distribution and the target posterior distribution.
+
+Monte Carlo accuracy must also be assessed because MCMC samples are autocorrelated. Effective sample size measures the amount of independent-sample information represented by an autocorrelated chain. Monte Carlo standard error measures the simulation uncertainty of posterior estimates. Flegal, Haran and Jones emphasized that reporting Monte Carlo standard errors is important for assessing the numerical reliability of MCMC estimates \cite{flegal2008mcmc}. In this study, ESS and MCSE are reported together with posterior summaries to evaluate the accuracy of the full-data and consensus posterior estimates.
+
+\section{Multi-chain Convergence Diagnostics}
+
+Running multiple independent chains provides additional information about whether MCMC simulations have reached similar stationary behaviour. Gelman and Rubin proposed a multiple-sequence convergence diagnostic based on comparing between-chain and within-chain variation \cite{gelman1992inference}. This diagnostic is commonly expressed as the potential scale reduction factor, or $\hat{R}$, where values close to $1$ indicate that the independent chains have similar behaviour. Brooks and Gelman extended the diagnostic framework and discussed general methods for monitoring convergence in iterative simulations \cite{brooks1998general}.
+
+The multi-chain implementation in this project reports Gelman--Rubin diagnostics for full-data chains, shard-level chains, and final CMC consensus chains. It also computes ESS using the chains as a \texttt{coda::mcmc.list} object rather than computing autocorrelation-based diagnostics from artificially pooled chains. This distinction is important because pooling several chains into one long matrix may be appropriate for posterior summaries, but it should not be treated as a single genuine time series for convergence diagnostics.
+
+More recent work by Vehtari et al. proposed rank-normalized, folded, and localized versions of $\hat{R}$, showing that traditional $\hat{R}$ can miss convergence problems in heavy-tailed or scale-varying chains \cite{vehtari2021rank}. The present study does not implement these newer rank-normalized diagnostics; instead, it uses the classical Gelman--Rubin diagnostic through the \texttt{coda} package. Nevertheless, the modern diagnostic literature is useful for interpreting the limitations of $\hat{R}$ and for motivating the combined reporting of $\hat{R}$, ESS, MCSE, trace plots, and autocorrelation plots.
+
+\section{Distributed Bayesian Computation}
+
+Full-data MCMC can become computationally expensive for large datasets because each iteration may require evaluating the likelihood over all observations. Distributed Bayesian computation addresses this issue by partitioning the data, performing computation separately on subsets, and recombining the subset-level results. Huang and Gelman proposed an early subset-based approach for Bayesian computation with large datasets, using separate analyses on data partitions followed by approximate combination of the resulting inferences \cite{huang2005sampling}. This work is relevant because it identifies the main statistical challenge that later Consensus Monte Carlo methods address: local computations are easy to parallelise, but the local posterior information must be recombined in a way that approximates the full posterior.
+
+In the present study, data partitioning is not used merely for data management. It defines the computational structure of the Consensus Monte Carlo method. The observations are divided into $K=10$ shards using stratified assignment by response class so that each shard retains representation from both binary response categories. Shard-level MCMC computations are then run independently, allowing the expensive likelihood evaluations to be distributed across workers.
+
+\section{Consensus Monte Carlo}
+
+Consensus Monte Carlo is a distributed Bayesian computation method designed to approximate a full-data posterior distribution using subset posterior simulations. Scott et al. proposed the Consensus Monte Carlo algorithm as a low-communication approach for Bayesian inference with large datasets \cite{scott2016bayes}. The key idea is to divide the data into shards, run separate Monte Carlo simulations on each shard, and then combine the resulting subposterior draws to approximate the full posterior distribution.
+
+Suppose the full likelihood factorises over $K$ data shards as
+\[
+L(\mathbf{y}\mid\boldsymbol{\beta},\mathbf{X})
+=
+\prod_{k=1}^{K}
+L(\mathbf{y}_k\mid\boldsymbol{\beta},\mathbf{X}_k).
+\]
+A common Consensus Monte Carlo construction defines the $k$th subposterior as
+\[
+\pi_k(\boldsymbol{\beta}\mid\mathbf{y}_k,\mathbf{X}_k)
+\propto
+L(\mathbf{y}_k\mid\boldsymbol{\beta},\mathbf{X}_k)
+\pi(\boldsymbol{\beta})^{1/K}.
+\]
+The fractional prior contribution ensures that multiplying all subposterior kernels recovers a kernel proportional to the full posterior. This construction is used in the present methodology for both CMC-RWMH and CMC-IMH.
+
+The remaining problem is how to combine subposterior samples. In approximately Gaussian settings, precision-weighted averaging is a natural strategy. If $\widehat{\boldsymbol{\Sigma}}_k$ is the estimated covariance matrix of subposterior $k$ and $\mathbf{W}_k=\widehat{\boldsymbol{\Sigma}}_k^{-1}$ is the corresponding precision matrix, then consensus draws can be formed using precision-weighted combinations of shard-level draws. Scott compared several Consensus Monte Carlo strategies and emphasized that the practical performance of CMC depends not only on generating local posterior samples but also on the aggregation rule used to combine them \cite{scott2017comparing}. This is directly relevant to the present study, which uses precision-weighted combination of subposterior samples.
+
+\section{Evaluation of Consensus Monte Carlo Approximation}
+
+Because Consensus Monte Carlo is an approximation to full-data posterior inference, its output must be compared with a full-data reference. In this study, full-data Random Walk Metropolis--Hastings serves as the reference for CMC-RWMH, and full-data Independent Metropolis--Hastings serves as the reference for CMC-IMH. Posterior means, medians, posterior standard deviations, credible intervals, odds ratios, acceptance rates, $\hat{R}$, ESS, MCSE, trace plots, autocorrelation plots, density plots, and runtime are used to compare the methods.
+
+The posterior mean root mean squared error is used as a direct numerical measure of approximation error. For a CMC posterior mean vector $\widehat{\boldsymbol{\mu}}_{\mathrm{CMC}}$ and a full-data posterior mean vector $\widehat{\boldsymbol{\mu}}_{\mathrm{full}}$, the RMSE is
+\[
+\operatorname{RMSE}
+=
+\sqrt{
+\frac{1}{d}
+\sum_{j=1}^{d}
+\left(
+\widehat{\mu}_{\mathrm{CMC},j}
+-
+\widehat{\mu}_{\mathrm{full},j}
+\right)^2
+}.
+\]
+A smaller RMSE indicates that the consensus posterior mean is closer to the corresponding full-data posterior mean. However, RMSE alone is not sufficient. It must be interpreted together with diagnostic measures and computational runtime because a method may be fast but inaccurate, or accurate but computationally inefficient. Therefore, the evaluation of CMC in this study considers both statistical agreement with the full-data posterior and computational efficiency.
