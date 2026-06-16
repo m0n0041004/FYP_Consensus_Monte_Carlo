@@ -1,22 +1,28 @@
 \chapter{Literature Review}
 
-\section{Bayesian Modelling for Binary Response Data}
+\section{Bayesian Logistic Regression for Binary Response Data}
 
-Bayesian inference provides a probabilistic framework for estimating unknown model parameters by combining information from the likelihood with prior information. For a parameter vector $\boldsymbol{\beta}$ and observed data $(\mathbf{y},\mathbf{X})$, the posterior distribution is proportional to
+Logistic regression is a standard member of the generalized linear model family for binary and binomial response data. In the generalized linear model framework, a response distribution from the exponential family is connected to a linear predictor through a link function; for binary response modelling, the logit link is commonly used to model the log-odds of the event probability as a linear function of covariates \cite{mccullagh1989generalized,hosmer2013applied}. This makes logistic regression suitable for modelling whether an observation belongs to an event class or a reference class.
+
+For a binary response $y_i\in\{0,1\}$, logistic regression assumes
+\[
+y_i\mid p_i \sim \operatorname{Bernoulli}(p_i),
+\qquad
+\operatorname{logit}(p_i)
+=
+\log\left(\frac{p_i}{1-p_i}\right)
+=
+\mathbf{x}_i^T\boldsymbol{\beta}.
+\]
+The regression coefficient $\beta_j$ is interpreted on the log-odds scale, while $\exp(\beta_j)$ is interpreted as an odds ratio for a one-unit change in the corresponding predictor or relative to a reference category for categorical predictors \cite{hosmer2013applied}. When categorical predictors are included, one category is treated as the reference category, and the coefficients for the remaining categories describe log-odds contrasts relative to that baseline.
+
+Bayesian logistic regression extends this model by treating the coefficient vector $\boldsymbol{\beta}$ as unknown and assigning it a prior distribution. The posterior distribution is then proportional to the product of the likelihood and the prior distribution,
 \[
 \pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X})
 \propto
 L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})\pi(\boldsymbol{\beta}).
 \]
-The posterior distribution is therefore the central object of inference because it describes uncertainty about the regression coefficients after observing the data. In this study, posterior inference is required for a binary accident-severity response, so Bayesian logistic regression provides the modelling foundation for the subsequent Metropolis--Hastings and Consensus Monte Carlo procedures.
-
-Logistic regression is appropriate when the response variable is binary. Let $y_i\in\{0,1\}$ denote the response for observation $i$, where $y_i=1$ represents a serious/fatal accident and $y_i=0$ represents a slight accident. The Bayesian logistic regression model assumes
-\[
-y_i\mid \boldsymbol{\beta}\sim \operatorname{Bernoulli}(p_i),
-\qquad
-\operatorname{logit}(p_i)=\mathbf{x}_i^T\boldsymbol{\beta}.
-\]
-Here, $p_i$ is the probability of serious/fatal accident severity and $\mathbf{x}_i$ contains the intercept and encoded predictor values. Because road type and speed limit are categorical predictors, one category must be treated as the reference category. The coefficients for the remaining categories are then interpreted as changes in log-odds relative to the reference category, holding other predictors fixed. This reference-category interpretation is important because the empirical implementation models road type and speed limit through indicator variables.
+This posterior distribution represents uncertainty about the regression coefficients after observing the data \cite{gelman2013bayesian}. In the present study, Bayesian logistic regression provides the posterior target that is later approximated using full-data Metropolis--Hastings sampling and Consensus Monte Carlo.
 
 \section{Prior Specification in Bayesian Logistic Regression}
 
