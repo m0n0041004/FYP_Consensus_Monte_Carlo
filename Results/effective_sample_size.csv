@@ -1,0 +1,41 @@
+"Method","Parameter","ESS"
+"Full-data RWMH","(Intercept)",8949.79807018919
+"Full-data RWMH","road_typedual carriageway",9063.45619844163
+"Full-data RWMH","road_typeone way street (from 2005)",9203.64306709062
+"Full-data RWMH","road_typeroundabout",9135.29147559305
+"Full-data RWMH","road_typeslip road (from 2005)",8974.01039572468
+"Full-data RWMH","speed_limit1",8952.32961572859
+"Full-data RWMH","speed_limit3",9107.0051438113
+"Full-data RWMH","speed_limit4",8968.99270332296
+"Full-data RWMH","speed_limit5",9110.96899868416
+"Full-data RWMH","speed_limit6",9168.79607641693
+"Full-data IMH","(Intercept)",34881.8424272706
+"Full-data IMH","road_typedual carriageway",34253.931073614
+"Full-data IMH","road_typeone way street (from 2005)",35572.0599504653
+"Full-data IMH","road_typeroundabout",34744.9800972185
+"Full-data IMH","road_typeslip road (from 2005)",32510.3956417608
+"Full-data IMH","speed_limit1",35351.5634074817
+"Full-data IMH","speed_limit3",35627.3917126323
+"Full-data IMH","speed_limit4",35792.1062870247
+"Full-data IMH","speed_limit5",34816.71531158
+"Full-data IMH","speed_limit6",34714.9039364096
+"CMC-RWMH","(Intercept)",9324.47742223333
+"CMC-RWMH","road_typedual carriageway",9137.87439270779
+"CMC-RWMH","road_typeone way street (from 2005)",9108.76261196892
+"CMC-RWMH","road_typeroundabout",9103.6302470122
+"CMC-RWMH","road_typeslip road (from 2005)",9514.33585787811
+"CMC-RWMH","speed_limit1",9216.67219176441
+"CMC-RWMH","speed_limit3",9014.08046701346
+"CMC-RWMH","speed_limit4",9358.09452459048
+"CMC-RWMH","speed_limit5",9246.82318881652
+"CMC-RWMH","speed_limit6",9252.97928955445
+"CMC-IMH","(Intercept)",35976.8116093437
+"CMC-IMH","road_typedual carriageway",36066.691271755
+"CMC-IMH","road_typeone way street (from 2005)",35739.1250505878
+"CMC-IMH","road_typeroundabout",34888.6575354723
+"CMC-IMH","road_typeslip road (from 2005)",35061.3417786899
+"CMC-IMH","speed_limit1",34817.5601200174
+"CMC-IMH","speed_limit3",35347.1726724729
+"CMC-IMH","speed_limit4",34932.3139408762
+"CMC-IMH","speed_limit5",36304.3745424944
+"CMC-IMH","speed_limit6",35277.4945457316
