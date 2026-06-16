@@ -2,13 +2,13 @@
 
 \section{Background Study}
 
-Bayesian inference provides a probability-based framework for learning about unknown quantities from observed data. Let $\theta$ denote a general parameter vector and let $y$ denote the observed data. Prior information about $\theta$ is represented by the prior distribution $\pi(\theta)$, while information contributed by the data is represented by the likelihood function $p(y\mid \theta)$. The posterior distribution combines these two components and is written as
+Bayesian inference provides a probability-based framework for learning about unknown quantities from observed data. Let $\boldsymbol{\theta}$ denote a general parameter vector and let $\mathbf{y}$ denote the observed data. Prior information about $\boldsymbol{\theta}$ is represented by the prior distribution $\pi(\boldsymbol{\theta})$, while information contributed by the data is represented by the likelihood function $L(\mathbf{y}\mid \boldsymbol{\theta})$. The posterior distribution combines these two components and is written as
 \[
-p(\theta\mid y)
+p(\boldsymbol{\theta}\mid \mathbf{y})
 \propto
-p(y\mid \theta)\pi(\theta).
+L(\mathbf{y}\mid \boldsymbol{\theta})\pi(\boldsymbol{\theta}).
 \]
-The posterior distribution is the central object in Bayesian inference because it describes uncertainty about $\theta$ after observing $y$. Posterior summaries such as posterior means, posterior medians, posterior standard deviations, and credible intervals are commonly used to report this uncertainty. TODO: add citation for Bayesian inference.
+The posterior distribution is the central object in Bayesian inference because it describes uncertainty about $\boldsymbol{\theta}$ after observing $\mathbf{y}$. Posterior summaries such as posterior means, posterior medians, posterior standard deviations, and credible intervals are commonly used to report this uncertainty. TODO: add citation for Bayesian inference.
 
 A practical weakness of Bayesian inference is that the posterior distribution is often difficult to evaluate or summarise analytically. In many realistic models, the normalising constant of the posterior distribution is unavailable in closed form, and posterior expectations require integration over a possibly high-dimensional parameter space. As a result, direct analytical calculation of posterior summaries may be infeasible, and computational approximation becomes necessary.
 
@@ -24,29 +24,29 @@ Although MCMC methods are flexible, full-data Metropolis--Hastings sampling can 
 
 Distributed Bayesian computation addresses this issue by dividing a large dataset into smaller parts and carrying out posterior simulation or approximation at the shard level. Such approaches are motivated by settings in which the full dataset is too large to process efficiently as a single object, or where separate computations can be organised across data partitions. However, distributed Bayesian computation introduces an additional statistical problem: the shard-level posterior information must be combined in a way that approximates the full posterior distribution.
 
-Consensus Monte Carlo is one method for distributed Bayesian computation. The full dataset is divided into $K$ shards. Let $y_m$ denote the data in shard $m$, where $m=1,\ldots,K$. If the likelihood factorises across shards, then
+Consensus Monte Carlo is one method for distributed Bayesian computation. In the Bayesian logistic regression setting of this thesis, the parameter of interest is the coefficient vector $\boldsymbol{\beta}$, and the full binary response vector is denoted by $\mathbf{y}$. The full dataset is divided into $K$ shards. Let $\mathbf{y}_m$ denote the response data in shard $m$, where $m=1,\ldots,K$. If the likelihood factorises across shards, then
 \[
-L(y\mid \theta)
+L(\mathbf{y}\mid \boldsymbol{\beta})
 =
 \prod_{m=1}^{K}
-L(y_m\mid \theta).
+L(\mathbf{y}_m\mid \boldsymbol{\beta}).
 \]
 Consensus Monte Carlo constructs a shard-level subposterior for each shard, simulates from these subposteriors, and combines the resulting samples to approximate the full posterior distribution \cite{scott2017comparing,scott2022bayes}. A standard shard-level subposterior construction is
 \[
-p_m(\theta\mid y_m)
+p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)
 \propto
-L(y_m\mid \theta)\pi(\theta)^{1/K}.
+L(\mathbf{y}_m\mid \boldsymbol{\beta})\pi(\boldsymbol{\beta})^{1/K}.
 \]
-The factor $\pi(\theta)^{1/K}$ splits the prior contribution across the $K$ shards. This construction gives
+The factor $\pi(\boldsymbol{\beta})^{1/K}$ splits the prior contribution across the $K$ shards. This construction gives
 \[
 \prod_{m=1}^{K}
-p_m(\theta\mid y_m)
+p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)
 \propto
-L(y\mid \theta)\pi(\theta),
+L(\mathbf{y}\mid \boldsymbol{\beta})\pi(\boldsymbol{\beta}),
 \]
 so the product of the shard-level subposterior kernels is proportional to the full posterior kernel.
 
-Several posterior combination strategies may be used in Consensus Monte Carlo, including simple averaging, scalar weighted averaging, precision-weighted averaging, and density-based product approximations. The choice of combination method matters because the consensus sample is only an approximation to the full-data posterior sample. This thesis focuses on precision-weighted Consensus Monte Carlo, where subposterior samples are combined using estimated shard precision matrices so that shards with smaller posterior variance receive greater weight in the consensus combination.
+Several posterior combination strategies may be used in Consensus Monte Carlo, including simple averaging, scalar weighted averaging, precision-weighted averaging, and density-based product approximations. The choice of combination method matters because the consensus sample is only an approximation to the full-data posterior sample. This thesis focuses on precision-weighted Consensus Monte Carlo, where subposterior sample vectors are combined using estimated shard precision matrices so that shards with smaller posterior variance receive greater weight in the consensus combination.
 
 The main problem considered in this thesis is how full-data Metropolis--Hastings posterior summaries compare with posterior summaries obtained from a precision-weighted Consensus Monte Carlo approximation. The comparison must be made empirically rather than assumed, because the quality of the consensus approximation can depend on shard construction, shard-level sampler behaviour, and the posterior combination rule.
 
@@ -72,13 +72,13 @@ The objectives of this project are as follows:
 
 \section{Research Framework}
 
-The research framework begins with data preparation. The empirical data are arranged into a form suitable for Bayesian logistic regression, with the detailed preprocessing steps described in Chapter 3. This stage constructs the binary response variable $y$, where serious/fatal accident severity is coded as the event of interest, and forms the predictor matrix from the selected categorical predictors.
+The research framework begins with data preparation. The empirical data are arranged into a form suitable for Bayesian logistic regression, with the detailed preprocessing steps described in Chapter 3. This stage constructs the binary response vector $\mathbf{y}$, where serious/fatal accident severity is coded as the event of interest, and forms the predictor matrix $X$ from the selected categorical predictors.
 
-The second stage is model specification. A Bayesian logistic regression model is defined by specifying the Bernoulli likelihood for the binary response and the prior distribution for the coefficient vector $\beta$. The resulting posterior distribution $p(\beta\mid y)$ is the target distribution for the full-data analysis.
+The second stage is model specification. A Bayesian logistic regression model is defined by specifying the Bernoulli likelihood for the binary response and the prior distribution for the coefficient vector $\boldsymbol{\beta}$. The resulting posterior distribution $p(\boldsymbol{\beta}\mid \mathbf{y})$ is the target distribution for the full-data analysis.
 
 The third stage is full-data Metropolis--Hastings sampling. Full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings are used to generate posterior samples based on the complete dataset. The retained post-burn-in samples are used to obtain full-data posterior summaries and provide the reference point for comparison.
 
-The fourth stage is data partitioning. The full dataset is divided into $K=10$ shards, denoted by $y_1,\ldots,y_K$. In the current implementation, the shard allocation is stratified by the binary response class so that the response distribution is represented across the shards. Each shard defines a shard-level likelihood contribution and a corresponding subposterior distribution with the prior contribution split across shards.
+The fourth stage is data partitioning. The full dataset is divided into $K=10$ shards, denoted by $\mathbf{y}_1,\ldots,\mathbf{y}_K$. In the current implementation, the shard allocation is stratified by the binary response class so that the response distribution is represented across the shards. Each shard defines a shard-level likelihood contribution and a corresponding subposterior distribution with the prior contribution split across shards.
 
 The fifth stage is shard-level Metropolis--Hastings sampling. Separate Metropolis--Hastings simulations are carried out for the subposterior distributions. The current implementation runs the CMC shard computations using parallel workers, while the full-data samplers are run sequentially.
 
