@@ -4,7 +4,7 @@
 
 This chapter reports the empirical results for Bayesian logistic regression applied to the 2013 UK accident dataset. The response is binary accident severity, where serious/fatal accident severity is coded as 1 and is the event being modelled, while slight accident severity is coded as 0 and is the reference response class. The predictors are road type and speed limit.
 
-The exported model settings report 82570 original observations and 82344 observations after preprocessing. Serious/fatal accidents account for 10970 observations, corresponding to 13.32\% of the analysis data, while slight accidents account for 71374 observations, corresponding to 86.68\%. The response distribution is shown in Table \ref{tab:response_distribution}.
+The reported model settings give 82570 original observations and 82344 observations after preprocessing. Serious/fatal accidents account for 10970 observations, corresponding to 13.32\% of the analysis data, while slight accidents account for 71374 observations, corresponding to 86.68\%. The response distribution is shown in Table \ref{tab:response_distribution}.
 
 \begin{table}[htbp]
 \centering
@@ -57,13 +57,13 @@ Speed limit category & Count & Proportion \\
 \end{tabular}
 \end{table}
 
-The exported results do not currently include road-type by response-class or speed-limit by response-class cross-tabulations. TODO: export predictor by response-class count tables if these descriptive comparisons are required.
+The reported results do not currently include road-type by response-class or speed-limit by response-class cross-tabulations. TODO: export predictor by response-class count tables if these descriptive comparisons are required.
 
 \section{Frequentist Logistic Regression Results}
 
-A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline, diagnostic checks, and proposal mean and covariance information for the Metropolis--Hastings algorithms. The p-values are reported for completeness, but they are not treated as the main inferential output of the thesis because the primary analysis is Bayesian.
+A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline, diagnostic checks, and proposal mean and covariance information for the Metropolis--Hastings algorithms. The $P$-values are reported for completeness, but they are not treated as the main inferential output of the thesis because the primary analysis is Bayesian.
 
-Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimates, standard errors, z-values, and p-values. Based on the reported p-values, all non-intercept coefficients except Road type: one way street (from 2005) are below 0.05 in the frequentist fit.
+Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimates, standard errors, $z$-values, and $P$-values. Based on the reported $P$-values, all non-intercept coefficients except Road type: one way street (from 2005) are below 0.05 in the frequentist fit.
 
 \begin{table}[htbp]
 \centering
@@ -73,7 +73,7 @@ Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimat
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccc}
 \hline
-Parameter & Estimate & Std. Error & z-value & p-value \\
+Parameter & Estimate & Std. Error & $z$-value & $P$-value \\
 \hline
 Intercept & -1.8981 & 0.0129 & -146.8137 & 0 \\
 Road type: dual carriageway & -0.2250 & 0.0389 & -5.7799 & $7.4759\times 10^{-9}$ \\
@@ -90,22 +90,22 @@ Speed limit: 6 & 0.3925 & 0.0684 & 5.7374 & $9.6120\times 10^{-9}$ \\
 }
 \end{table}
 
-The likelihood-ratio G-square test compares the fitted logistic regression model with the intercept-only model. The exported result gives $G^2=432.0306$ with 9 degrees of freedom and p-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
+The likelihood-ratio $G^2$ test compares the fitted logistic regression model with the intercept-only model. The reported result gives $G^2=432.0306$ with 9 degrees of freedom and $P$-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
 
 \begin{table}[htbp]
 \centering
-\caption{Likelihood-ratio G-square test}
+\caption{Likelihood-ratio $G^2$ test}
 \label{tab:frequentist_lrt}
 \begin{tabular}{ccc}
 \hline
-$G^2$ & Degrees of freedom & p-value \\
+$G^2$ & Degrees of freedom & $P$-value \\
 \hline
 432.0306 & 9 & $1.9855\times 10^{-87}$ \\
 \hline
 \end{tabular}
 \end{table}
 
-Table \ref{tab:frequentist_gvif} reports the adjusted GVIF values for the categorical predictors. The adjusted GVIF values are close to 1 for both predictors, so the exported diagnostic values do not suggest serious multicollinearity concerns in this fitted model.
+Table \ref{tab:frequentist_gvif} reports the adjusted GVIF values for the categorical predictors. The adjusted GVIF values are close to 1 for both predictors, so the reported diagnostic values do not suggest serious multicollinearity concerns in this fitted model.
 
 \begin{table}[htbp]
 \centering
@@ -142,7 +142,7 @@ Deviance & -0.6761 & -0.5285 & -0.5285 & -0.1945 & -0.4755 & 2.3341 & 0.8614 \\
 
 \section{Consensus Monte Carlo Shard Summary}
 
-The current Consensus Monte Carlo implementation uses $K=10$ shards. The shard allocation is stratified by the binary response class. The exported shard sizes and response counts are reported in Table \ref{tab:cmc_shard_response}. The first four shards contain 8235 observations each, and the remaining six shards contain 8234 observations each. Each shard contains 1097 serious/fatal observations. This indicates that the response class allocation is balanced across the shards under the current stratified split.
+The current Consensus Monte Carlo implementation uses $K=10$ shards. The shard allocation is stratified by the binary response class. The reported shard sizes and response counts are given in Table \ref{tab:cmc_shard_response}. The first four shards contain 8235 observations each, and the remaining six shards contain 8234 observations each. Each shard contains 1097 serious/fatal observations. This indicates that the response class allocation is balanced across the shards under the current stratified split.
 
 \begin{table}[htbp]
 \centering
@@ -317,7 +317,7 @@ Speed limit: 6 & 0.3903 & 0.3893 & 0.3862 & 0.3870 \\
 }
 \end{table}
 
-Table \ref{tab:cmc_rmse} reports the posterior mean root mean squared error for the CMC methods. CMC-RWMH is compared against full-data RWMH, while CMC-IMH is compared against full-data IMH. The posterior mean RMSE values are 0.0054 for CMC-RWMH and 0.0060 for CMC-IMH. These values suggest that, under the current implementation and exported run, both CMC posterior mean approximations are close to their corresponding full-data references.
+Table \ref{tab:cmc_rmse} reports the posterior mean root mean squared error for the CMC methods. CMC-RWMH is compared against full-data RWMH, while CMC-IMH is compared against full-data IMH. The posterior mean RMSE values are 0.0054 for CMC-RWMH and 0.0060 for CMC-IMH. These values suggest that, under the current implementation and reported run, both CMC posterior mean approximations are close to their corresponding full-data references.
 
 \begin{table}[htbp]
 \centering
@@ -333,7 +333,7 @@ CMC-IMH & Full-data IMH & 0.0060 \\
 \end{tabular}
 \end{table}
 
-The effective sample size and Monte Carlo standard error outputs indicate larger ESS values and smaller MCSE values for the full-data Independent Metropolis--Hastings sampler than for the full-data Random Walk Metropolis--Hastings sampler. The CMC-IMH ESS and MCSE values are also close to the full-data Independent Metropolis--Hastings values in the exported summaries. These values are not interpreted in isolation because the CMC density plots are based on combined consensus samples rather than a single Markov chain.
+The effective sample size and Monte Carlo standard error outputs indicate larger ESS values and smaller MCSE values for the full-data Independent Metropolis--Hastings sampler than for the full-data Random Walk Metropolis--Hastings sampler. The CMC-IMH ESS and MCSE values are also close to the full-data Independent Metropolis--Hastings values in the reported summaries. These values are not interpreted in isolation because the CMC density plots are based on combined consensus samples rather than a single Markov chain.
 
 \section{Acceptance Rates and Computational Runtime}
 
@@ -358,39 +358,39 @@ Mean CMC-IMH & 0.2177 & 1.47 \\
 }
 \end{table}
 
-The CMC-RWMH shard acceptance rates range from 0.3776 to 0.4113. The CMC-IMH shard acceptance rates range from 0.2152 to 0.2207. The CMC acceptance rates therefore appear stable across shards in the current exported run.
+The CMC-RWMH shard acceptance rates range from 0.3776 to 0.4113. The CMC-IMH shard acceptance rates range from 0.2152 to 0.2207. The CMC acceptance rates therefore appear stable across shards in the current reported run.
 
-The current implementation runs the full-data RWMH and full-data IMH samplers sequentially. In contrast, the CMC-RWMH and CMC-IMH shard computations use parallel workers, with the number of workers set equal to the number of shards. The recorded CMC runtimes therefore reflect the current parallel implementation and include cluster setup and worker overhead. The exported runtime values show shorter recorded wall-clock times for the CMC methods than for the corresponding full-data methods in this run. This observation should not be generalised as hardware-independent speedup, because runtime depends on the computing environment, parallel backend, cluster overhead, posterior combination cost, implementation details, and statistical efficiency.
+The current implementation runs the full-data RWMH and full-data IMH samplers sequentially. In contrast, the CMC-RWMH and CMC-IMH shard computations use parallel workers, with the number of workers set equal to the number of shards. The recorded CMC runtimes therefore reflect the current parallel implementation and include cluster setup and worker overhead. The reported runtime values show shorter recorded wall-clock times for the CMC methods than for the corresponding full-data methods in this run. This observation should not be generalised as hardware-independent speedup, because runtime depends on the computing environment, parallel backend, cluster overhead, posterior combination cost, implementation details, and statistical efficiency.
 
 \section{Diagnostic Plots}
 
-The exported figure manifest reports numbered posterior histogram, trace, autocorrelation, and density plots. Because the coefficient vector has multiple parameters, the figure export script writes several numbered files for each plot type. Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_density_01} show the first exported page for each main posterior plot type; the remaining numbered files provide the same diagnostic format for the remaining coefficients.
+The figure manifest reports numbered posterior histogram, trace, autocorrelation, and density plots. Because the coefficient vector has multiple parameters, the figure export procedure writes several numbered files for each plot type. Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_density_01} show the first reported page for each main posterior plot type; the remaining numbered files provide the same diagnostic format for the remaining coefficients.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../Figure/full_data_rwmh_hist_trace_01.pdf}
-\caption{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, first exported page}
+\caption{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, first reported page}
 \label{fig:full_rwmh_hist_trace_01}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../Figure/full_data_imh_hist_trace_01.pdf}
-\caption{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, first exported page}
+\caption{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, first reported page}
 \label{fig:full_imh_hist_trace_01}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../Figure/cmc_rwmh_density_01.pdf}
-\caption{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, first exported page}
+\caption{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, first reported page}
 \label{fig:cmc_rwmh_density_01}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../Figure/cmc_imh_density_01.pdf}
-\caption{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, first exported page}
+\caption{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, first reported page}
 \label{fig:cmc_imh_density_01}
 \end{figure}
 
@@ -407,10 +407,10 @@ Figure \ref{fig:residual_acf_correlograms} shows correlograms for the standardis
 
 \section{Summary of Findings}
 
-The frequentist logistic regression provides an initial baseline, diagnostic checks, and proposal information for the Metropolis--Hastings samplers. Its p-values are reported descriptively, while the likelihood-ratio G-square test assesses improvement over the intercept-only model and the GVIF values assess multicollinearity among the categorical predictors.
+The frequentist logistic regression provides an initial baseline, diagnostic checks, and proposal information for the Metropolis--Hastings samplers. Its $P$-values are reported descriptively, while the likelihood-ratio $G^2$ test assesses improvement over the intercept-only model and the GVIF values assess multicollinearity among the categorical predictors.
 
 The full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produce similar posterior means, medians, standard deviations, and credible intervals. Across the Bayesian posterior summaries, the 95\% credible interval for Road type: one way street (from 2005) contains zero, while the intervals for the other non-intercept coefficients exclude zero. This provides posterior evidence that those coefficients are credibly different from zero under the fitted model.
 
 The Consensus Monte Carlo summaries are compared against the full-data methods as posterior approximations. CMC-RWMH and CMC-IMH are generally close to the corresponding full-data posterior summaries, with posterior mean RMSE values of 0.0054 and 0.0060, respectively. The acceptance rates for the CMC methods are similar to the corresponding full-data Metropolis--Hastings methods and should still be interpreted together with posterior summaries, density plots, and runtime.
 
-The runtime results reflect the current implementation: full-data samplers are run sequentially, while CMC shard computations use parallel workers. The exported timing values show shorter recorded wall-clock runtime for the CMC methods than for the corresponding full-data methods in this run. This should be interpreted as an empirical runtime result for the current implementation and computing environment, not as a general claim of automatic speedup.
+The runtime results reflect the current implementation: full-data samplers are run sequentially, while CMC shard computations use parallel workers. The reported timing values show shorter recorded wall-clock runtime for the CMC methods than for the corresponding full-data methods in this run. This should be interpreted as an empirical runtime result for the current implementation and computing environment, not as a general claim of automatic speedup.
