@@ -2,7 +2,7 @@
 
 \section{Data Source}
 
-The empirical analysis uses the 2013 UK accident dataset stored as . TODO: add citation for the UK accident dataset source. The dataset contains accident-level information, including accident severity and road-related variables. It is accompanied by variable documentation describing the accident-level variables and their coding.
+The empirical analysis uses the 2013 UK accident dataset. TODO: add citation for the UK accident dataset source. The dataset contains accident-level information, including accident severity and road-related variables. It is accompanied by variable documentation describing the accident-level variables and their coding.
 
 The dataset is used as an applied setting for studying Bayesian logistic regression and Consensus Monte Carlo. The response of interest is serious/fatal accident severity relative to slight accident severity. The methodological comparison is between full-data Metropolis--Hastings sampling and Consensus Monte Carlo based on shard-level Metropolis--Hastings sampling.
 
@@ -30,13 +30,13 @@ y_i =
 \]
 Thus, the event being modelled is serious/fatal accident severity.
 
-Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway, and the reference category for speed limit is category 2. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $\mathbf{X}$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
+Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway, and the reference category for speed limit is category 2. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $X$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
 
 The exported model settings report 82570 original observations and 82344 observations after preprocessing. These values are used to document the final analysis size. The response and predictor distributions after preprocessing are exported separately for reporting in the results chapter.
 
 \section{Bayesian Logistic Regression Model}
 
-Let $\mathbf{y}=(y_1,\ldots,y_n)^T$ denote the binary response vector, and let $\mathbf{x}_i$ denote the predictor vector for observation $i$, including the intercept term and the encoded categorical predictors. Let $\boldsymbol{\beta}=(\beta_0,\beta_1,\ldots,\beta_p)^T$ denote the regression coefficient vector, where $d=p+1$ is the number of regression coefficients. The Bayesian logistic regression model assumes
+Let $\mathbf{y}=(y_1,\ldots,y_n)^T$ denote the binary response vector, and let $\mathbf{x}_i$ denote the predictor vector for observation $i$, including the intercept term and the encoded categorical predictors. Let $\boldsymbol{\beta}=(\beta_1,\ldots,\beta_d)^T$ denote the regression coefficient vector, where $d$ is the number of regression coefficients. The Bayesian logistic regression model assumes
 \[
 y_i \mid \boldsymbol{\beta} \sim \operatorname{Bernoulli}(p_i),
 \]
@@ -45,8 +45,6 @@ where $p_i$ is the probability that observation $i$ has serious/fatal accident s
 \operatorname{logit}(p_i)
 =
 \log\left(\frac{p_i}{1-p_i}\right)
-=
-\beta_0+\beta_1x_{i1}+\beta_2x_{i2}+\cdots+\beta_px_{ip}
 =
 \mathbf{x}_i^T\boldsymbol{\beta}.
 \]
@@ -64,14 +62,14 @@ p_i
 
 For $n$ independent observations, the likelihood is
 \[
-L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})
+L(\mathbf{y}\mid \boldsymbol{\beta})
 =
 \prod_{i=1}^{n}
 p_i^{y_i}(1-p_i)^{1-y_i}.
 \]
 The corresponding log-likelihood is
 \[
-\log L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})
+\log L(\mathbf{y}\mid \boldsymbol{\beta})
 =
 \sum_{i=1}^{n}
 \left[
@@ -84,9 +82,9 @@ In the computation, the term $\log\{1+\exp(\mathbf{x}_i^T\boldsymbol{\beta})\}$ 
 
 \section{Prior Distribution}
 
-A weakly informative Cauchy prior distribution is assigned independently to each regression coefficient. For $j=0,\ldots,p$,
+A weakly informative Cauchy prior distribution is assigned independently to each regression coefficient. For $j=1,\ldots,d$,
 \[
-\beta_j \sim \operatorname{Cauchy}(0,2.5).
+\beta_j \sim \operatorname{Cauchy}(0, 2.5).
 \]
 This prior is centred at zero and has scale parameter 2.5. It is used as a weakly informative prior for logistic regression coefficients, following the general motivation of weakly informative default priors for logistic regression \cite{gelman2008weakly}.
 
@@ -94,37 +92,37 @@ Under prior independence, the joint prior density is
 \[
 \pi(\boldsymbol{\beta})
 =
-\prod_{j=0}^{p}
+\prod_{j=1}^{d}
 \pi(\beta_j).
 \]
 
 \section{Posterior Distribution}
 
-Treating the predictor values as fixed and incorporated into the likelihood, the posterior distribution for the regression coefficient vector is
+Treating the predictor values as fixed and incorporated into the likelihood through $\mathbf{x}_i^T\boldsymbol{\beta}$, the posterior distribution for the regression coefficient vector is
 \[
-\pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X})
+p(\boldsymbol{\beta}\mid \mathbf{y})
 \propto
-L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})\pi(\boldsymbol{\beta}).
+L(\mathbf{y}\mid \boldsymbol{\beta})\pi(\boldsymbol{\beta}).
 \]
 Analytical posterior summaries are not used in this study. Instead, posterior summaries are approximated from samples generated by Metropolis--Hastings algorithms. TODO: add citation for posterior simulation.
 
 \section{Frequentist Logistic Regression and Diagnostic Checks}
 
-A frequentist logistic regression model is fitted before Bayesian posterior simulation. This preliminary model serves several methodological roles. First, it provides coefficient estimates, standard errors, z-values, and p-values for coefficient-level Wald tests. Second, it is used to compute a likelihood-ratio G-square test against the intercept-only model. Third, it supports a generalised variance inflation factor (GVIF) check for multicollinearity among the categorical predictors. Fourth, standardised Pearson and deviance residuals are used to obtain residual diagnostic summaries and correlograms.
+A frequentist logistic regression model is fitted before Bayesian posterior simulation. This preliminary model serves several methodological roles. First, it provides coefficient estimates, standard errors, $z$-values, and $P$-values for coefficient-level Wald tests. Second, it is used to compute a likelihood-ratio $G^2$ test against the intercept-only model. Third, it supports a generalised variance inflation factor (GVIF) check for multicollinearity among the categorical predictors. Fourth, standardised Pearson and deviance residuals are used to obtain residual diagnostic summaries and correlograms.
 
-The frequentist fit also provides quantities used directly in the Metropolis--Hastings algorithms. Let $\widehat{\boldsymbol{\beta}}$ denote the estimated coefficient vector from the fitted frequentist logistic regression model, and let $\widehat{\boldsymbol{\Sigma}}$ denote the estimated covariance matrix of $\widehat{\boldsymbol{\beta}}$. The matrix $\widehat{\boldsymbol{\Sigma}}$ is obtained from the covariance matrix of the fitted frequentist logistic regression model. It is used as a reference covariance matrix because it provides an empirical estimate of the scale and correlation structure of the coefficient estimates. These quantities are used to initialise the samplers and to construct proposal distributions for the full-data and shard-level Metropolis--Hastings algorithms.
+The frequentist fit also provides quantities used directly in the Metropolis--Hastings algorithms. Let $\widehat{\boldsymbol{\beta}}$ denote the estimated coefficient vector from the fitted frequentist logistic regression model, and let $\widehat{\Sigma}$ denote the estimated covariance matrix of $\widehat{\boldsymbol{\beta}}$. The matrix $\widehat{\Sigma}$ is obtained from the covariance matrix of the fitted frequentist logistic regression model. It is used as a reference covariance matrix because it provides an empirical estimate of the scale and correlation structure of the coefficient estimates. These quantities are used to initialise the samplers and to construct proposal distributions for the full-data and shard-level Metropolis--Hastings algorithms.
 
 The Pearson and deviance residual correlograms are treated as supplementary diagnostic plots. They may indicate patterns in the ordered residual sequence, but they should be interpreted cautiously unless the observation order has a meaningful temporal or spatial interpretation.
 
 \section{Full-Data Metropolis--Hastings Sampling}
 
-The full-data analysis uses the complete response vector $\mathbf{y}$ and design matrix $\mathbf{X}$ to sample from $\pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X})$. Two full-data samplers are implemented: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. TODO: add citation for the Metropolis--Hastings algorithm.
+The full-data analysis uses the complete response vector $\mathbf{y}$ to sample from $p(\boldsymbol{\beta}\mid \mathbf{y})$. The predictor information is incorporated through the likelihood contribution defined by $\mathbf{x}_i^T\boldsymbol{\beta}$. Two full-data samplers are implemented: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings. TODO: add citation for the Metropolis--Hastings algorithm.
 
 In the following sections,
 \[
-\operatorname{MVN}(\boldsymbol{\mu},\boldsymbol{\Sigma})
+\mathcal{N}_d(\boldsymbol{\mu},\Sigma)
 \]
-denotes a multivariate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\boldsymbol{\Sigma}$. For both full-data samplers, the starting value is the frequentist logistic regression estimate $\widehat{\boldsymbol{\beta}}$.
+denotes a $d$-dimensional multivariate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\Sigma$. For both full-data samplers, the starting value is the frequentist logistic regression estimate $\widehat{\boldsymbol{\beta}}$.
 
 For both full-data samplers, the number of Metropolis--Hastings iterations is set to 100000, and the burn-in fraction is 0.2. This gives 20000 burn-in iterations and 80000 retained post-burn-in samples for each full-data sampler. Runtime is recorded using start and end time measurements, and the recorded runtime values are reported in Chapter 4 as part of the computational comparison.
 
@@ -138,15 +136,15 @@ In Random Walk Metropolis--Hastings, the proposed value at iteration $t$ is gene
 \qquad
 \boldsymbol{\varepsilon}
 \sim
-\operatorname{MVN}(\mathbf{0},\boldsymbol{\Sigma}_{\mathrm{RWMH}}).
+\mathcal{N}_d(\mathbf{0},\Sigma_{\mathrm{RWMH}}).
 \]
 The full-data Random Walk Metropolis--Hastings proposal covariance matrix is
 \[
-\boldsymbol{\Sigma}_{\mathrm{RWMH}}
+\Sigma_{\mathrm{RWMH}}
 =
 c_{\mathrm{RWMH}}^2
 \frac{2.38^2}{d}
-\widehat{\boldsymbol{\Sigma}}.
+\widehat{\Sigma}.
 \]
 In this study, $c_{\mathrm{RWMH}}=0.75$. This tuning factor adjusts the proposal scale so that the random walk proposal is not too wide for the posterior target. Reducing the proposal scale can improve acceptance behaviour when the initial proposal covariance is too large, but no claim of optimality is made.
 
@@ -157,9 +155,9 @@ Because the random walk proposal is symmetric, the proposal densities cancel in 
 \min\left\{
 1,
 \frac{
-\pi(\boldsymbol{\beta}^{*}\mid \mathbf{y},\mathbf{X})
+p(\boldsymbol{\beta}^{*}\mid \mathbf{y})
 }{
-\pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y},\mathbf{X})
+p(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y})
 }
 \right\}.
 \]
@@ -167,9 +165,9 @@ In log form, the proposal is accepted when
 \[
 \log u
 <
-\log \pi(\boldsymbol{\beta}^{*}\mid \mathbf{y},\mathbf{X})
+\log p(\boldsymbol{\beta}^{*}\mid \mathbf{y})
 -
-\log \pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y},\mathbf{X}),
+\log p(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y}),
 \]
 where $u \sim \operatorname{Uniform}(0,1)$.
 
@@ -181,17 +179,17 @@ In Independent Metropolis--Hastings, the proposal distribution does not depend o
 \[
 \boldsymbol{\beta}^{*}
 \sim
-\operatorname{MVN}(
+\mathcal{N}_d(
 \widehat{\boldsymbol{\beta}},
-\boldsymbol{\Sigma}_{\mathrm{IMH}}
+\Sigma_{\mathrm{IMH}}
 ),
 \]
 where
 \[
-\boldsymbol{\Sigma}_{\mathrm{IMH}}
+\Sigma_{\mathrm{IMH}}
 =
 c_{\mathrm{IMH}}^2
-\widehat{\boldsymbol{\Sigma}}.
+\widehat{\Sigma}.
 \]
 In this study, $c_{\mathrm{IMH}}=1.5$. A wider variance-covariance matrix is often useful for an independent proposal because it helps the proposal explore the posterior support rather than being too concentrated near the frequentist estimate.
 
@@ -202,17 +200,17 @@ Since the proposal is independent rather than a symmetric random walk, the propo
 \min\left\{
 1,
 \frac{
-\pi(\boldsymbol{\beta}^{*}\mid \mathbf{y},\mathbf{X})q(\boldsymbol{\beta}^{(t-1)})
+p(\boldsymbol{\beta}^{*}\mid \mathbf{y})q(\boldsymbol{\beta}^{(t-1)})
 }{
-\pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y},\mathbf{X})q(\boldsymbol{\beta}^{*})
+p(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y})q(\boldsymbol{\beta}^{*})
 }
 \right\}.
 \]
 Equivalently, the log acceptance ratio is
 \[
-\log \pi(\boldsymbol{\beta}^{*}\mid \mathbf{y},\mathbf{X})
+\log p(\boldsymbol{\beta}^{*}\mid \mathbf{y})
 -
-\log \pi(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y},\mathbf{X})
+\log p(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y})
 +
 \log q(\boldsymbol{\beta}^{(t-1)})
 -
@@ -221,74 +219,74 @@ Equivalently, the log acceptance ratio is
 
 \section{Consensus Monte Carlo}
 
-Consensus Monte Carlo is used to approximate the full posterior distribution by partitioning the data, sampling from shard-specific subposteriors, and combining the resulting subposterior samples \cite{scott2017comparing,scott2022bayes}. The data are divided into $K$ subsets, referred to as shards in the implementation. In this study, Consensus Monte Carlo is implemented with both Random Walk Metropolis--Hastings and Independent Metropolis--Hastings shard-level samplers.
+Consensus Monte Carlo is used to approximate the full posterior distribution by partitioning the data, sampling from shard-specific subposteriors, and combining the resulting subposterior samples \cite{scott2017comparing,scott2022bayes}. The data are divided into $K$ shards. In this study, Consensus Monte Carlo is implemented with both Random Walk Metropolis--Hastings and Independent Metropolis--Hastings shard-level samplers.
 
 \subsection{Data Partitioning}
 
-Let the full dataset be partitioned into $K$ shards. In the empirical analysis, $K=10$. The response vector and design matrix for shard $k$ are denoted by $\mathbf{y}_k$ and $\mathbf{X}_k$, where $k=1,\ldots,K$. Observations are assigned to shards using stratified random assignment by the binary response class. This means that observations within each response class are shuffled and distributed across the $K$ shards, so that each shard receives observations from both response classes.
+Let the full dataset be partitioned into $K$ shards. In the empirical analysis, $K=10$. The response vector and predictor matrix for shard $m$ are denoted by $\mathbf{y}_m$ and $X_m$, where $m=1,\ldots,K$. Observations are assigned to shards using stratified random assignment by the binary response class. This means that observations within each response class are shuffled and distributed across the $K$ shards, so that each shard receives observations from both response classes.
 
 The full likelihood factorises across the shards as
 \[
-L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})
+L(\mathbf{y}\mid \boldsymbol{\beta})
 =
-\prod_{k=1}^{K}
-L(\mathbf{y}_k\mid \boldsymbol{\beta},\mathbf{X}_k),
+\prod_{m=1}^{K}
+L(\mathbf{y}_m\mid \boldsymbol{\beta}),
 \]
-where each shard likelihood is computed using the observations assigned to that shard.
+where each shard likelihood is computed using the observations assigned to that shard and their corresponding predictor rows.
 
 \subsection{Subposterior Distribution}
 
-For shard $k$, the subposterior distribution is defined by combining the shard likelihood with a fractional prior contribution:
+For shard $m$, the subposterior distribution is defined by combining the shard likelihood with a fractional prior contribution:
 \[
-\pi_k(\boldsymbol{\beta}\mid \mathbf{y}_k,\mathbf{X}_k)
+p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)
 \propto
-L(\mathbf{y}_k\mid \boldsymbol{\beta},\mathbf{X}_k)
+L(\mathbf{y}_m\mid \boldsymbol{\beta})
 \pi(\boldsymbol{\beta})^{1/K}.
 \]
 The factor $\pi(\boldsymbol{\beta})^{1/K}$ splits the prior contribution across shards. Under the likelihood factorisation,
 \[
-\prod_{k=1}^{K}
-\pi_k(\boldsymbol{\beta}\mid \mathbf{y}_k,\mathbf{X}_k)
+\prod_{m=1}^{K}
+p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)
 \propto
-\prod_{k=1}^{K}
-L(\mathbf{y}_k\mid \boldsymbol{\beta},\mathbf{X}_k)
+\prod_{m=1}^{K}
+L(\mathbf{y}_m\mid \boldsymbol{\beta})
 \pi(\boldsymbol{\beta})^{1/K}
 =
-L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})\pi(\boldsymbol{\beta})
+L(\mathbf{y}\mid \boldsymbol{\beta})\pi(\boldsymbol{\beta})
 \propto
-\pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X}).
+p(\boldsymbol{\beta}\mid \mathbf{y}).
 \]
 Thus, multiplying the subposterior kernels recovers a kernel proportional to the full-data posterior.
 
 \subsection{Shard-Level Metropolis--Hastings Sampling}
 
-Separate Metropolis--Hastings chains are run on the shard-level subposterior distributions. For each shard-level sampler, the target density in the acceptance probability is $\pi_k(\boldsymbol{\beta}\mid \mathbf{y}_k,\mathbf{X}_k)$ rather than the full-data posterior density. The shard-level samplers use 100000 iterations and a burn-in fraction of 0.2, giving 80000 retained post-burn-in samples per shard before consensus combination.
+Separate Metropolis--Hastings chains are run on the shard-level subposterior distributions. For each shard-level sampler, the target density in the acceptance probability is $p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)$ rather than the full-data posterior density. The shard-level samplers use 100000 iterations and a burn-in fraction of 0.2, giving 80000 retained post-burn-in samples per shard before consensus combination.
 
 For Consensus Monte Carlo using Random Walk Metropolis--Hastings, the proposal covariance matrix is based on the full-data covariance estimate and is scaled by $K$:
 \[
-\boldsymbol{\Sigma}_{\mathrm{CMC,RWMH}}
+\Sigma_{\mathrm{CMC,RWMH}}
 =
 c_{\mathrm{CMC,RWMH}}^2
 \frac{2.38^2}{d}
-K\widehat{\boldsymbol{\Sigma}}.
+K\widehat{\Sigma}.
 \]
 In this study, $c_{\mathrm{CMC,RWMH}}=0.75$. The scaling by $K$ is motivated by the fact that each shard contains approximately $n/K$ observations. Posterior uncertainty is inversely related to information size, so when the sample size decreases from $n$ to approximately $n/K$, the shard posterior variance scale is expected to be approximately $K$ times the full-data variance scale. This is a proposal-scale motivation and approximation, not an exact proof.
 
-For Consensus Monte Carlo using Independent Metropolis--Hastings, a separate frequentist logistic regression model is fitted within each shard. This gives a shard-specific coefficient estimate $\widehat{\boldsymbol{\beta}}_k$ and covariance estimate $\widehat{\boldsymbol{\Sigma}}_k$. These quantities are used for the shard-specific independent proposal because they are estimated directly from the same shard that defines the target subposterior. The proposal is
+For Consensus Monte Carlo using Independent Metropolis--Hastings, a separate frequentist logistic regression model is fitted within each shard. This gives a shard-specific coefficient estimate $\widehat{\boldsymbol{\beta}}_m$ and covariance estimate $\widehat{\Sigma}_m$. These quantities are used for the shard-specific independent proposal because they are estimated directly from the same shard that defines the target subposterior. The proposal is
 \[
 \boldsymbol{\beta}^{*}
 \sim
-\operatorname{MVN}(
-\widehat{\boldsymbol{\beta}}_k,
-\boldsymbol{\Sigma}_{\mathrm{CMC,IMH},k}
+\mathcal{N}_d(
+\widehat{\boldsymbol{\beta}}_m,
+\Sigma_{\mathrm{CMC,IMH},m}
 ),
 \]
 where
 \[
-\boldsymbol{\Sigma}_{\mathrm{CMC,IMH},k}
+\Sigma_{\mathrm{CMC,IMH},m}
 =
 c_{\mathrm{CMC,IMH}}^2
-\widehat{\boldsymbol{\Sigma}}_k.
+\widehat{\Sigma}_m.
 \]
 In this study, $c_{\mathrm{CMC,IMH}}=1.5$, which is the same tuning factor as the full-data Independent Metropolis--Hastings sampler. The proposal mean and covariance are shard-specific because they are estimated from the frequentist logistic regression model fitted within the corresponding shard. Since the proposal is independent of the current state, the proposal-density correction is included in the Metropolis--Hastings acceptance probability.
 
@@ -296,18 +294,14 @@ The CMC-RWMH and CMC-IMH shard computations are run using parallel workers, with
 
 \subsection{Consensus Posterior Combination}
 
-The retained subposterior samples are combined using a precision-weighted consensus method. Let $S$ denote the common number of retained samples, and let $\boldsymbol{\beta}_k^{(s)}$ denote the $s$th retained subposterior sample from shard $k$, where $s=1,\ldots,S$. In the current implementation, all shard chains use the same number of post-burn-in samples, but the combination function still aligns the retained chains using the common retained sample length across shards.
+The retained subposterior samples are combined using a precision-weighted consensus method. Let $S$ denote the common number of retained samples, and let $\boldsymbol{\beta}_m^{(s)}$ denote the $s$th retained subposterior sample vector from shard $m$, where $s=1,\ldots,S$ and $m=1,\ldots,K$. In the current implementation, all shard chains use the same number of post-burn-in samples, but the combination function still aligns the retained chains using the common retained sample length across shards.
 
-Let
+Let $\widehat{\Sigma}_m^{\mathrm{sub}}$ denote the estimated covariance matrix of the retained subposterior sample vectors from shard $m$. The corresponding precision matrix is
 \[
-\widehat{\boldsymbol{\Sigma}}_k^{\mathrm{sub}}
-\]
-denote the estimated covariance matrix of the retained subposterior samples from shard $k$. The corresponding precision matrix is
-\[
-\mathbf{W}_k
+W_m
 =
 \left(
-\widehat{\boldsymbol{\Sigma}}_k^{\mathrm{sub}}
+\widehat{\Sigma}_m^{\mathrm{sub}}
 \right)^{-1}.
 \]
 The precision-weighted consensus sample is
@@ -315,12 +309,12 @@ The precision-weighted consensus sample is
 \boldsymbol{\beta}_{\mathrm{consensus}}^{(s)}
 =
 \left(
-\sum_{k=1}^{K}
-\mathbf{W}_k
+\sum_{m=1}^{K}
+W_m
 \right)^{-1}
-\sum_{k=1}^{K}
-\mathbf{W}_k
-\boldsymbol{\beta}_k^{(s)}.
+\sum_{m=1}^{K}
+W_m
+\boldsymbol{\beta}_m^{(s)}.
 \]
 This produces the consensus posterior sample sequence
 \[
@@ -332,7 +326,7 @@ which is summarised and compared with the corresponding full-data posterior samp
 
 \section{Posterior Summary and Evaluation Criteria}
 
-Posterior samples from the full-data Metropolis--Hastings samplers and the Consensus Monte Carlo procedures are evaluated using posterior summaries and diagnostic quantities. The frequentist logistic regression stage is evaluated using coefficient estimates, standard errors, z-values, p-values, the likelihood-ratio G-square test, GVIF multicollinearity checks, and Pearson and deviance residual diagnostics. For each Bayesian regression coefficient, the posterior summaries are:
+Posterior samples from the full-data Metropolis--Hastings samplers and the Consensus Monte Carlo procedures are evaluated using posterior summaries and diagnostic quantities. The frequentist logistic regression stage is evaluated using coefficient estimates, standard errors, $z$-values, $P$-values, the likelihood-ratio $G^2$ test, GVIF multicollinearity checks, and Pearson and deviance residual diagnostics. For each Bayesian regression coefficient, the posterior summaries are:
 \begin{enumerate}
 \item posterior mean;
 \item posterior median;
