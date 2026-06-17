@@ -12,13 +12,38 @@ The empirical analysis uses three variables from the original dataset: accident 
 
 Accident severity is interpreted according to the reported road casualty statistics framework. The Department for Transport background quality report states that collision severity is based on the severity of the most severely injured casualty. Casualties are divided into killed, seriously injured, and slightly injured categories. A killed casualty is a human casualty whose injuries cause death within 30 days of the collision, excluding confirmed suicides. Injured casualties are classified as seriously or slightly injured according to the type of injury recorded by the police from information available shortly after the accident, and this classification may not fully reflect the outcome of a later medical examination \cite{dft2025quality}. In this study, fatal and serious accident severity are combined into the serious/fatal class because both represent more severe outcomes than slight accident severity. Slight accident severity is retained as the reference response class. Therefore, the binary response models serious/fatal accident severity relative to slight accident severity.
 
-Road type is treated as a coded categorical description of the road configuration at the accident location. The categories used in the model are single carriageway, dual carriageway, one-way street, roundabout, and slip road. These categories distinguish the broad road setting in which the accident occurred, rather than providing continuous geometric measurements of the road. Since the aim of the model is to compare accident severity across coded road-type categories, detailed engineering definitions are not required for the regression specification. Visual examples may be included to help readers recognise the broad road-type categories.
+Road type is treated as a coded categorical description of the road configuration at the accident location. The categories used in the model are single carriageway, dual carriageway, one-way street, roundabout, and slip road. These categories distinguish the broad road setting in which the accident occurred, rather than providing continuous geometric measurements of the road. Since the aim of the model is to compare accident severity across coded road-type categories, detailed engineering definitions are not required for the regression specification. Figure \ref{fig:road_type_examples} provides visual examples of four road-type categories used to illustrate the broad road configurations.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../Figure/road_type_single_carriageway.png}\\
+\small Single carriageway
+\end{minipage}\hfill
+\begin{minipage}{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../Figure/road_type_dual_carriageway.png}\\
+\small Dual carriageway
+\end{minipage}
+
+\vspace{0.4cm}
+
+\begin{minipage}{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../Figure/road_type_roundabout.png}\\
+\small Roundabout
+\end{minipage}\hfill
+\begin{minipage}{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../Figure/road_type_slip_road.png}\\
+\small Slip road
+\end{minipage}
+\caption{Visual examples of four coded road-type categories used in the empirical analysis}
+\label{fig:road_type_examples}
+\end{figure}
 
 Speed limit is the permanent speed limit recorded for the accident location, measured in miles per hour in the accompanying variable documentation. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement. This means that each non-reference speed-limit category is compared with the reference speed-limit category, rather than assuming a single linear increase in log-odds for each one-unit increase in speed limit.
-
-% TODO: add road-type illustration Figure/road_type_roundabout.png.
-% TODO: add road-type illustration Figure/road_type_dual_carriageway.png.
-% TODO: add road-type illustration Figure/road_type_single_carriageway.png.
 
 The preprocessing procedure is as follows. First, the selected variables are extracted from the original dataset. Second, observations with missing values in these variables are removed by complete-case filtering. Third, accident severity is recoded into a binary response. Fourth, observations with unknown road type are removed because ``unknown'' is not an interpretable road-type category for regression comparison. Finally, road type and speed limit are converted to categorical predictors and their reference categories are set.
 
