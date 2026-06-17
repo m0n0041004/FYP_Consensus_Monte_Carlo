@@ -252,6 +252,8 @@ Use vector notation consistently:
 
 Use the term **credible interval** for Bayesian posterior intervals, not confidence interval, unless discussing frequentist methods.
 
+When reporting credible intervals or confidence intervals, use parentheses, such as $(a,b)$, not square brackets such as $[a,b]$.
+
 Use `Metropolis--Hastings`, not `Metropolis-Hastings`.
 
 Use `serious/fatal accident severity` or `serious/fatal accidents` consistently when referring to the binary event. Do not write that slight accidents are the event being modelled.
