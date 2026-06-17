@@ -362,37 +362,86 @@ The current implementation runs the full-data RWMH and full-data IMH samplers se
 
 \section{Diagnostic Plots}
 
-The figure manifest reports numbered posterior histogram, trace, autocorrelation, and density plots. Because the coefficient vector has multiple parameters, the figure export procedure writes several numbered files for each plot type. Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_density_01} show the first reported page for each main posterior plot type; the remaining numbered files provide the same diagnostic format for the remaining coefficients.
+The figure manifest reports numbered posterior histogram, trace, autocorrelation, and density plots. Because the coefficient vector has 10 parameters and the exported diagnostic figures show two parameters per page, each numbered diagnostic group has pages 01--05. All exported diagnostic figure pages are included in this section.
 
+\newcommand{\diagnosticfigure}[3]{%
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{../Figure/full_data_rwmh_hist_trace_01.pdf}
-\caption{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, first reported page}
-\label{fig:full_rwmh_hist_trace_01}
+\includegraphics[width=\textwidth]{../Figure/#1}
+\caption{#2}
+\label{#3}
 \end{figure}
+}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\textwidth]{../Figure/full_data_imh_hist_trace_01.pdf}
-\caption{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, first reported page}
-\label{fig:full_imh_hist_trace_01}
-\end{figure}
+\subsection{Full-data Random Walk Metropolis--Hastings diagnostics}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\textwidth]{../Figure/cmc_rwmh_density_01.pdf}
-\caption{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, first reported page}
-\label{fig:cmc_rwmh_density_01}
-\end{figure}
+\diagnosticfigure{full_data_rwmh_hist_trace_01.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_rwmh_hist_trace_01}
+\diagnosticfigure{full_data_rwmh_hist_trace_02.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_rwmh_hist_trace_02}
+\diagnosticfigure{full_data_rwmh_hist_trace_03.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 3}{fig:full_rwmh_hist_trace_03}
+\diagnosticfigure{full_data_rwmh_hist_trace_04.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 4}{fig:full_rwmh_hist_trace_04}
+\diagnosticfigure{full_data_rwmh_hist_trace_05.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 5}{fig:full_rwmh_hist_trace_05}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\textwidth]{../Figure/cmc_imh_density_01.pdf}
-\caption{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, first reported page}
-\label{fig:cmc_imh_density_01}
-\end{figure}
+\diagnosticfigure{full_data_rwmh_acf_01.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 1}{fig:full_rwmh_acf_01}
+\diagnosticfigure{full_data_rwmh_acf_02.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 2}{fig:full_rwmh_acf_02}
+\diagnosticfigure{full_data_rwmh_acf_03.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 3}{fig:full_rwmh_acf_03}
+\diagnosticfigure{full_data_rwmh_acf_04.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 4}{fig:full_rwmh_acf_04}
+\diagnosticfigure{full_data_rwmh_acf_05.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 5}{fig:full_rwmh_acf_05}
 
-Figures \ref{fig:full_rwmh_hist_trace_01} and \ref{fig:full_imh_hist_trace_01} provide visual information about marginal posterior shapes and sampled-chain behaviour for the full-data samplers, but they are not sufficient on their own to establish convergence. Figures \ref{fig:cmc_rwmh_density_01} and \ref{fig:cmc_imh_density_01} show posterior density plots for the Consensus Monte Carlo results. These plots are based on combined consensus samples and do not represent a single shard-level Markov chain. They are therefore used to compare marginal posterior shapes after posterior combination rather than to assess within-shard trace behaviour.
+\subsection{Full-data Independent Metropolis--Hastings diagnostics}
+
+\diagnosticfigure{full_data_imh_hist_trace_01.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_imh_hist_trace_01}
+\diagnosticfigure{full_data_imh_hist_trace_02.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_imh_hist_trace_02}
+\diagnosticfigure{full_data_imh_hist_trace_03.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 3}{fig:full_imh_hist_trace_03}
+\diagnosticfigure{full_data_imh_hist_trace_04.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 4}{fig:full_imh_hist_trace_04}
+\diagnosticfigure{full_data_imh_hist_trace_05.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 5}{fig:full_imh_hist_trace_05}
+
+\diagnosticfigure{full_data_imh_acf_01.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 1}{fig:full_imh_acf_01}
+\diagnosticfigure{full_data_imh_acf_02.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 2}{fig:full_imh_acf_02}
+\diagnosticfigure{full_data_imh_acf_03.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 3}{fig:full_imh_acf_03}
+\diagnosticfigure{full_data_imh_acf_04.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 4}{fig:full_imh_acf_04}
+\diagnosticfigure{full_data_imh_acf_05.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 5}{fig:full_imh_acf_05}
+
+\subsection{Consensus Monte Carlo using Random Walk Metropolis--Hastings diagnostics}
+
+\diagnosticfigure{cmc_rwmh_density_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_rwmh_density_01}
+\diagnosticfigure{cmc_rwmh_density_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_rwmh_density_02}
+\diagnosticfigure{cmc_rwmh_density_03.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 3}{fig:cmc_rwmh_density_03}
+\diagnosticfigure{cmc_rwmh_density_04.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 4}{fig:cmc_rwmh_density_04}
+\diagnosticfigure{cmc_rwmh_density_05.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 5}{fig:cmc_rwmh_density_05}
+
+\diagnosticfigure{cmc_rwmh_hist_trace_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 1}{fig:cmc_rwmh_hist_trace_01}
+\diagnosticfigure{cmc_rwmh_hist_trace_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 2}{fig:cmc_rwmh_hist_trace_02}
+\diagnosticfigure{cmc_rwmh_hist_trace_03.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 3}{fig:cmc_rwmh_hist_trace_03}
+\diagnosticfigure{cmc_rwmh_hist_trace_04.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 4}{fig:cmc_rwmh_hist_trace_04}
+\diagnosticfigure{cmc_rwmh_hist_trace_05.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 5}{fig:cmc_rwmh_hist_trace_05}
+
+\diagnosticfigure{cmc_rwmh_acf_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 1}{fig:cmc_rwmh_acf_01}
+\diagnosticfigure{cmc_rwmh_acf_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 2}{fig:cmc_rwmh_acf_02}
+\diagnosticfigure{cmc_rwmh_acf_03.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 3}{fig:cmc_rwmh_acf_03}
+\diagnosticfigure{cmc_rwmh_acf_04.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 4}{fig:cmc_rwmh_acf_04}
+\diagnosticfigure{cmc_rwmh_acf_05.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 5}{fig:cmc_rwmh_acf_05}
+
+\subsection{Consensus Monte Carlo using Independent Metropolis--Hastings diagnostics}
+
+\diagnosticfigure{cmc_imh_density_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_imh_density_01}
+\diagnosticfigure{cmc_imh_density_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_imh_density_02}
+\diagnosticfigure{cmc_imh_density_03.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 3}{fig:cmc_imh_density_03}
+\diagnosticfigure{cmc_imh_density_04.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 4}{fig:cmc_imh_density_04}
+\diagnosticfigure{cmc_imh_density_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 5}{fig:cmc_imh_density_05}
+
+\diagnosticfigure{cmc_imh_hist_trace_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 1}{fig:cmc_imh_hist_trace_01}
+\diagnosticfigure{cmc_imh_hist_trace_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 2}{fig:cmc_imh_hist_trace_02}
+\diagnosticfigure{cmc_imh_hist_trace_03.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 3}{fig:cmc_imh_hist_trace_03}
+\diagnosticfigure{cmc_imh_hist_trace_04.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 4}{fig:cmc_imh_hist_trace_04}
+\diagnosticfigure{cmc_imh_hist_trace_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 5}{fig:cmc_imh_hist_trace_05}
+
+\diagnosticfigure{cmc_imh_acf_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 1}{fig:cmc_imh_acf_01}
+\diagnosticfigure{cmc_imh_acf_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 2}{fig:cmc_imh_acf_02}
+\diagnosticfigure{cmc_imh_acf_03.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 3}{fig:cmc_imh_acf_03}
+\diagnosticfigure{cmc_imh_acf_04.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 4}{fig:cmc_imh_acf_04}
+\diagnosticfigure{cmc_imh_acf_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 5}{fig:cmc_imh_acf_05}
+
+Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_acf_05} provide visual information about marginal posterior shapes, representative sampled-chain behaviour, and autocorrelation patterns for the full-data and Consensus Monte Carlo posterior outputs. The full-data histogram and trace plots are based on representative full-data chains, while the CMC histogram and trace plots are based on representative final consensus chains. The CMC density plots are based on combined consensus samples and do not represent a single shard-level Markov chain. Therefore, the plots are used together with numerical posterior summaries, ESS, MCSE, acceptance rates, and $\widehat{R}$ diagnostics rather than as standalone convergence evidence.
 
 The Gelman--Rubin $\widehat{R}$ diagnostics provide an additional multi-chain convergence check for the final posterior samples. The reported $\widehat{R}$ values are close to 1 across all parameters: approximately 1.0001 to 1.0008 for full-data RWMH, 1.0000 to 1.0002 for full-data IMH, 1.0006 to 1.0031 for CMC-RWMH, and 1.0002 to 1.0019 for CMC-IMH. These values do not indicate substantial between-chain disagreement in the final reported samples, although they should still be considered together with trace plots, autocorrelation plots, ESS, MCSE, and posterior summaries.
 
