@@ -75,7 +75,15 @@ where $p_i$ is the probability that observation $i$ has serious/fatal accident s
 =
 \mathbf{x}_i^T\boldsymbol{\beta}.
 \]
-There is no additive error term in this link equation because the stochastic component is represented through the Bernoulli response distribution.
+For an estimated fitted model, the fitted event probability is denoted by $\widehat{p}_i$ and is obtained by replacing $\boldsymbol{\beta}$ with an estimate $\widehat{\boldsymbol{\beta}}$. The fitted link equation can therefore be written as
+\[
+\operatorname{logit}(\widehat{p}_i)
+=
+\log\left(\frac{\widehat{p}_i}{1-\widehat{p}_i}\right)
+=
+\mathbf{x}_i^T\widehat{\boldsymbol{\beta}}.
+\]
+No additive error term is appended to this fitted link equation; the stochastic component of the binary response is represented through the Bernoulli response distribution.
 
 The event probability can be written in sigmoid form as
 \[
@@ -139,7 +147,7 @@ A frequentist logistic regression model is fitted before Bayesian posterior simu
 
 The frequentist fit also provides quantities used directly in the Metropolis--Hastings algorithms. Let $\widehat{\boldsymbol{\beta}}$ denote the estimated coefficient vector from the fitted frequentist logistic regression model, and let $\widehat{\Sigma}$ denote the estimated covariance matrix of $\widehat{\boldsymbol{\beta}}$. The matrix $\widehat{\Sigma}$ is obtained from the covariance matrix of the fitted frequentist logistic regression model. It is used as a reference covariance matrix because it provides an empirical estimate of the scale and correlation structure of the coefficient estimates. These quantities are used to initialise the samplers and to construct proposal distributions for the full-data and shard-level Metropolis--Hastings algorithms.
 
-The Pearson and deviance residual correlograms are treated as supplementary diagnostic plots. They may indicate patterns in the ordered residual sequence, but they should be interpreted cautiously unless the observation order has a meaningful temporal or spatial interpretation.
+The Pearson and deviance residual correlograms are used to check for the presence of autocorrelation in the residuals. If the residual autocorrelations are low, then the independence assumption of the logistic regression model is not violated according to these residual diagnostic plots.
 
 \section{Full-Data Metropolis--Hastings Sampling}
 
@@ -292,6 +300,19 @@ Equivalently, the log acceptance ratio is
 -
 \log q(\boldsymbol{\beta}^{*}).
 \]
+After generating $u\sim\operatorname{Uniform}(0,1)$, the IMH proposal is accepted when
+\[
+\log u
+<
+\log p(\boldsymbol{\beta}^{*}\mid \mathbf{y})
+-
+\log p(\boldsymbol{\beta}^{(t-1)}\mid \mathbf{y})
++
+\log q(\boldsymbol{\beta}^{(t-1)})
+-
+\log q(\boldsymbol{\beta}^{*}).
+\]
+If this condition is satisfied, then $\boldsymbol{\beta}^{(t)}=\boldsymbol{\beta}^{*}$; otherwise, $\boldsymbol{\beta}^{(t)}=\boldsymbol{\beta}^{(t-1)}$.
 
 \section{Consensus Monte Carlo}
 
