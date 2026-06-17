@@ -43,7 +43,7 @@ Road type is treated as a coded categorical description of the road configuratio
 \label{fig:road_type_examples}
 \end{figure}
 
-Speed limit is the permanent speed limit recorded for the accident location, measured in miles per hour in the accompanying variable documentation. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement. This means that each non-reference speed-limit category is compared with the reference speed-limit category, rather than assuming a single linear increase in log-odds for each one-unit increase in speed limit.
+Speed limit is the permanent speed limit recorded for the accident location, measured in miles per hour in the accompanying variable documentation. The speed-limit variable is stored using numerical category codes in units of 10 miles per hour: category 1 represents 10 miles per hour, category 2 represents 20 miles per hour, category 3 represents 30 miles per hour, category 4 represents 40 miles per hour, category 5 represents 50 miles per hour, and category 6 represents 60 miles per hour. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement. This means that each non-reference speed-limit category is compared with the reference speed-limit category, rather than assuming a single linear increase in log-odds for each one-unit increase in speed limit.
 
 The preprocessing procedure is as follows. First, the selected variables are extracted from the original dataset. Second, observations with missing values in these variables are removed by complete-case filtering. Third, accident severity is recoded into a binary response. Fourth, observations with unknown road type are removed because ``unknown'' is not an interpretable road-type category for regression comparison. Finally, road type and speed limit are converted to categorical predictors and their reference categories are set.
 
@@ -57,7 +57,7 @@ y_i =
 \]
 Thus, the event being modelled is serious/fatal accident severity.
 
-Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway, and the reference category for speed limit is category 2. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $X$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
+Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway, and the reference category for speed limit is category 2. Category 2 corresponds to a recorded speed limit of 20 miles per hour. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $X$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
 
 The exported model settings report 82570 original observations and 82344 observations after preprocessing. These values are used to document the final analysis size. The response and predictor distributions after preprocessing are exported separately for reporting in the results chapter.
 
@@ -143,7 +143,7 @@ The Pearson and deviance residual correlograms are treated as supplementary diag
 
 \section{Full-Data Metropolis--Hastings Sampling}
 
-The full-data analysis uses the complete response vector $\mathbf{y}$ to sample from $p(\boldsymbol{\beta}\mid \mathbf{y})$. The predictor information is incorporated through the likelihood contribution defined by $\mathbf{x}_i^T\boldsymbol{\beta}$. Two full-data samplers are implemented: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings \cite{metropolis1953equation,hastings1970monte,chib1995understanding}.
+The full-data analysis uses the complete response vector $\mathbf{y}$ to sample from $p(\boldsymbol{\beta}\mid \mathbf{y})$. The predictor information is incorporated through the likelihood contribution defined by $\mathbf{x}_i^T\boldsymbol{\beta}$. The Metropolis--Hastings framework is first stated in general form, followed by the two proposal choices used in the empirical analysis: Random Walk Metropolis--Hastings and Independent Metropolis--Hastings \cite{metropolis1953equation,hastings1970monte,chib1995understanding}.
 
 In the following sections,
 \[
@@ -152,6 +152,37 @@ In the following sections,
 denotes a $d$-dimensional multivariate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\Sigma$. For both full-data samplers, the starting value is the frequentist logistic regression estimate $\widehat{\boldsymbol{\beta}}$.
 
 For both full-data samplers, the number of Metropolis--Hastings iterations is set to 100000, and the burn-in fraction is 0.2. This gives 20000 burn-in iterations and 80000 retained post-burn-in samples for each full-data sampler. Runtime is recorded using start and end time measurements, and the recorded runtime values are reported in Chapter 4 as part of the computational comparison.
+
+\subsection{Metropolis--Hastings Algorithm}
+
+Let $\pi_T(\boldsymbol{\beta})$ denote the target posterior kernel, where
+\[
+\pi_T(\boldsymbol{\beta})
+\propto
+p(\boldsymbol{\beta}\mid \mathbf{y}).
+\]
+At iteration $t$, suppose the current state is $\boldsymbol{\beta}^{(t-1)}$. A proposal value $\boldsymbol{\beta}^{*}$ is generated from a proposal density
+\[
+q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)}).
+\]
+The Metropolis--Hastings acceptance probability is
+\[
+\alpha
+=
+\min\left\{
+1,
+\frac{
+\pi_T(\boldsymbol{\beta}^{*})
+q(\boldsymbol{\beta}^{(t-1)}\mid \boldsymbol{\beta}^{*})
+}{
+\pi_T(\boldsymbol{\beta}^{(t-1)})
+q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)})
+}
+\right\}.
+\]
+A value $u\sim\operatorname{Uniform}(0,1)$ is generated. If $u<\alpha$, then the proposal is accepted and $\boldsymbol{\beta}^{(t)}=\boldsymbol{\beta}^{*}$. Otherwise, the proposal is rejected and $\boldsymbol{\beta}^{(t)}=\boldsymbol{\beta}^{(t-1)}$.
+
+Random Walk Metropolis--Hastings and Independent Metropolis--Hastings are special cases of this general algorithm because they use different forms of the proposal density $q(\cdot\mid\cdot)$. In Random Walk Metropolis--Hastings, the proposal is centred at the current state and is symmetric, so the proposal-density ratio cancels. In Independent Metropolis--Hastings, the proposal does not depend on the current state, so the proposal-density correction generally remains in the acceptance probability.
 
 \subsection{Random Walk Metropolis--Hastings Algorithm}
 
@@ -165,6 +196,20 @@ In Random Walk Metropolis--Hastings, the proposed value at iteration $t$ is gene
 \sim
 \mathcal{N}_d(\mathbf{0},\Sigma_{\mathrm{RWMH}}).
 \]
+Equivalently, the proposal density is
+\[
+q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)})
+=
+\mathcal{N}_d(\boldsymbol{\beta}^{(t-1)},\Sigma_{\mathrm{RWMH}}).
+\]
+This is a special case of Metropolis--Hastings in which the proposal distribution is centred at the current state. Because the multivariate normal random-walk proposal is symmetric,
+\[
+q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)})
+=
+q(\boldsymbol{\beta}^{(t-1)}\mid \boldsymbol{\beta}^{*}),
+\]
+so the proposal densities cancel from the general Metropolis--Hastings ratio.
+
 The full-data Random Walk Metropolis--Hastings proposal covariance matrix is
 \[
 \Sigma_{\mathrm{RWMH}}
@@ -175,7 +220,7 @@ c_{\mathrm{RWMH}}^2
 \]
 The factor $2.38^2/d$ follows a common asymptotic scaling rule for random-walk Metropolis proposals \cite{roberts1997weak}. In this study, $c_{\mathrm{RWMH}}=0.75$. This tuning factor adjusts the proposal scale so that the random walk proposal is not too wide for the posterior target. Reducing the proposal scale can improve acceptance behaviour when the initial proposal covariance is too large, but no claim of optimality is made.
 
-Because the random walk proposal is symmetric, the proposal densities cancel in the Metropolis--Hastings ratio. The acceptance probability is
+The resulting acceptance probability is
 \[
 \alpha
 =
@@ -198,11 +243,15 @@ In log form, the proposal is accepted when
 \]
 where $u \sim \operatorname{Uniform}(0,1)$.
 
-If the proposal is accepted, $\boldsymbol{\beta}^{*}$ becomes the current value for the next iteration. If the proposal is rejected, the chain repeats the previous value, so the next stored state remains $\boldsymbol{\beta}^{(t-1)}$.
-
 \subsection{Independent Metropolis--Hastings Algorithm}
 
-In Independent Metropolis--Hastings, the proposal distribution does not depend on the current state. The full-data Independent Metropolis--Hastings sampler uses
+In Independent Metropolis--Hastings, the proposal distribution does not depend on the current state. The proposal density has the form
+\[
+q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)})
+=
+q(\boldsymbol{\beta}^{*}).
+\]
+This is a special case of Metropolis--Hastings in which candidate values are generated from a fixed proposal distribution rather than by perturbing the current state. The full-data Independent Metropolis--Hastings sampler uses
 \[
 \boldsymbol{\beta}^{*}
 \sim
