@@ -20,7 +20,10 @@ Slight & 71374 & 0.8668 \\
 \end{tabular}
 \end{table}
 
-Tables \ref{tab:road_type_distribution} and \ref{tab:speed_limit_distribution} summarise the predictor distributions after preprocessing. Single carriageway is the most frequent road-type category, and speed limit category 2 is the most frequent speed-limit category. These categories are used as reference categories in the empirical model. Choosing a reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients for the other categories are interpreted relative to the baseline.
+Tables \ref{tab:road_type_distribution} and \ref{tab:speed_limit_distribution} summarise the predictor distributions after preprocessing. Single carriageway is the most frequent road-type category, while speed limit category 2 is the most frequent speed-limit category. These categories are therefore used as the reference categories in the empirical model.
+
+The most frequent categories are chosen as reference categories for two main reasons. First, they provide a natural and empirically meaningful baseline because they represent the most common accident conditions in the analysis data. As a result, the estimated regression coefficients for the remaining categories can be interpreted as changes in the log-odds of serious or fatal accident severity relative to the typical road-type and speed-limit conditions observed in the dataset. Secondly, using the largest category as the reference helps avoid using a sparse category as the baseline. A sparse reference category may lead to less stable comparisons, especially when some categories contain relatively few observations. In contrast, a reference group with a large sample size provides a more stable baseline against which the effects of the other categories can be compared.
+
 
 \begin{table}[htbp]
 \centering
@@ -59,7 +62,7 @@ Speed limit category & Count & Proportion \\
 
 \section{Frequentist Logistic Regression Results}
 
-A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline, diagnostic checks, and proposal mean and covariance information for the Metropolis--Hastings algorithms. The $P$-values are reported for completeness, but they are not treated as the main inferential output of the thesis because the primary analysis is Bayesian.
+A frequentist logistic regression model is fitted before the Bayesian simulation stage. The frequentist model provides an initial baseline, diagnostic checks, and proposal mean and covariance information for the Metropolis--Hastings algorithms. The $P$-values are reported for completeness and are used as a secondary frequentist benchmark for assessing whether the predictors that appear statistically significant under the classical model are broadly consistent with the Bayesian posterior results. However, they are not treated as the main inferential output of the thesis, since the primary analysis is Bayesian. In the Bayesian analysis, inference is based mainly on posterior summaries, credible intervals, and posterior uncertainty rather than on frequentist hypothesis tests.
 
 Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimates, standard errors, $z$-values, and $P$-values. Based on the reported $P$-values, all non-intercept coefficients except Road type: one way street (from 2005) are below 0.05 in the frequentist fit.
 
@@ -88,20 +91,29 @@ Speed limit: 6 & 0.3925 & 0.0684 & 5.7374 & $9.6120\times 10^{-9}$ \\
 }
 \end{table}
 
-The likelihood-ratio result in Table \ref{tab:frequentist_lrt} compares the fitted logistic regression model with the intercept-only model. The reported result gives $G^2=432.0306$ with 9 degrees of freedom and $P$-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
+The likelihood-ratio result in Table \ref{tab:frequentist_lrt} compares the fitted logistic regression model with the intercept-only model. The reported result gives $\chi^2=432.0306$ with 9 degrees of freedom and $P$-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
 
 \begin{table}[htbp]
 \centering
-\caption{Likelihood-ratio $G^2$ test}
+\caption{Likelihood-ratio test}
 \label{tab:frequentist_lrt}
 \begin{tabular}{ccc}
 \hline
-$G^2$ & Degrees of freedom & $P$-value \\
+$\chi^2$ & Degrees of freedom & $P$-value \\
 \hline
 432.0306 & 9 & $1.9855\times 10^{-87}$ \\
 \hline
 \end{tabular}
 \end{table}
+
+Figure \ref{fig:residual_acf_correlograms} shows correlograms for the standardised Pearson and deviance residuals. These residual correlograms serve as independence assumption checks to see whether the residuals exhibit any autocorrelation patterns. The reported ACF plots do not show strong evidence of autocorrelation, so the indepndece assumption of the logistic regression model is plausible.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{../Figure/residual_acf_correlograms.pdf}
+\caption{Correlograms of standardised Pearson and deviance residuals}
+\label{fig:residual_acf_correlograms}
+\end{figure}
 
 Table \ref{tab:frequentist_gvif} reports the adjusted GVIF values for the categorical predictors. The adjusted GVIF values are close to 1 for both predictors, so the reported diagnostic values do not suggest serious multicollinearity concerns in this fitted model.
 
@@ -312,7 +324,7 @@ CMC-IMH & Full-data IMH & 0.0060 \\
 \end{tabular}
 \end{table}
 
-The effective sample size and Monte Carlo standard error outputs indicate larger ESS values and smaller MCSE values for the full-data Independent Metropolis--Hastings sampler than for the full-data Random Walk Metropolis--Hastings sampler. A similar pattern appears when comparing CMC-IMH with CMC-RWMH. These values are not interpreted in isolation because efficiency, posterior approximation accuracy, convergence diagnostics, and runtime must be considered together.
+The effective sample size (ESS) and Monte Carlo standard error (MCSE) results suggest that the full-data Independent Metropolis--Hastings sampler is more efficient than the full-data Random Walk Metropolis--Hastings sampler, as it produces larger ESS values and smaller MCSE values. A similar pattern is observed for the consensus samplers, where CMC-IMH shows larger ESS and smaller MCSE than CMC-RWMH. However, these efficiency measures should be interpreted together with posterior approximation accuracy, convergence diagnostics, and computational runtime, rather than considered on their own.
 
 \section{Acceptance Rates and Computational Runtime}
 
@@ -322,8 +334,6 @@ Table \ref{tab:acceptance_runtime} reports mean acceptance rates and runtime val
 \centering
 \caption{Mean acceptance rates and computational runtime}
 \label{tab:acceptance_runtime}
-\scriptsize
-\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcc}
 \hline
 Method & Mean acceptance rate & Runtime minutes \\
@@ -333,17 +343,16 @@ Full-data IMH & 0.2170 & 20.84 \\
 Mean CMC-RWMH & 0.3962 & 8.51 \\
 Mean CMC-IMH & 0.2168 & 8.97 \\
 \hline
-\end{tabular}%
-}
+\end{tabular}
 \end{table}
 
 The full-data RWMH chain-level acceptance rates range from 0.3916 to 0.3949, and the full-data IMH chain-level acceptance rates range from 0.2151 to 0.2198. The CMC-RWMH shard-chain acceptance rates range from 0.3765 to 0.4113, while the CMC-IMH shard-chain acceptance rates range from 0.2126 to 0.2207. The acceptance rates therefore appear stable across chains and shard-chain runs in the current reported analysis.
 
-The current implementation runs the full-data RWMH and full-data IMH samplers sequentially. In contrast, the CMC-RWMH and CMC-IMH shard computations use parallel workers, with the number of workers set equal to the number of shards. The recorded CMC runtimes therefore reflect the current parallel implementation and include cluster setup and worker overhead. The reported runtime values show shorter recorded wall-clock times for the CMC methods than for the corresponding full-data methods in this run. This observation should not be generalised as hardware-independent speedup, because runtime depends on the computing environment, parallel backend, cluster overhead, posterior combination cost, implementation details, and statistical efficiency.
+
 
 \section{Diagnostic Plots}
 
-The figure manifest reports numbered posterior histogram, trace, autocorrelation, and density plots. Because the coefficient vector has 10 parameters and the exported diagnostic figures show two parameters per page, each numbered diagnostic group has pages 01--05. All exported diagnostic figure pages are included in this section.
+The figure manifest reports numbered posterior histogram, trace, and autocorrelation plots for the full-data and Consensus Monte Carlo outputs. Because the coefficient vector has 10 parameters and the exported diagnostic figures show two parameters per page, each numbered diagnostic group has pages 01--05. The diagnostic plots are included in this section and are interpreted together with the posterior summaries, effective sample sizes (ESS), Monte Carlo standard errors (MCSE), acceptance rates, and $\widehat{R}$ diagnostics rather than as standalone evidence.
 
 \newcommand{\diagnosticfigure}[3]{%
 \begin{figure}[htbp]
@@ -356,7 +365,7 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 
 \subsection{Full-data Random Walk Metropolis--Hastings diagnostics}
 
-The following figures present the representative posterior histograms, trace plots, and autocorrelation plots for the full-data RWMH output.
+The following figures present posterior histograms, trace plots, and autocorrelation plots for the full-data RWMH output.
 
 \diagnosticfigure{full_data_rwmh_hist_trace_01.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_rwmh_hist_trace_01}
 \diagnosticfigure{full_data_rwmh_hist_trace_02.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_rwmh_hist_trace_02}
@@ -373,7 +382,7 @@ The following figures present the representative posterior histograms, trace plo
 \clearpage
 \subsection{Full-data Independent Metropolis--Hastings diagnostics}
 
-The following figures present the representative posterior histograms, trace plots, and autocorrelation plots for the full-data IMH output.
+The following figures present posterior histograms, trace plots, and autocorrelation plots for the full-data IMH output.
 
 \diagnosticfigure{full_data_imh_hist_trace_01.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_imh_hist_trace_01}
 \diagnosticfigure{full_data_imh_hist_trace_02.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_imh_hist_trace_02}
@@ -390,13 +399,7 @@ The following figures present the representative posterior histograms, trace plo
 \clearpage
 \subsection{Consensus Monte Carlo using Random Walk Metropolis--Hastings diagnostics}
 
-The following figures present posterior densities from the combined CMC-RWMH samples and representative histogram, trace, and autocorrelation plots for a final consensus chain.
-
-\diagnosticfigure{cmc_rwmh_density_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_rwmh_density_01}
-\diagnosticfigure{cmc_rwmh_density_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_rwmh_density_02}
-\diagnosticfigure{cmc_rwmh_density_03.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 3}{fig:cmc_rwmh_density_03}
-\diagnosticfigure{cmc_rwmh_density_04.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 4}{fig:cmc_rwmh_density_04}
-\diagnosticfigure{cmc_rwmh_density_05.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 5}{fig:cmc_rwmh_density_05}
+The following figures present histogram, trace, and autocorrelation plots for the reported CMC-RWMH output diagnostics.
 
 \diagnosticfigure{cmc_rwmh_hist_trace_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 1}{fig:cmc_rwmh_hist_trace_01}
 \diagnosticfigure{cmc_rwmh_hist_trace_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain histograms and trace plots, page 2}{fig:cmc_rwmh_hist_trace_02}
@@ -413,13 +416,7 @@ The following figures present posterior densities from the combined CMC-RWMH sam
 \clearpage
 \subsection{Consensus Monte Carlo using Independent Metropolis--Hastings diagnostics}
 
-The following figures present posterior densities from the combined CMC-IMH samples and representative histogram, trace, and autocorrelation plots for a final consensus chain.
-
-\diagnosticfigure{cmc_imh_density_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_imh_density_01}
-\diagnosticfigure{cmc_imh_density_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_imh_density_02}
-\diagnosticfigure{cmc_imh_density_03.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 3}{fig:cmc_imh_density_03}
-\diagnosticfigure{cmc_imh_density_04.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 4}{fig:cmc_imh_density_04}
-\diagnosticfigure{cmc_imh_density_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 5}{fig:cmc_imh_density_05}
+The following figures present histogram, trace, and autocorrelation plots for the reported CMC-IMH output diagnostics.
 
 \diagnosticfigure{cmc_imh_hist_trace_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 1}{fig:cmc_imh_hist_trace_01}
 \diagnosticfigure{cmc_imh_hist_trace_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain histograms and trace plots, page 2}{fig:cmc_imh_hist_trace_02}
@@ -434,25 +431,16 @@ The following figures present posterior densities from the combined CMC-IMH samp
 \diagnosticfigure{cmc_imh_acf_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 5}{fig:cmc_imh_acf_05}
 
 \clearpage
-Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_acf_05} provide visual information about marginal posterior shapes, representative sampled-chain behaviour, and autocorrelation patterns for the full-data and Consensus Monte Carlo posterior outputs. The full-data histogram and trace plots are based on representative full-data chains, while the CMC histogram and trace plots are based on representative final consensus chains. The CMC density plots are based on combined consensus samples and do not represent a single shard-level Markov chain. Therefore, the plots are used together with numerical posterior summaries, ESS, MCSE, acceptance rates, and $\widehat{R}$ diagnostics rather than as standalone convergence evidence.
+Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_acf_05} provide visual information about marginal posterior shapes, sampled-chain behaviour, and autocorrelation patterns for the full-data and Consensus Monte Carlo posterior outputs. The full-data histogram and trace plots are based on representative full-data chains, while the CMC histogram and trace plots are based on representative final consensus chains.
 
-The Gelman--Rubin $\widehat{R}$ diagnostics provide an additional multi-chain convergence check for the final posterior samples. The reported $\widehat{R}$ values are close to 1 across all parameters: approximately 1.0001 to 1.0008 for full-data RWMH, 1.0000 to 1.0002 for full-data IMH, 1.0006 to 1.0031 for CMC-RWMH, and 1.0002 to 1.0019 for CMC-IMH. These values do not indicate substantial between-chain disagreement in the final reported samples, although they should still be considered together with trace plots, autocorrelation plots, ESS, MCSE, and posterior summaries.
-
-Figure \ref{fig:residual_acf_correlograms} shows correlograms for the standardised Pearson and deviance residuals. These residual ACF plots are supplementary diagnostics. They should be interpreted cautiously because a correlogram depends on whether the observation order has a meaningful temporal or spatial interpretation.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.85\textwidth]{../Figure/residual_acf_correlograms.pdf}
-\caption{Correlograms of standardised Pearson and deviance residuals}
-\label{fig:residual_acf_correlograms}
-\end{figure}
+The Gelman--Rubin $\widehat{R}$ diagnostics provide an additional multi-chain convergence check for the final posterior samples. The reported $\widehat{R}$ values are close to 1 across all parameters: approximately 1.0001 to 1.0008 for full-data RWMH, 1.0000 to 1.0002 for full-data IMH, 1.0006 to 1.0031 for CMC-RWMH, and 1.0002 to 1.0019 for CMC-IMH. These $\widehat{R}$ values suggest that the final posterior samples are approximately converged across the four Bayesian methods.
 
 \section{Summary of Findings}
 
-The frequentist logistic regression provides an initial baseline, diagnostic checks, and proposal information for the Metropolis--Hastings samplers. Its $P$-values are reported descriptively, while the likelihood-ratio $G^2$ test assesses improvement over the intercept-only model and the GVIF values assess multicollinearity among the categorical predictors.
+The frequentist logistic regression provides an initial baseline, diagnostic checks, and proposal information for the Metropolis--Hastings samplers. Its $P$-values are reported descriptively, while the likelihood-ratio test assesses improvement over the intercept-only model and the GVIF values assess multicollinearity among the categorical predictors.
 
 The full-data Random Walk Metropolis--Hastings and full-data Independent Metropolis--Hastings samplers produce similar posterior means, medians, standard deviations, credible intervals, and posterior odds ratios. Across the Bayesian posterior summaries, the 95\% credible interval for Road type: one way street (from 2005) contains zero, while the intervals for the other non-intercept coefficients exclude zero. This provides posterior evidence that those coefficients are credibly different from zero under the fitted model.
 
-The Consensus Monte Carlo summaries are compared against the full-data methods as posterior approximations. CMC-RWMH and CMC-IMH are generally close to the corresponding full-data posterior summaries, with posterior mean RMSE values of 0.0057 and 0.0060, respectively. The acceptance rates for the CMC methods are similar to the corresponding full-data Metropolis--Hastings methods and should still be interpreted together with posterior summaries, density plots, convergence diagnostics, and runtime.
+The Consensus Monte Carlo summaries are compared against the full-data methods as posterior approximations. CMC-RWMH and CMC-IMH are generally close to the corresponding full-data posterior summaries, with posterior mean RMSE values of 0.0057 and 0.0060, respectively. The acceptance rates for the CMC methods are similar to the corresponding full-data Metropolis--Hastings methods and should still be interpreted together with posterior summaries, convergence diagnostics, and runtime.
 
 The runtime results reflect the current implementation: full-data samplers are run sequentially, while CMC shard computations use parallel workers. The reported timing values show shorter recorded wall-clock runtime for the CMC methods than for the corresponding full-data methods in this run. This should be interpreted as an empirical runtime result for the current implementation and computing environment, not as a general claim of automatic speedup.

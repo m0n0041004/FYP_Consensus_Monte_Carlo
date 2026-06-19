@@ -12,7 +12,7 @@ The empirical analysis uses three variables from the original dataset: accident 
 
 Accident severity is interpreted according to the reported road casualty statistics framework. The Department for Transport background quality report states that collision severity is based on the severity of the most severely injured casualty. Casualties are divided into killed, seriously injured, and slightly injured categories. A killed casualty is a human casualty whose injuries cause death within 30 days of the collision, excluding confirmed suicides. Injured casualties are classified as seriously or slightly injured according to the type of injury recorded by the police from information available shortly after the accident, and this classification may not fully reflect the outcome of a later medical examination \cite{dft2025quality}. In this study, fatal and serious accident severity are combined into the serious/fatal class because both represent more severe outcomes than slight accident severity. Slight accident severity is retained as the reference response class. Therefore, the binary response models serious/fatal accident severity relative to slight accident severity.
 
-Road type is treated as a coded categorical description of the road configuration at the accident location. The categories used in the model are single carriageway, dual carriageway, one-way street, roundabout, and slip road. These categories distinguish the broad road setting in which the accident occurred, rather than providing continuous geometric measurements of the road. Since the aim of the model is to compare accident severity across coded road-type categories, detailed engineering definitions are not required for the regression specification. Figure \ref{fig:road_type_examples} provides visual examples of four road-type categories used to illustrate the broad road configurations.
+Road type is included in the model as a categorical variable describing the road configuration at the accident location. The categories used in the model are single carriageway, dual carriageway, one-way street, roundabout, and slip road. Figure \ref{fig:road_type_examples} provides visual examples of selected road-type categories to illustrate the broad road configurations considered in the analysis.
 
 \begin{figure}[htbp]
 \centering
@@ -43,7 +43,7 @@ Road type is treated as a coded categorical description of the road configuratio
 \label{fig:road_type_examples}
 \end{figure}
 
-Speed limit is the permanent speed limit recorded for the accident location, measured in miles per hour in the accompanying variable documentation. The speed-limit variable is stored using numerical category codes in units of 10 miles per hour: category 1 represents 10 miles per hour, category 2 represents 20 miles per hour, category 3 represents 30 miles per hour, category 4 represents 40 miles per hour, category 5 represents 50 miles per hour, and category 6 represents 60 miles per hour. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement. This means that each non-reference speed-limit category is compared with the reference speed-limit category, rather than assuming a single linear increase in log-odds for each one-unit increase in speed limit.
+Speed limit is the permanent speed limit recorded for the accident location, measured in miles per hour in the accompanying variable documentation. The speed-limit variable is stored using numerical category codes corresponding to recorded speed limits in miles per hour: category 1 represents 20 miles per hour, category 2 represents 30 miles per hour, category 3 represents 40 miles per hour, category 4 represents 50 miles per hour, category 5 represents 60 miles per hour, and category 6 represents 70 miles per hour. In the empirical model, speed limit is treated as a categorical predictor rather than as a continuous numerical measurement. This means that each non-reference speed-limit category is compared with the reference speed-limit category, rather than assuming a single linear increase in log-odds for each one-unit increase in speed limit.
 
 The preprocessing procedure is as follows. First, the selected variables are extracted from the original dataset. Second, observations with missing values in these variables are removed by complete-case filtering. Third, accident severity is recoded into a binary response. Fourth, observations with unknown road type are removed because ``unknown'' is not an interpretable road-type category for regression comparison. Finally, road type and speed limit are converted to categorical predictors and their reference categories are set.
 
@@ -57,7 +57,7 @@ y_i =
 \]
 Thus, the event being modelled is serious/fatal accident severity.
 
-Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway, and the reference category for speed limit is category 2. Category 2 corresponds to a recorded speed limit of 20 miles per hour. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $X$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
+Road type and speed limit are treated as categorical predictors. The reference category for road type is single carriageway. The reference category for speed limit is category 2, which corresponds to a recorded speed limit of 30 miles per hour. These categories correspond to the reference categories set in the empirical implementation. The choice of reference category does not change the fitted logistic regression model as a whole, but it determines how the regression coefficients are interpreted relative to the baseline category. A design matrix $X$ is constructed from the fitted logistic regression model and includes the intercept together with indicator variables for the non-reference predictor categories.
 
 The exported model settings report 82570 original observations and 82344 observations after preprocessing. These values are used to document the final analysis size. The response and predictor distributions after preprocessing are exported separately for reporting in the results chapter.
 
@@ -74,14 +74,6 @@ where $p_i$ is the probability that observation $i$ has serious/fatal accident s
 \log\left(\frac{p_i}{1-p_i}\right)
 =
 \mathbf{x}_i^T\boldsymbol{\beta}.
-\]
-For an estimated fitted model, the fitted event probability is denoted by $\widehat{p}_i$ and is obtained by replacing $\boldsymbol{\beta}$ with an estimate $\widehat{\boldsymbol{\beta}}$. The fitted link equation can therefore be written as
-\[
-\operatorname{logit}(\widehat{p}_i)
-=
-\log\left(\frac{\widehat{p}_i}{1-\widehat{p}_i}\right)
-=
-\mathbf{x}_i^T\widehat{\boldsymbol{\beta}}.
 \]
 No additive error term is appended to this fitted link equation; the stochastic component of the binary response is represented through the Bernoulli response distribution.
 
@@ -436,6 +428,6 @@ Posterior samples from the full-data Metropolis--Hastings samplers and the Conse
 
 The effective sample size is estimated from the autocorrelation structure of the sampled values. The Monte Carlo standard error is computed as the posterior standard deviation divided by the square root of the estimated effective sample size. The 95\% credible interval is used to describe posterior uncertainty for each coefficient \cite{flegal2008mcmc}.
 
-Additional evaluation criteria include acceptance rate, runtime, trace plots, posterior histograms, autocorrelation plots, posterior density plots, and the Gelman--Rubin potential scale reduction factor, denoted by $\widehat{R}$. The $\widehat{R}$ diagnostic compares within-chain and between-chain variation as a multi-chain convergence check, with values close to 1 indicating similar behaviour across the independent chains \cite{gelman1992inference}. Acceptance rates are used to assess the behaviour of the Metropolis--Hastings proposal mechanisms. Runtime is recorded during the empirical analysis and reported in Chapter 4. Histogram, trace, and autocorrelation plots are produced for the full-data Metropolis--Hastings chains, while posterior density plots are produced for the combined consensus samples \cite{brooks1998general,cowles1996markov}.
+Additional evaluation criteria include acceptance rate, runtime, trace plots, posterior histograms, autocorrelation plots, and the Gelman--Rubin potential scale reduction factor, denoted by $\widehat{R}$. The $\widehat{R}$ diagnostic compares within-chain and between-chain variation as a multi-chain convergence check, with values close to 1 indicating similar behaviour across the independent chains \cite{gelman1992inference}. Acceptance rates are used to assess the behaviour of the Metropolis--Hastings proposal mechanisms. Runtime is recorded during the empirical analysis and reported in Chapter 4. Histogram, trace, and autocorrelation plots are produced for the full-data Metropolis--Hastings chains and for the reported Consensus Monte Carlo output diagnostics \cite{brooks1998general,cowles1996markov}.
 
 For CMC-RWMH, posterior mean error and posterior mean root mean squared error are computed relative to the full-data RWMH posterior mean. For CMC-IMH, the same quantities are computed relative to the full-data IMH posterior mean. These quantities are used as empirical measures of how closely the consensus posterior means approximate the corresponding full-data posterior means under the current implementation.
