@@ -1,5 +1,6 @@
 # Export results for thesis tables and figures
-# Run this after Consensus_Monte_Carlo.r has completed or partially completed.
+# Run this after Consensus_Monte_Carlo_multi_chain.r has completed or
+# partially completed in the current R session.
 
 # -------------------------------------------------------------------
 # 0. Create output folders
@@ -17,11 +18,121 @@ if (!dir.exists("Figure")) {
 # Helper functions
 # -------------------------------------------------------------------
 
+expected_num_chains <- if (exists("num_chains", inherits = TRUE)) {
+  as.integer(get("num_chains", inherits = TRUE))
+} else {
+  4L
+}
+
+params_per_diagnostic_page <- 2L
+
+required_result_files <- c(
+  "Results/model_settings.csv",
+  "Results/response_distribution.csv",
+  "Results/road_type_distribution.csv",
+  "Results/speed_limit_distribution.csv",
+  "Results/reference_categories.csv",
+  "Results/frequentist_logistic_summary.csv",
+  "Results/frequentist_likelihood_ratio_test.csv",
+  "Results/frequentist_gvif.csv",
+  "Results/pearson_residual_summary.csv",
+  "Results/deviance_residual_summary.csv",
+  "Results/cmc_shard_sizes.csv",
+  "Results/cmc_shard_response_distribution.csv",
+  "Results/full_data_rwmh_posterior_summary.csv",
+  "Results/full_data_imh_posterior_summary.csv",
+  "Results/cmc_rwmh_posterior_summary.csv",
+  "Results/cmc_imh_posterior_summary.csv",
+  "Results/posterior_mean_comparison.csv",
+  "Results/cmc_rmse_comparison.csv",
+  "Results/acceptance_rates.csv",
+  "Results/runtime_comparison.csv",
+  "Results/gelman_rubin_diagnostics.csv",
+  "Results/effective_sample_size.csv",
+  "Results/report_artifact_manifest.csv",
+  "Results/export_object_availability.csv"
+)
+
+fixed_road_type_figures <- file.path(
+  "Figure",
+  c(
+    "road_type_single_carriageway.png",
+    "road_type_dual_carriageway.png",
+    "road_type_roundabout.png",
+    "road_type_slip_road.png"
+  )
+)
+
+diagnostic_figure_prefixes <- c(
+  "full_data_rwmh_hist_trace",
+  "full_data_rwmh_acf",
+  "full_data_imh_hist_trace",
+  "full_data_imh_acf",
+  "cmc_rwmh_hist_trace",
+  "cmc_rwmh_acf",
+  "cmc_imh_hist_trace",
+  "cmc_imh_acf"
+)
+
+required_diagnostic_figures <- unlist(
+  lapply(
+    diagnostic_figure_prefixes,
+    function(prefix) {
+      file.path(
+        "Figure",
+        sprintf("%s_%02d.pdf", prefix, seq_len(5L))
+      )
+    }
+  ),
+  use.names = FALSE
+)
+
+required_figure_files <- c(
+  fixed_road_type_figures,
+  "Figure/residual_acf_correlograms.pdf",
+  required_diagnostic_figures
+)
+
+known_supplementary_result_files <- c(
+  "Results/data_preview.csv",
+  "Results/parameter_names.csv",
+  "Results/design_matrix_info.csv",
+  "Results/frequentist_coefficient_covariance.csv",
+  "Results/full_data_rwmh_chain_dimensions.csv",
+  "Results/full_data_imh_chain_dimensions.csv",
+  "Results/cmc_rwmh_chain_dimensions.csv",
+  "Results/cmc_imh_chain_dimensions.csv",
+  "Results/full_data_rwmh_chain_posterior_summary.csv",
+  "Results/full_data_imh_chain_posterior_summary.csv",
+  "Results/cmc_rwmh_chain_posterior_summary.csv",
+  "Results/cmc_imh_chain_posterior_summary.csv",
+  "Results/ess_mcse_comparison.csv",
+  "Results/cmc_shard_gelman_rubin_diagnostics.csv",
+  "Results/cmc_shard_effective_sample_size.csv",
+  "Results/cmc_rwmh_posterior_mean_error.csv",
+  "Results/cmc_imh_posterior_mean_error.csv",
+  "Results/cmc_rwmh_rmse.csv",
+  "Results/cmc_imh_rmse.csv",
+  "Results/cmc_shard_road_type_distribution.csv",
+  "Results/cmc_shard_speed_limit_distribution.csv",
+  "Results/proposal_cov_full_rwmh.csv",
+  "Results/proposal_cov_full_imh.csv",
+  "Results/proposal_cov_cmc_rwmh.csv"
+)
+
+thesis_required_files <- c(required_result_files, required_figure_files)
+exported_paths <- character()
+
 report_artifact_manifest <- data.frame(
   Artifact = character(),
   File_Path = character(),
+  Artifact_Type = character(),
   Report_Section = character(),
   Description = character(),
+  Required_For_Thesis = logical(),
+  Generated_By_Export = logical(),
+  Exists = logical(),
+  Notes = character(),
   stringsAsFactors = FALSE
 )
 
@@ -72,7 +183,30 @@ infer_artifact_description <- function(file_path) {
   description
 }
 
-register_artifact <- function(file_path, report_section = NULL, description = NULL) {
+infer_artifact_type <- function(file_path) {
+  extension <- tolower(tools::file_ext(file_path))
+
+  if (extension %in% c("pdf", "png", "jpg", "jpeg", "svg")) {
+    return("Figure")
+  }
+
+  if (extension == "csv") {
+    return("Result table")
+  }
+
+  if (extension == "rds") {
+    return("Supplementary data")
+  }
+
+  "Artifact"
+}
+
+register_artifact <- function(file_path,
+                              report_section = NULL,
+                              description = NULL,
+                              required_for_thesis = file_path %in% thesis_required_files,
+                              generated_by_export = file_path %in% exported_paths,
+                              notes = "") {
   if (is.null(report_section)) {
     report_section <- infer_report_section(file_path)
   }
@@ -87,8 +221,13 @@ register_artifact <- function(file_path, report_section = NULL, description = NU
       data.frame(
         Artifact = tools::file_path_sans_ext(basename(file_path)),
         File_Path = file_path,
+        Artifact_Type = infer_artifact_type(file_path),
         Report_Section = report_section,
         Description = description,
+        Required_For_Thesis = required_for_thesis,
+        Generated_By_Export = generated_by_export,
+        Exists = file.exists(file_path),
+        Notes = notes,
         stringsAsFactors = FALSE
       )
     )
@@ -98,6 +237,7 @@ register_artifact <- function(file_path, report_section = NULL, description = NU
 safe_write_csv <- function(object, file_path, report_section = NULL, description = NULL) {
   if (!is.null(object)) {
     write.csv(object, file_path, row.names = FALSE)
+    exported_paths <<- unique(c(exported_paths, file_path))
     register_artifact(file_path, report_section, description)
   }
 }
@@ -105,6 +245,7 @@ safe_write_csv <- function(object, file_path, report_section = NULL, description
 safe_write_matrix <- function(object, file_path, report_section = NULL, description = NULL) {
   if (!is.null(object)) {
     write.csv(as.data.frame(object), file_path, row.names = TRUE)
+    exported_paths <<- unique(c(exported_paths, file_path))
     register_artifact(file_path, report_section, description)
   }
 }
@@ -112,6 +253,7 @@ safe_write_matrix <- function(object, file_path, report_section = NULL, descript
 safe_save_rds <- function(object, file_path, report_section = NULL, description = NULL) {
   if (!is.null(object)) {
     saveRDS(object, file_path)
+    exported_paths <<- unique(c(exported_paths, file_path))
     register_artifact(file_path, report_section, description)
   }
 }
@@ -132,22 +274,67 @@ valid_sample_matrix <- function(samples) {
   is.matrix(samples) &&
     nrow(samples) > 0 &&
     ncol(samples) > 0 &&
+    !is.null(colnames(samples)) &&
+    all(nzchar(colnames(samples))) &&
     all(is.finite(samples))
 }
 
-valid_sample_list <- function(samples_list) {
+sample_list_problems <- function(samples_list,
+                                 expected_chains = expected_num_chains) {
+  problems <- character()
+
   if (!is.list(samples_list) || length(samples_list) == 0) {
-    return(FALSE)
+    return("is not a non-empty list")
   }
 
-  matrix_check <- vapply(samples_list, valid_sample_matrix, logical(1))
+  if (length(samples_list) < expected_chains) {
+    problems <- c(
+      problems,
+      paste0(
+        "contains ",
+        length(samples_list),
+        " chains; expected at least ",
+        expected_chains
+      )
+    )
+  }
+
+  matrix_check <- vapply(
+    samples_list,
+    function(samples) {
+      is.matrix(samples) && nrow(samples) > 0 && ncol(samples) > 0
+    },
+    logical(1)
+  )
 
   if (!all(matrix_check)) {
-    return(FALSE)
+    problems <- c(problems, "contains a non-matrix or empty chain")
+    return(unique(problems))
   }
 
+  nrows <- vapply(samples_list, nrow, integer(1))
   ncols <- vapply(samples_list, ncol, integer(1))
-  identical_dimensions <- length(unique(ncols)) == 1
+
+  if (length(unique(nrows)) != 1 || length(unique(ncols)) != 1) {
+    problems <- c(problems, "has inconsistent chain dimensions")
+  }
+
+  if (any(!vapply(samples_list, function(x) all(is.finite(x)), logical(1)))) {
+    problems <- c(problems, "contains non-finite sample values")
+  }
+
+  if (any(vapply(samples_list, function(x) is.null(colnames(x)), logical(1)))) {
+    problems <- c(problems, "has missing parameter column names")
+    return(unique(problems))
+  }
+
+  if (any(vapply(
+    samples_list,
+    function(x) any(!nzchar(colnames(x))),
+    logical(1)
+  ))) {
+    problems <- c(problems, "has blank parameter column names")
+  }
 
   colname_check <- vapply(
     samples_list,
@@ -157,14 +344,29 @@ valid_sample_list <- function(samples_list) {
     logical(1)
   )
 
-  identical_dimensions && all(colname_check)
+  if (!all(colname_check)) {
+    problems <- c(problems, "has inconsistent parameter column names")
+  }
+
+  unique(problems)
 }
 
-ensure_valid_sample_list <- function(samples_list, object_name) {
-  if (!valid_sample_list(samples_list)) {
+valid_sample_list <- function(samples_list,
+                              expected_chains = expected_num_chains) {
+  length(sample_list_problems(samples_list, expected_chains)) == 0
+}
+
+ensure_valid_sample_list <- function(samples_list,
+                                     object_name,
+                                     expected_chains = expected_num_chains) {
+  problems <- sample_list_problems(samples_list, expected_chains)
+
+  if (length(problems) > 0) {
     warning(
       object_name,
-      " is missing, empty, non-finite, or has inconsistent chain dimensions.",
+      " ",
+      paste(problems, collapse = "; "),
+      ".",
       call. = FALSE
     )
     return(FALSE)
@@ -323,34 +525,51 @@ acceptance_matrix_table <- function(values, method_name) {
   output[, c("Method", "Level", "Shard", "Chain", "Acceptance_Rate")]
 }
 
-representative_samples <- function(samples_list_name,
-                                   pooled_samples_name,
-                                   chain_id_name = NULL) {
+representative_chain_samples <- function(samples_list_name,
+                                         chain_id_name = NULL) {
   samples_list <- object_value(samples_list_name)
 
-  if (valid_sample_list(samples_list)) {
-    chain_id <- 1
+  if (!ensure_valid_sample_list(samples_list, samples_list_name)) {
+    return(NULL)
+  }
 
-    if (!is.null(chain_id_name) && object_exists(chain_id_name)) {
-      candidate_id <- as.integer(object_value(chain_id_name)[1])
+  chain_id <- 1L
 
-      if (!is.na(candidate_id) &&
-          candidate_id >= 1 &&
-          candidate_id <= length(samples_list)) {
-        chain_id <- candidate_id
-      }
+  if (!is.null(chain_id_name) && object_exists(chain_id_name)) {
+    candidate_id <- suppressWarnings(
+      as.integer(object_value(chain_id_name)[1])
+    )
+
+    if (!is.na(candidate_id) &&
+        candidate_id >= 1 &&
+        candidate_id <= length(samples_list)) {
+      chain_id <- candidate_id
+    } else {
+      warning(
+        chain_id_name,
+        " is invalid; representative chain 1 will be used.",
+        call. = FALSE
+      )
     }
-
-    return(samples_list[[chain_id]])
+  } else {
+    warning(
+      if (is.null(chain_id_name)) {
+        paste0(
+          "No plot-chain ID was supplied for ",
+          samples_list_name,
+          "; representative chain 1 will be used."
+        )
+      } else {
+        paste0(
+          chain_id_name,
+          " is missing; representative chain 1 will be used."
+        )
+      },
+      call. = FALSE
+    )
   }
 
-  pooled_samples <- object_value(pooled_samples_name)
-
-  if (valid_sample_matrix(pooled_samples)) {
-    return(pooled_samples)
-  }
-
-  NULL
+  samples_list[[chain_id]]
 }
 
 add_setting <- function(name, value) {
@@ -374,6 +593,42 @@ residual_summary_table <- function(residuals) {
     Maximum = max(residuals),
     Std_Dev = sd(residuals),
     row.names = NULL
+  )
+}
+
+missing_fixed_road_type_figures <- fixed_road_type_figures[
+  !file.exists(fixed_road_type_figures)
+]
+
+if (length(missing_fixed_road_type_figures) > 0) {
+  warning(
+    "The following fixed road-type figures required by Chapter 3 are missing: ",
+    paste(missing_fixed_road_type_figures, collapse = ", "),
+    call. = FALSE
+  )
+}
+
+for (fixed_figure in fixed_road_type_figures) {
+  register_artifact(
+    fixed_figure,
+    "Data and preprocessing",
+    paste(
+      "Fixed road-type example:",
+      tools::toTitleCase(
+        gsub(
+          "_",
+          " ",
+          tools::file_path_sans_ext(basename(fixed_figure))
+        )
+      )
+    ),
+    required_for_thesis = TRUE,
+    generated_by_export = FALSE,
+    notes = if (file.exists(fixed_figure)) {
+      "Fixed thesis image verified; not generated by Export_Results.r."
+    } else {
+      "Fixed thesis image is missing and was not generated."
+    }
   )
 }
 
@@ -684,6 +939,12 @@ for (method_key in names(multi_chain_sample_objects)) {
         paste(sample_info$description, "post-burn-in samples by chain")
       )
     }
+  } else {
+    warning(
+      sample_info$samples_list,
+      " is missing; chain dimensions and chain-specific summaries were not exported.",
+      call. = FALSE
+    )
   }
 
   pooled_samples <- object_value(sample_info$pooled_samples)
@@ -694,6 +955,18 @@ for (method_key in names(multi_chain_sample_objects)) {
       file.path("Results", paste0(file_prefix, "_pooled_post_samples.rds")),
       "Posterior summaries",
       paste(sample_info$description, "pooled posterior samples")
+    )
+  } else if (!is.null(pooled_samples)) {
+    warning(
+      sample_info$pooled_samples,
+      " is invalid, non-finite, empty, or lacks parameter column names.",
+      call. = FALSE
+    )
+  } else {
+    warning(
+      sample_info$pooled_samples,
+      " is missing; pooled posterior samples were not exported.",
+      call. = FALSE
     )
   }
 }
@@ -1260,8 +1533,6 @@ if (exists("cmc_rwmh_proposal_cov")) {
 # 10. Figure exports
 # -------------------------------------------------------------------
 
-graphics.off()
-
 fig_dpi <- 100
 
 fig_width_px <- 800
@@ -1274,310 +1545,237 @@ fig_wide_height_px <- 300
 fig_wide_width_in <- fig_wide_width_px / fig_dpi
 fig_wide_height_in <- fig_wide_height_px / fig_dpi
 
-# Full-data RWMH histogram and trace plots. In the multi-chain workflow,
-# a representative chain is plotted because pooled samples are not one chain.
-full_data_rwmh_plot_samples <- representative_samples(
-  "full_data_rwmh_post_samples_list",
-  "full_data_rwmh_post_samples",
-  "full_data_rwmh_plot_chain_id"
+export_paginated_diagnostic <- function(samples,
+                                        plot_function_name,
+                                        file_prefix,
+                                        description,
+                                        width,
+                                        height,
+                                        par_settings) {
+  if (is.null(samples)) {
+    warning(
+      "Cannot export ",
+      file_prefix,
+      " because no valid representative chain is available.",
+      call. = FALSE
+    )
+    return(character())
+  }
+
+  if (!exists(plot_function_name, mode = "function", inherits = TRUE)) {
+    warning(
+      plot_function_name,
+      " is missing; ",
+      file_prefix,
+      " figures were not generated.",
+      call. = FALSE
+    )
+    return(character())
+  }
+
+  expected_pages <- ceiling(ncol(samples) / params_per_diagnostic_page)
+
+  if (ncol(samples) == 10L && expected_pages != 5L) {
+    warning(
+      file_prefix,
+      " should have 5 pages for 10 parameters and 2 parameters per page.",
+      call. = FALSE
+    )
+  }
+
+  temp_directory <- tempfile(paste0(file_prefix, "_"))
+  dir.create(temp_directory)
+  on.exit(unlink(temp_directory, recursive = TRUE, force = TRUE), add = TRUE)
+
+  temp_pattern <- file.path(
+    temp_directory,
+    paste0(file_prefix, "_%02d.pdf")
+  )
+
+  device_open <- FALSE
+  export_succeeded <- tryCatch(
+    {
+      pdf(
+        temp_pattern,
+        width = width,
+        height = height,
+        onefile = FALSE
+      )
+      device_open <- TRUE
+
+      old_par <- par(no.readonly = TRUE)
+      do.call(par, par_settings)
+
+      do.call(
+        get(plot_function_name, mode = "function", inherits = TRUE),
+        list(
+          samples = samples,
+          params_per_page = params_per_diagnostic_page
+        )
+      )
+
+      par(old_par)
+      dev.off()
+      device_open <- FALSE
+      TRUE
+    },
+    error = function(error_condition) {
+      if (device_open && dev.cur() > 1L) {
+        dev.off()
+      }
+
+      warning(
+        "Failed to generate ",
+        file_prefix,
+        ": ",
+        conditionMessage(error_condition),
+        call. = FALSE
+      )
+      FALSE
+    }
+  )
+
+  if (!export_succeeded) {
+    return(character())
+  }
+
+  generated_temp_files <- sort(
+    list.files(
+      temp_directory,
+      pattern = paste0("^", file_prefix, "_[0-9]{2}\\.pdf$"),
+      full.names = TRUE
+    )
+  )
+
+  if (length(generated_temp_files) != expected_pages) {
+    warning(
+      file_prefix,
+      " generated ",
+      length(generated_temp_files),
+      " pages; expected ",
+      expected_pages,
+      ".",
+      call. = FALSE
+    )
+    return(character())
+  }
+
+  target_files <- file.path(
+    "Figure",
+    sprintf("%s_%02d.pdf", file_prefix, seq_len(expected_pages))
+  )
+
+  existing_files <- list.files(
+    "Figure",
+    pattern = paste0("^", file_prefix, "_[0-9]{2}\\.pdf$"),
+    full.names = TRUE
+  )
+
+  if (length(existing_files) > 0) {
+    unlink(existing_files)
+  }
+
+  copied <- file.copy(
+    generated_temp_files,
+    target_files,
+    overwrite = TRUE
+  )
+
+  if (!all(copied)) {
+    warning(
+      "Not all ",
+      file_prefix,
+      " diagnostic pages could be copied into Figure/.",
+      call. = FALSE
+    )
+  }
+
+  copied_files <- target_files[copied & file.exists(target_files)]
+  exported_paths <<- unique(c(exported_paths, copied_files))
+
+  for (page_index in seq_along(copied_files)) {
+    register_artifact(
+      copied_files[[page_index]],
+      "Figures",
+      paste0(description, ", page ", page_index)
+    )
+  }
+
+  if (ncol(samples) == 10L && length(copied_files) != 5L) {
+    warning(
+      file_prefix,
+      " has ",
+      length(copied_files),
+      " final pages; 5 are required by the thesis.",
+      call. = FALSE
+    )
+  }
+
+  copied_files
+}
+
+diagnostic_method_map <- list(
+  full_data_rwmh = list(
+    samples_list = "full_data_rwmh_post_samples_list",
+    plot_chain_id = "full_data_rwmh_plot_chain_id",
+    label = "Full-data RWMH"
+  ),
+  full_data_imh = list(
+    samples_list = "full_data_imh_post_samples_list",
+    plot_chain_id = "full_data_imh_plot_chain_id",
+    label = "Full-data IMH"
+  ),
+  cmc_rwmh = list(
+    samples_list = "cmc_rwmh_consensus_samples_list",
+    plot_chain_id = "cmc_rwmh_plot_chain_id",
+    label = "CMC-RWMH final consensus"
+  ),
+  cmc_imh = list(
+    samples_list = "cmc_imh_consensus_samples_list",
+    plot_chain_id = "cmc_imh_plot_chain_id",
+    label = "CMC-IMH final consensus"
+  )
 )
 
-if (!is.null(full_data_rwmh_plot_samples) && exists("hist_trace_plot")) {
-  pdf(
-    "Figure/full_data_rwmh_hist_trace_%02d.pdf",
+for (method_key in names(diagnostic_method_map)) {
+  method_info <- diagnostic_method_map[[method_key]]
+  plot_samples <- representative_chain_samples(
+    method_info$samples_list,
+    method_info$plot_chain_id
+  )
+
+  export_paginated_diagnostic(
+    samples = plot_samples,
+    plot_function_name = "hist_trace_plot",
+    file_prefix = paste0(method_key, "_hist_trace"),
+    description = paste(
+      method_info$label,
+      "posterior histograms and trace plots"
+    ),
     width = fig_width_in,
     height = fig_height_in,
-    onefile = FALSE
+    par_settings = list(
+      cex.main = 0.80,
+      cex.lab = 0.85,
+      cex.axis = 0.85
+    )
   )
 
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.80,
-    cex.lab = 0.85,
-    cex.axis = 0.85
-  )
-
-  hist_trace_plot(full_data_rwmh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/full_data_rwmh_hist_trace_%02d.pdf",
-    "Figures",
-    "Full-data RWMH posterior histograms and trace plots"
-  )
-}
-
-# Full-data RWMH ACF plots
-if (!is.null(full_data_rwmh_plot_samples) && exists("acf_mcmc_plot")) {
-  pdf(
-    "Figure/full_data_rwmh_acf_%02d.pdf",
+  export_paginated_diagnostic(
+    samples = plot_samples,
+    plot_function_name = "acf_mcmc_plot",
+    file_prefix = paste0(method_key, "_acf"),
+    description = paste(
+      method_info$label,
+      "posterior autocorrelation plots"
+    ),
     width = fig_wide_width_in,
     height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.75,
-    cex.lab = 0.80,
-    cex.axis = 0.80
-  )
-
-  acf_mcmc_plot(full_data_rwmh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/full_data_rwmh_acf_%02d.pdf",
-    "Figures",
-    "Full-data RWMH posterior autocorrelation plots"
-  )
-}
-
-# Full-data IMH histogram and trace plots
-full_data_imh_plot_samples <- representative_samples(
-  "full_data_imh_post_samples_list",
-  "full_data_imh_post_samples",
-  "full_data_imh_plot_chain_id"
-)
-
-if (!is.null(full_data_imh_plot_samples) && exists("hist_trace_plot")) {
-  pdf(
-    "Figure/full_data_imh_hist_trace_%02d.pdf",
-    width = fig_width_in,
-    height = fig_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.80,
-    cex.lab = 0.85,
-    cex.axis = 0.85
-  )
-
-  hist_trace_plot(full_data_imh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/full_data_imh_hist_trace_%02d.pdf",
-    "Figures",
-    "Full-data IMH posterior histograms and trace plots"
-  )
-}
-
-# Full-data IMH ACF plots
-if (!is.null(full_data_imh_plot_samples) && exists("acf_mcmc_plot")) {
-  pdf(
-    "Figure/full_data_imh_acf_%02d.pdf",
-    width = fig_wide_width_in,
-    height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.75,
-    cex.lab = 0.80,
-    cex.axis = 0.80
-  )
-
-  acf_mcmc_plot(full_data_imh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/full_data_imh_acf_%02d.pdf",
-    "Figures",
-    "Full-data IMH posterior autocorrelation plots"
-  )
-}
-
-# CMC-RWMH density plots
-if (exists("cmc_rwmh_samples") && exists("consensus_density_plot")) {
-  pdf(
-    "Figure/cmc_rwmh_density_%02d.pdf",
-    width = fig_wide_width_in,
-    height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.65,
-    cex.lab = 0.75,
-    cex.axis = 0.75,
-    mar = c(5, 4, 3, 1),
-    oma = c(0, 0, 0, 0)
-  )
-
-  consensus_density_plot(cmc_rwmh_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_rwmh_density_%02d.pdf",
-    "Figures",
-    "CMC-RWMH consensus posterior density plots"
-  )
-}
-
-# CMC-RWMH representative final consensus chain histogram and trace plots
-cmc_rwmh_plot_samples <- representative_samples(
-  "cmc_rwmh_consensus_samples_list",
-  "cmc_rwmh_samples",
-  "cmc_rwmh_plot_chain_id"
-)
-
-if (!is.null(cmc_rwmh_plot_samples) && exists("hist_trace_plot")) {
-  pdf(
-    "Figure/cmc_rwmh_hist_trace_%02d.pdf",
-    width = fig_width_in,
-    height = fig_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.80,
-    cex.lab = 0.85,
-    cex.axis = 0.85
-  )
-
-  hist_trace_plot(cmc_rwmh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_rwmh_hist_trace_%02d.pdf",
-    "Figures",
-    "CMC-RWMH representative final consensus chain histograms and trace plots"
-  )
-}
-
-if (!is.null(cmc_rwmh_plot_samples) && exists("acf_mcmc_plot")) {
-  pdf(
-    "Figure/cmc_rwmh_acf_%02d.pdf",
-    width = fig_wide_width_in,
-    height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.75,
-    cex.lab = 0.80,
-    cex.axis = 0.80
-  )
-
-  acf_mcmc_plot(cmc_rwmh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_rwmh_acf_%02d.pdf",
-    "Figures",
-    "CMC-RWMH representative final consensus chain autocorrelation plots"
-  )
-}
-
-# CMC-IMH density plots
-if (exists("cmc_imh_samples") && exists("consensus_density_plot")) {
-  pdf(
-    "Figure/cmc_imh_density_%02d.pdf",
-    width = fig_wide_width_in,
-    height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.65,
-    cex.lab = 0.75,
-    cex.axis = 0.75,
-    mar = c(5, 4, 3, 1),
-    oma = c(0, 0, 0, 0)
-  )
-
-  consensus_density_plot(cmc_imh_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_imh_density_%02d.pdf",
-    "Figures",
-    "CMC-IMH consensus posterior density plots"
-  )
-}
-
-# CMC-IMH representative final consensus chain histogram and trace plots
-cmc_imh_plot_samples <- representative_samples(
-  "cmc_imh_consensus_samples_list",
-  "cmc_imh_samples",
-  "cmc_imh_plot_chain_id"
-)
-
-if (!is.null(cmc_imh_plot_samples) && exists("hist_trace_plot")) {
-  pdf(
-    "Figure/cmc_imh_hist_trace_%02d.pdf",
-    width = fig_width_in,
-    height = fig_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.80,
-    cex.lab = 0.85,
-    cex.axis = 0.85
-  )
-
-  hist_trace_plot(cmc_imh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_imh_hist_trace_%02d.pdf",
-    "Figures",
-    "CMC-IMH representative final consensus chain histograms and trace plots"
-  )
-}
-
-if (!is.null(cmc_imh_plot_samples) && exists("acf_mcmc_plot")) {
-  pdf(
-    "Figure/cmc_imh_acf_%02d.pdf",
-    width = fig_wide_width_in,
-    height = fig_wide_height_in,
-    onefile = FALSE
-  )
-
-  old_par <- par(no.readonly = TRUE)
-  par(
-    cex.main = 0.75,
-    cex.lab = 0.80,
-    cex.axis = 0.80
-  )
-
-  acf_mcmc_plot(cmc_imh_plot_samples, params_per_page = 2)
-
-  par(old_par)
-  dev.off()
-
-  register_artifact(
-    "Figure/cmc_imh_acf_%02d.pdf",
-    "Figures",
-    "CMC-IMH representative final consensus chain autocorrelation plots"
+    par_settings = list(
+      cex.main = 0.75,
+      cex.lab = 0.80,
+      cex.axis = 0.80
+    )
   )
 }
 
@@ -1610,6 +1808,9 @@ if (exists("pearson_resid_std") && exists("deviance_resid_std")) {
   par(old_par)
   dev.off()
 
+  exported_paths <- unique(
+    c(exported_paths, "Figure/residual_acf_correlograms.pdf")
+  )
   register_artifact(
     "Figure/residual_acf_correlograms.pdf",
     "Figures",
@@ -1682,6 +1883,10 @@ object_names <- c(
   "cmc_imh_ess_by_parameter",
   "cmc_rwmh_ess_table",
   "cmc_imh_ess_table",
+  "full_data_rwmh_plot_chain_id",
+  "full_data_imh_plot_chain_id",
+  "cmc_rwmh_plot_chain_id",
+  "cmc_imh_plot_chain_id",
   "cmc_rwmh_samples",
   "cmc_imh_samples",
   "cmc_rwmh_post_stats_table",
@@ -1711,16 +1916,176 @@ safe_write_csv(
   "Results/export_object_availability.csv"
 )
 
-register_artifact(
-  "Results/report_artifact_manifest.csv",
-  "Data and preprocessing",
-  "Manifest of report-ready tables and figures exported by the script"
+# -------------------------------------------------------------------
+# 12. Required artifact checklist and final manifest
+# -------------------------------------------------------------------
+
+for (required_file in thesis_required_files) {
+  if (!required_file %in% report_artifact_manifest$File_Path) {
+    register_artifact(
+      required_file,
+      required_for_thesis = TRUE,
+      generated_by_export = required_file %in% exported_paths,
+      notes = if (file.exists(required_file)) {
+        "Required artifact exists but was not registered earlier."
+      } else {
+        "Required artifact is missing."
+      }
+    )
+  }
+}
+
+for (supplementary_file in known_supplementary_result_files) {
+  if (file.exists(supplementary_file) &&
+      !supplementary_file %in% report_artifact_manifest$File_Path) {
+    register_artifact(
+      supplementary_file,
+      required_for_thesis = FALSE,
+      generated_by_export = supplementary_file %in% exported_paths,
+      notes = paste(
+        "Optional supplementary result exists but was not generated",
+        "during this export run."
+      )
+    )
+  }
+}
+
+manifest_path <- "Results/report_artifact_manifest.csv"
+checklist_path <- "Results/thesis_required_artifact_checklist.csv"
+
+exported_paths <- unique(
+  c(exported_paths, manifest_path, checklist_path)
 )
+
+register_artifact(
+  manifest_path,
+  "Artifact validation",
+  "Manifest of report-ready and supplementary artifacts",
+  required_for_thesis = TRUE,
+  generated_by_export = TRUE,
+  notes = "Generated by Export_Results.r."
+)
+
+register_artifact(
+  checklist_path,
+  "Artifact validation",
+  "Checklist of artifacts required by the current thesis",
+  required_for_thesis = FALSE,
+  generated_by_export = TRUE,
+  notes = "Operational validation file generated by Export_Results.r."
+)
+
+deduplicate_manifest <- function(manifest) {
+  manifest <- manifest[!duplicated(manifest$File_Path, fromLast = TRUE), ]
+  manifest <- manifest[order(
+    !manifest$Required_For_Thesis,
+    manifest$Artifact_Type,
+    manifest$File_Path
+  ), ]
+  rownames(manifest) <- NULL
+  manifest
+}
+
+report_artifact_manifest$Exists <- file.exists(
+  report_artifact_manifest$File_Path
+)
+report_artifact_manifest$Generated_By_Export <-
+  report_artifact_manifest$File_Path %in% exported_paths
+report_artifact_manifest <- deduplicate_manifest(report_artifact_manifest)
 
 write.csv(
   report_artifact_manifest,
-  "Results/report_artifact_manifest.csv",
+  manifest_path,
   row.names = FALSE
 )
 
-cat("Export complete. Results saved in Results/ and figures saved in Figure/.\n")
+thesis_required_artifact_checklist <- data.frame(
+  Artifact_Type = vapply(
+    thesis_required_files,
+    infer_artifact_type,
+    character(1)
+  ),
+  File_Path = thesis_required_files,
+  Required_For_Thesis = TRUE,
+  Exists = file.exists(thesis_required_files),
+  Notes = vapply(
+    thesis_required_files,
+    function(file_path) {
+      if (file_path %in% fixed_road_type_figures) {
+        if (file.exists(file_path)) {
+          return("Fixed figure verified; not generated by Export_Results.r.")
+        }
+
+        return("Fixed figure is missing.")
+      }
+
+      if (file_path %in% exported_paths) {
+        return("Generated or written during this export run.")
+      }
+
+      if (file.exists(file_path)) {
+        return(
+          paste(
+            "File exists from an earlier run but was not generated",
+            "during this export run; verify the required source object."
+          )
+        )
+      }
+
+      "Required artifact is missing."
+    },
+    character(1)
+  ),
+  stringsAsFactors = FALSE
+)
+
+write.csv(
+  thesis_required_artifact_checklist,
+  checklist_path,
+  row.names = FALSE
+)
+
+report_artifact_manifest$Exists <- file.exists(
+  report_artifact_manifest$File_Path
+)
+report_artifact_manifest <- deduplicate_manifest(report_artifact_manifest)
+
+write.csv(
+  report_artifact_manifest,
+  manifest_path,
+  row.names = FALSE
+)
+
+required_not_currently_exported <- setdiff(
+  thesis_required_files,
+  c(
+    exported_paths,
+    fixed_road_type_figures[file.exists(fixed_road_type_figures)]
+  )
+)
+
+if (length(required_not_currently_exported) > 0) {
+  warning(
+    "The following thesis-required artifacts were not generated during this export run: ",
+    paste(required_not_currently_exported, collapse = ", "),
+    call. = FALSE
+  )
+}
+
+missing_required_artifacts <- thesis_required_files[
+  !file.exists(thesis_required_files)
+]
+
+if (length(missing_required_artifacts) > 0) {
+  warning(
+    "The following thesis-required artifacts are missing after export: ",
+    paste(missing_required_artifacts, collapse = ", "),
+    call. = FALSE
+  )
+}
+
+cat(
+  "Export complete. Results saved in Results/ and thesis-required figures ",
+  "saved or verified in Figure/.\n",
+  sep = ""
+)
