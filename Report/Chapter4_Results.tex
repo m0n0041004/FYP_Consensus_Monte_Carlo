@@ -119,7 +119,24 @@ Speed limit & 1.3481 & 5 & 1.0303 \\
 \end{tabular}
 \end{table}
 
-Pearson and deviance residuals are used only through the correlogram diagnostic in this chapter, because the purpose is to assess whether residual autocorrelation is present rather than to interpret residual summary statistics.
+Table \ref{tab:residual_summary} reports supplementary summaries of the standardised Pearson and deviance residuals. These summaries are descriptive diagnostics and should be interpreted together with the residual correlograms shown later in this chapter.
+
+\begin{table}[htbp]
+\centering
+\caption{Standardised residual summaries}
+\label{tab:residual_summary}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccc}
+\hline
+Residual type & Minimum & First quartile & Median & Mean & Third quartile & Maximum & Std. Dev. \\
+\hline
+Pearson & -0.5067 & -0.3871 & -0.3871 & 0.0001 & -0.3459 & 3.7709 & 1.0005 \\
+Deviance & -0.6761 & -0.5285 & -0.5285 & -0.1945 & -0.4755 & 2.3341 & 0.8614 \\
+\hline
+\end{tabular}%
+}
+\end{table}
 
 \section{Consensus Monte Carlo Shard Summary}
 
@@ -428,7 +445,7 @@ Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_acf_05} provide visu
 
 The Gelman--Rubin $\widehat{R}$ diagnostics provide an additional multi-chain convergence check for the final posterior samples. The reported $\widehat{R}$ values are close to 1 across all parameters: approximately 1.0001 to 1.0008 for full-data RWMH, 1.0000 to 1.0002 for full-data IMH, 1.0006 to 1.0031 for CMC-RWMH, and 1.0002 to 1.0019 for CMC-IMH. These values do not indicate substantial between-chain disagreement in the final reported samples, although they should still be considered together with trace plots, autocorrelation plots, ESS, MCSE, and posterior summaries.
 
-Figure \ref{fig:residual_acf_correlograms} shows correlograms for the standardised Pearson and deviance residuals. These residual ACF plots are used to check whether residual autocorrelation is present; low residual autocorrelations support the independence assumption of the logistic regression model.
+Figure \ref{fig:residual_acf_correlograms} shows correlograms for the standardised Pearson and deviance residuals. These residual ACF plots are supplementary diagnostics. They should be interpreted cautiously because a correlogram depends on whether the observation order has a meaningful temporal or spatial interpretation.
 
 \begin{figure}[htbp]
 \centering
