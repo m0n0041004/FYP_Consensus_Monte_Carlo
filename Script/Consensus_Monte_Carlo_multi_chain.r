@@ -392,7 +392,7 @@ d <- length(coef(logistic_model))
 start_value <- coef(logistic_model)
 
 # Tuning factor for random-walk proposal
-rwmh_tuning_factor <- 0.75
+rwmh_tuning_factor <- 1
 
 # Full covariance random-walk proposal
 proposal_cov_rwmh <-
@@ -674,7 +674,7 @@ set.seed(2)
 proposal_mean_imh <- coef(logistic_model)
 
 # Tuning factor for independent proposal
-imh_tuning_factor <- 1.5
+imh_tuning_factor <- 1.0
 
 # Independent proposal covariance
 proposal_cov_imh <- imh_tuning_factor^2 * vcov(logistic_model)
@@ -1112,7 +1112,7 @@ cmc_rwmh_shard <- function(start_value,
 # Each shard contains roughly 1 / K of the full dataset.
 # Therefore, each subposterior is expected to be wider than the full posterior.
 # The full-data covariance estimate is multiplied by K to approximate this.
-cmc_rwmh_tuning_factor <- 0.75
+cmc_rwmh_tuning_factor <- rwmh_tuning_factor
 
 cmc_rwmh_proposal_cov <-
   cmc_rwmh_tuning_factor^2 *
@@ -1502,8 +1502,7 @@ acf_mcmc_plot(
 set.seed(4)
 
 # Tuning factor for shard-specific IMH proposal
-# A value of 1.5 is used to match the Full-data IMH tuning factor.
-cmc_imh_tuning_factor <- 1.5
+cmc_imh_tuning_factor <- imh_tuning_factor
 
 # IMH sampler for one shard
 cmc_imh_shard <- function(start_value,
