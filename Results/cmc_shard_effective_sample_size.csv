@@ -1,201 +1,201 @@
 "Method","Shard","Parameter","ESS"
-"CMC-RWMH",1,"(Intercept)",9325.44867386269
-"CMC-RWMH",1,"road_typedual carriageway",9970.95743754017
-"CMC-RWMH",1,"road_typeone way street (from 2005)",8665.35323382337
-"CMC-RWMH",1,"road_typeroundabout",9482.21829115968
-"CMC-RWMH",1,"road_typeslip road (from 2005)",6402.72667814066
-"CMC-RWMH",1,"speed_limit1",9255.97053794766
-"CMC-RWMH",1,"speed_limit3",8583.83802289837
-"CMC-RWMH",1,"speed_limit4",9542.01362915456
-"CMC-RWMH",1,"speed_limit5",9907.64645890946
-"CMC-RWMH",1,"speed_limit6",9116.53861288692
-"CMC-RWMH",2,"(Intercept)",9487.49085857903
-"CMC-RWMH",2,"road_typedual carriageway",10172.4628718166
-"CMC-RWMH",2,"road_typeone way street (from 2005)",6121.11082243559
-"CMC-RWMH",2,"road_typeroundabout",10410.9981344907
-"CMC-RWMH",2,"road_typeslip road (from 2005)",7720.92438890114
-"CMC-RWMH",2,"speed_limit1",7673.52691226403
-"CMC-RWMH",2,"speed_limit3",9561.91979793707
-"CMC-RWMH",2,"speed_limit4",10649.0265697771
-"CMC-RWMH",2,"speed_limit5",8643.90395236407
-"CMC-RWMH",2,"speed_limit6",8129.25304236851
-"CMC-RWMH",3,"(Intercept)",9062.12162113739
-"CMC-RWMH",3,"road_typedual carriageway",9091.99156531364
-"CMC-RWMH",3,"road_typeone way street (from 2005)",9748.85352873261
-"CMC-RWMH",3,"road_typeroundabout",9095.76613802487
-"CMC-RWMH",3,"road_typeslip road (from 2005)",7703.10595478312
-"CMC-RWMH",3,"speed_limit1",8214.9083056437
-"CMC-RWMH",3,"speed_limit3",9105.78025417472
-"CMC-RWMH",3,"speed_limit4",9308.92011657529
-"CMC-RWMH",3,"speed_limit5",9150.86660367816
-"CMC-RWMH",3,"speed_limit6",9841.19892633928
-"CMC-RWMH",4,"(Intercept)",9591.48765575553
-"CMC-RWMH",4,"road_typedual carriageway",8147.72111928555
-"CMC-RWMH",4,"road_typeone way street (from 2005)",10129.7854339967
-"CMC-RWMH",4,"road_typeroundabout",8577.57756155211
-"CMC-RWMH",4,"road_typeslip road (from 2005)",6594.44313029123
-"CMC-RWMH",4,"speed_limit1",10088.3743648704
-"CMC-RWMH",4,"speed_limit3",9397.21731711583
-"CMC-RWMH",4,"speed_limit4",10033.9785969417
-"CMC-RWMH",4,"speed_limit5",9647.83403182571
-"CMC-RWMH",4,"speed_limit6",7709.11800220861
-"CMC-RWMH",5,"(Intercept)",8711.62255029539
-"CMC-RWMH",5,"road_typedual carriageway",10223.4291187438
-"CMC-RWMH",5,"road_typeone way street (from 2005)",8469.91739126216
-"CMC-RWMH",5,"road_typeroundabout",9506.44600712232
-"CMC-RWMH",5,"road_typeslip road (from 2005)",8227.70798359144
-"CMC-RWMH",5,"speed_limit1",8300.35324592541
-"CMC-RWMH",5,"speed_limit3",9654.78217693654
-"CMC-RWMH",5,"speed_limit4",7505.51269650058
-"CMC-RWMH",5,"speed_limit5",9348.09147585507
-"CMC-RWMH",5,"speed_limit6",10866.6798431012
-"CMC-RWMH",6,"(Intercept)",9098.13303811576
-"CMC-RWMH",6,"road_typedual carriageway",9038.38622236036
-"CMC-RWMH",6,"road_typeone way street (from 2005)",9544.3032064488
-"CMC-RWMH",6,"road_typeroundabout",8288.69501027416
-"CMC-RWMH",6,"road_typeslip road (from 2005)",11232.8748082289
-"CMC-RWMH",6,"speed_limit1",8577.64348964392
-"CMC-RWMH",6,"speed_limit3",9358.07924728063
-"CMC-RWMH",6,"speed_limit4",7103.93813112181
-"CMC-RWMH",6,"speed_limit5",8898.35726206793
-"CMC-RWMH",6,"speed_limit6",9439.03231529956
-"CMC-RWMH",7,"(Intercept)",9166.12759165317
-"CMC-RWMH",7,"road_typedual carriageway",8423.33514518995
-"CMC-RWMH",7,"road_typeone way street (from 2005)",8726.95385305124
-"CMC-RWMH",7,"road_typeroundabout",8916.49609457761
-"CMC-RWMH",7,"road_typeslip road (from 2005)",9703.96941003321
-"CMC-RWMH",7,"speed_limit1",10591.9646558462
-"CMC-RWMH",7,"speed_limit3",9413.82084741344
-"CMC-RWMH",7,"speed_limit4",6654.83518228183
-"CMC-RWMH",7,"speed_limit5",9238.23798265339
-"CMC-RWMH",7,"speed_limit6",9270.33921764583
-"CMC-RWMH",8,"(Intercept)",9731.89528576515
-"CMC-RWMH",8,"road_typedual carriageway",8367.09480469894
-"CMC-RWMH",8,"road_typeone way street (from 2005)",10285.4486910884
-"CMC-RWMH",8,"road_typeroundabout",7479.21015478196
-"CMC-RWMH",8,"road_typeslip road (from 2005)",6558.80160895501
-"CMC-RWMH",8,"speed_limit1",9563.61774672993
-"CMC-RWMH",8,"speed_limit3",7585.47865933928
-"CMC-RWMH",8,"speed_limit4",11269.2574576575
-"CMC-RWMH",8,"speed_limit5",8847.82879197621
-"CMC-RWMH",8,"speed_limit6",8385.70640957196
-"CMC-RWMH",9,"(Intercept)",8752.76675762936
-"CMC-RWMH",9,"road_typedual carriageway",8694.63463302745
-"CMC-RWMH",9,"road_typeone way street (from 2005)",8099.4687571207
-"CMC-RWMH",9,"road_typeroundabout",8920.86703249907
-"CMC-RWMH",9,"road_typeslip road (from 2005)",14434.4067156515
-"CMC-RWMH",9,"speed_limit1",9063.17623871225
-"CMC-RWMH",9,"speed_limit3",8875.47362029531
-"CMC-RWMH",9,"speed_limit4",7784.21722125378
-"CMC-RWMH",9,"speed_limit5",8398.79507039287
-"CMC-RWMH",9,"speed_limit6",9243.76084705952
-"CMC-RWMH",10,"(Intercept)",9431.46627437801
-"CMC-RWMH",10,"road_typedual carriageway",8887.01804134356
-"CMC-RWMH",10,"road_typeone way street (from 2005)",9224.51929321376
-"CMC-RWMH",10,"road_typeroundabout",10026.8937031135
-"CMC-RWMH",10,"road_typeslip road (from 2005)",6505.02260395815
-"CMC-RWMH",10,"speed_limit1",8683.62855352378
-"CMC-RWMH",10,"speed_limit3",9965.66473136246
-"CMC-RWMH",10,"speed_limit4",9890.01951450449
-"CMC-RWMH",10,"speed_limit5",8936.94680046293
-"CMC-RWMH",10,"speed_limit6",7964.37011416025
-"CMC-IMH",1,"(Intercept)",35415.7485813259
-"CMC-IMH",1,"road_typedual carriageway",34570.9753242195
-"CMC-IMH",1,"road_typeone way street (from 2005)",34687.9256632479
-"CMC-IMH",1,"road_typeroundabout",35994.4540389987
-"CMC-IMH",1,"road_typeslip road (from 2005)",33422.5732865712
-"CMC-IMH",1,"speed_limit1",34617.8774261426
-"CMC-IMH",1,"speed_limit3",34656.1983529579
-"CMC-IMH",1,"speed_limit4",36178.3195621731
-"CMC-IMH",1,"speed_limit5",35223.6705850551
-"CMC-IMH",1,"speed_limit6",35489.450954972
-"CMC-IMH",2,"(Intercept)",36455.4295010718
-"CMC-IMH",2,"road_typedual carriageway",34771.4083961315
-"CMC-IMH",2,"road_typeone way street (from 2005)",35545.8711303682
-"CMC-IMH",2,"road_typeroundabout",36324.1263703563
-"CMC-IMH",2,"road_typeslip road (from 2005)",34865.1459843425
-"CMC-IMH",2,"speed_limit1",35457.5001180279
-"CMC-IMH",2,"speed_limit3",35981.8437443918
-"CMC-IMH",2,"speed_limit4",34926.2297553717
-"CMC-IMH",2,"speed_limit5",35857.5085102374
-"CMC-IMH",2,"speed_limit6",36094.2944621247
-"CMC-IMH",3,"(Intercept)",35868.843592904
-"CMC-IMH",3,"road_typedual carriageway",34845.1913417241
-"CMC-IMH",3,"road_typeone way street (from 2005)",35098.174757812
-"CMC-IMH",3,"road_typeroundabout",34824.2750252556
-"CMC-IMH",3,"road_typeslip road (from 2005)",34045.4558528496
-"CMC-IMH",3,"speed_limit1",34788.9355200488
-"CMC-IMH",3,"speed_limit3",32995.754541008
-"CMC-IMH",3,"speed_limit4",34178.8869244622
-"CMC-IMH",3,"speed_limit5",36716.5086455082
-"CMC-IMH",3,"speed_limit6",34713.1530127382
-"CMC-IMH",4,"(Intercept)",35229.368767872
-"CMC-IMH",4,"road_typedual carriageway",35042.755145266
-"CMC-IMH",4,"road_typeone way street (from 2005)",33637.5098485679
-"CMC-IMH",4,"road_typeroundabout",33748.4865543069
-"CMC-IMH",4,"road_typeslip road (from 2005)",34513.0996919699
-"CMC-IMH",4,"speed_limit1",35157.5663909758
-"CMC-IMH",4,"speed_limit3",33477.6872240541
-"CMC-IMH",4,"speed_limit4",34652.6207451906
-"CMC-IMH",4,"speed_limit5",34151.1131806721
-"CMC-IMH",4,"speed_limit6",35016.7123607763
-"CMC-IMH",5,"(Intercept)",34201.1094308108
-"CMC-IMH",5,"road_typedual carriageway",34961.9730583375
-"CMC-IMH",5,"road_typeone way street (from 2005)",34705.7434505385
-"CMC-IMH",5,"road_typeroundabout",34707.5743062022
-"CMC-IMH",5,"road_typeslip road (from 2005)",35035.0665906083
-"CMC-IMH",5,"speed_limit1",36002.3923190226
-"CMC-IMH",5,"speed_limit3",34676.7717356615
-"CMC-IMH",5,"speed_limit4",34806.2230730429
-"CMC-IMH",5,"speed_limit5",34394.1651091827
-"CMC-IMH",5,"speed_limit6",35259.108901254
-"CMC-IMH",6,"(Intercept)",34293.6000342512
-"CMC-IMH",6,"road_typedual carriageway",35285.2990931146
-"CMC-IMH",6,"road_typeone way street (from 2005)",34680.8294748319
-"CMC-IMH",6,"road_typeroundabout",34929.8391941591
-"CMC-IMH",6,"road_typeslip road (from 2005)",35065.2770666482
-"CMC-IMH",6,"speed_limit1",33171.0281034378
-"CMC-IMH",6,"speed_limit3",35617.2398366944
-"CMC-IMH",6,"speed_limit4",35833.4302666876
-"CMC-IMH",6,"speed_limit5",34549.4575525786
-"CMC-IMH",6,"speed_limit6",35422.4867166119
-"CMC-IMH",7,"(Intercept)",35452.6108756405
-"CMC-IMH",7,"road_typedual carriageway",35115.9114754122
-"CMC-IMH",7,"road_typeone way street (from 2005)",36090.8731982092
-"CMC-IMH",7,"road_typeroundabout",36116.9484803811
-"CMC-IMH",7,"road_typeslip road (from 2005)",34879.7738357055
-"CMC-IMH",7,"speed_limit1",33416.2091723627
-"CMC-IMH",7,"speed_limit3",34709.8336034131
-"CMC-IMH",7,"speed_limit4",34688.684897335
-"CMC-IMH",7,"speed_limit5",34895.0714120901
-"CMC-IMH",7,"speed_limit6",35936.0512300412
-"CMC-IMH",8,"(Intercept)",35859.611438121
-"CMC-IMH",8,"road_typedual carriageway",32560.1827106506
-"CMC-IMH",8,"road_typeone way street (from 2005)",34326.7176806441
-"CMC-IMH",8,"road_typeroundabout",33361.8866193464
-"CMC-IMH",8,"road_typeslip road (from 2005)",32546.0723738348
-"CMC-IMH",8,"speed_limit1",33994.3402854027
-"CMC-IMH",8,"speed_limit3",36418.4036541731
-"CMC-IMH",8,"speed_limit4",35063.8338356432
-"CMC-IMH",8,"speed_limit5",35604.2679881838
-"CMC-IMH",8,"speed_limit6",36207.5181100372
-"CMC-IMH",9,"(Intercept)",33830.2828191608
-"CMC-IMH",9,"road_typedual carriageway",34919.0019109322
-"CMC-IMH",9,"road_typeone way street (from 2005)",34759.7206644216
-"CMC-IMH",9,"road_typeroundabout",33762.9481634499
-"CMC-IMH",9,"road_typeslip road (from 2005)",35648.0097679167
-"CMC-IMH",9,"speed_limit1",35765.6810535
-"CMC-IMH",9,"speed_limit3",34786.1037970665
-"CMC-IMH",9,"speed_limit4",33645.8106849393
-"CMC-IMH",9,"speed_limit5",34535.9818231699
-"CMC-IMH",9,"speed_limit6",34204.765609023
-"CMC-IMH",10,"(Intercept)",35655.0541100481
-"CMC-IMH",10,"road_typedual carriageway",33939.861995613
-"CMC-IMH",10,"road_typeone way street (from 2005)",34277.3350502149
-"CMC-IMH",10,"road_typeroundabout",36343.3602943634
-"CMC-IMH",10,"road_typeslip road (from 2005)",34342.8377115091
-"CMC-IMH",10,"speed_limit1",34675.7730585379
-"CMC-IMH",10,"speed_limit3",35660.3564533574
-"CMC-IMH",10,"speed_limit4",33826.4428499406
-"CMC-IMH",10,"speed_limit5",34896.8577792461
-"CMC-IMH",10,"speed_limit6",35784.7654099291
+"CMC-RWMH",1,"(Intercept)",10459.9397064823
+"CMC-RWMH",1,"road_typedual carriageway",10995.740928533
+"CMC-RWMH",1,"road_typeone way street (from 2005)",9980.94689334212
+"CMC-RWMH",1,"road_typeroundabout",10632.4406766491
+"CMC-RWMH",1,"road_typeslip road (from 2005)",7167.27525133079
+"CMC-RWMH",1,"speed_limit1",10349.9012021927
+"CMC-RWMH",1,"speed_limit3",9480.69697917106
+"CMC-RWMH",1,"speed_limit4",10647.359597156
+"CMC-RWMH",1,"speed_limit5",11037.856580263
+"CMC-RWMH",1,"speed_limit6",10030.146333159
+"CMC-RWMH",2,"(Intercept)",10557.4070301824
+"CMC-RWMH",2,"road_typedual carriageway",11453.9604795196
+"CMC-RWMH",2,"road_typeone way street (from 2005)",6766.86705468393
+"CMC-RWMH",2,"road_typeroundabout",11628.3621833153
+"CMC-RWMH",2,"road_typeslip road (from 2005)",8612.05329847262
+"CMC-RWMH",2,"speed_limit1",8647.48746922328
+"CMC-RWMH",2,"speed_limit3",11084.0155210158
+"CMC-RWMH",2,"speed_limit4",12054.2950726889
+"CMC-RWMH",2,"speed_limit5",10005.8266094384
+"CMC-RWMH",2,"speed_limit6",9295.51821402757
+"CMC-RWMH",3,"(Intercept)",9919.93249633714
+"CMC-RWMH",3,"road_typedual carriageway",9967.81167249744
+"CMC-RWMH",3,"road_typeone way street (from 2005)",10790.372729839
+"CMC-RWMH",3,"road_typeroundabout",10239.7249981972
+"CMC-RWMH",3,"road_typeslip road (from 2005)",8839.92943612831
+"CMC-RWMH",3,"speed_limit1",9182.03494322753
+"CMC-RWMH",3,"speed_limit3",10128.0881305745
+"CMC-RWMH",3,"speed_limit4",10038.8903598332
+"CMC-RWMH",3,"speed_limit5",10123.0822849686
+"CMC-RWMH",3,"speed_limit6",10871.5757334507
+"CMC-RWMH",4,"(Intercept)",10610.8064131893
+"CMC-RWMH",4,"road_typedual carriageway",9361.39621701874
+"CMC-RWMH",4,"road_typeone way street (from 2005)",11507.3029479514
+"CMC-RWMH",4,"road_typeroundabout",9544.88269620693
+"CMC-RWMH",4,"road_typeslip road (from 2005)",7605.12550220858
+"CMC-RWMH",4,"speed_limit1",11354.8863508943
+"CMC-RWMH",4,"speed_limit3",10325.4755954757
+"CMC-RWMH",4,"speed_limit4",11288.2982333777
+"CMC-RWMH",4,"speed_limit5",10660.65394865
+"CMC-RWMH",4,"speed_limit6",8873.03772038821
+"CMC-RWMH",5,"(Intercept)",9656.34953788554
+"CMC-RWMH",5,"road_typedual carriageway",11101.6627308143
+"CMC-RWMH",5,"road_typeone way street (from 2005)",9867.94612978943
+"CMC-RWMH",5,"road_typeroundabout",10595.575597371
+"CMC-RWMH",5,"road_typeslip road (from 2005)",9217.66096252894
+"CMC-RWMH",5,"speed_limit1",9213.68831145049
+"CMC-RWMH",5,"speed_limit3",10654.8463649372
+"CMC-RWMH",5,"speed_limit4",8487.84311234164
+"CMC-RWMH",5,"speed_limit5",10227.2908836845
+"CMC-RWMH",5,"speed_limit6",11969.776939456
+"CMC-RWMH",6,"(Intercept)",10103.3062825121
+"CMC-RWMH",6,"road_typedual carriageway",10007.3795449547
+"CMC-RWMH",6,"road_typeone way street (from 2005)",11030.3782722899
+"CMC-RWMH",6,"road_typeroundabout",9146.47504596982
+"CMC-RWMH",6,"road_typeslip road (from 2005)",12523.2025142008
+"CMC-RWMH",6,"speed_limit1",9403.16101316558
+"CMC-RWMH",6,"speed_limit3",10388.6443257224
+"CMC-RWMH",6,"speed_limit4",7755.57999909585
+"CMC-RWMH",6,"speed_limit5",9972.54839630926
+"CMC-RWMH",6,"speed_limit6",10599.7965370138
+"CMC-RWMH",7,"(Intercept)",10113.3994855313
+"CMC-RWMH",7,"road_typedual carriageway",9319.22963630962
+"CMC-RWMH",7,"road_typeone way street (from 2005)",9632.64316356109
+"CMC-RWMH",7,"road_typeroundabout",9772.32311236331
+"CMC-RWMH",7,"road_typeslip road (from 2005)",10787.4413358994
+"CMC-RWMH",7,"speed_limit1",11439.863510911
+"CMC-RWMH",7,"speed_limit3",10336.7368558481
+"CMC-RWMH",7,"speed_limit4",7575.46337624006
+"CMC-RWMH",7,"speed_limit5",10620.4703260518
+"CMC-RWMH",7,"speed_limit6",10410.7660169882
+"CMC-RWMH",8,"(Intercept)",10882.3649675648
+"CMC-RWMH",8,"road_typedual carriageway",9554.32800822234
+"CMC-RWMH",8,"road_typeone way street (from 2005)",11701.7816906602
+"CMC-RWMH",8,"road_typeroundabout",8765.01105311113
+"CMC-RWMH",8,"road_typeslip road (from 2005)",7239.387479705
+"CMC-RWMH",8,"speed_limit1",11366.7168267889
+"CMC-RWMH",8,"speed_limit3",8765.85758909352
+"CMC-RWMH",8,"speed_limit4",12762.2583611701
+"CMC-RWMH",8,"speed_limit5",10173.2917181556
+"CMC-RWMH",8,"speed_limit6",9686.66925331095
+"CMC-RWMH",9,"(Intercept)",9575.84356509181
+"CMC-RWMH",9,"road_typedual carriageway",9411.54746934924
+"CMC-RWMH",9,"road_typeone way street (from 2005)",8925.63975833307
+"CMC-RWMH",9,"road_typeroundabout",9839.8820476623
+"CMC-RWMH",9,"road_typeslip road (from 2005)",15126.4123409779
+"CMC-RWMH",9,"speed_limit1",9872.94698802846
+"CMC-RWMH",9,"speed_limit3",9766.89181814013
+"CMC-RWMH",9,"speed_limit4",8887.34185259889
+"CMC-RWMH",9,"speed_limit5",8988.60884566026
+"CMC-RWMH",9,"speed_limit6",9895.02342440408
+"CMC-RWMH",10,"(Intercept)",10571.0188596498
+"CMC-RWMH",10,"road_typedual carriageway",10050.7761053907
+"CMC-RWMH",10,"road_typeone way street (from 2005)",10505.7991264985
+"CMC-RWMH",10,"road_typeroundabout",11681.8543180671
+"CMC-RWMH",10,"road_typeslip road (from 2005)",7447.94185385387
+"CMC-RWMH",10,"speed_limit1",9893.33151732914
+"CMC-RWMH",10,"speed_limit3",10871.2234182288
+"CMC-RWMH",10,"speed_limit4",11204.0969907178
+"CMC-RWMH",10,"speed_limit5",10167.5938893146
+"CMC-RWMH",10,"speed_limit6",8974.97434190815
+"CMC-IMH",1,"(Intercept)",210202.506529145
+"CMC-IMH",1,"road_typedual carriageway",205889.731288571
+"CMC-IMH",1,"road_typeone way street (from 2005)",177286.578541537
+"CMC-IMH",1,"road_typeroundabout",202291.232326739
+"CMC-IMH",1,"road_typeslip road (from 2005)",104997.550324072
+"CMC-IMH",1,"speed_limit1",184457.047024484
+"CMC-IMH",1,"speed_limit3",206152.079739064
+"CMC-IMH",1,"speed_limit4",188288.179387801
+"CMC-IMH",1,"speed_limit5",209832.272233237
+"CMC-IMH",1,"speed_limit6",192995.280034066
+"CMC-IMH",2,"(Intercept)",205103.252851253
+"CMC-IMH",2,"road_typedual carriageway",203033.213095173
+"CMC-IMH",2,"road_typeone way street (from 2005)",146811.470657238
+"CMC-IMH",2,"road_typeroundabout",198991.82980947
+"CMC-IMH",2,"road_typeslip road (from 2005)",120314.726062287
+"CMC-IMH",2,"speed_limit1",159369.568866843
+"CMC-IMH",2,"speed_limit3",200301.346436292
+"CMC-IMH",2,"speed_limit4",194018.281226739
+"CMC-IMH",2,"speed_limit5",195562.13832549
+"CMC-IMH",2,"speed_limit6",188499.189764756
+"CMC-IMH",3,"(Intercept)",220716.590174333
+"CMC-IMH",3,"road_typedual carriageway",211675.607868738
+"CMC-IMH",3,"road_typeone way street (from 2005)",187988.634559576
+"CMC-IMH",3,"road_typeroundabout",214637.139056731
+"CMC-IMH",3,"road_typeslip road (from 2005)",152574.572847549
+"CMC-IMH",3,"speed_limit1",188423.219189142
+"CMC-IMH",3,"speed_limit3",208599.985786147
+"CMC-IMH",3,"speed_limit4",198951.11419176
+"CMC-IMH",3,"speed_limit5",211849.348660807
+"CMC-IMH",3,"speed_limit6",207916.236964933
+"CMC-IMH",4,"(Intercept)",210693.885414324
+"CMC-IMH",4,"road_typedual carriageway",202824.38674764
+"CMC-IMH",4,"road_typeone way street (from 2005)",193148.660054236
+"CMC-IMH",4,"road_typeroundabout",204829.441395354
+"CMC-IMH",4,"road_typeslip road (from 2005)",112619.419154907
+"CMC-IMH",4,"speed_limit1",183796.29496746
+"CMC-IMH",4,"speed_limit3",208700.186486868
+"CMC-IMH",4,"speed_limit4",199247.319925741
+"CMC-IMH",4,"speed_limit5",187296.364624757
+"CMC-IMH",4,"speed_limit6",183807.176568466
+"CMC-IMH",5,"(Intercept)",223024.044212996
+"CMC-IMH",5,"road_typedual carriageway",214059.279607562
+"CMC-IMH",5,"road_typeone way street (from 2005)",181585.294869537
+"CMC-IMH",5,"road_typeroundabout",209067.628285901
+"CMC-IMH",5,"road_typeslip road (from 2005)",149114.165505533
+"CMC-IMH",5,"speed_limit1",197976.700917364
+"CMC-IMH",5,"speed_limit3",215232.905405238
+"CMC-IMH",5,"speed_limit4",198907.995097463
+"CMC-IMH",5,"speed_limit5",214369.260012175
+"CMC-IMH",5,"speed_limit6",201927.239269868
+"CMC-IMH",6,"(Intercept)",220224.052654383
+"CMC-IMH",6,"road_typedual carriageway",216059.307318827
+"CMC-IMH",6,"road_typeone way street (from 2005)",199298.513115036
+"CMC-IMH",6,"road_typeroundabout",216209.094760432
+"CMC-IMH",6,"road_typeslip road (from 2005)",162588.623724518
+"CMC-IMH",6,"speed_limit1",192231.385477016
+"CMC-IMH",6,"speed_limit3",220003.855788731
+"CMC-IMH",6,"speed_limit4",190236.672668328
+"CMC-IMH",6,"speed_limit5",220356.903045224
+"CMC-IMH",6,"speed_limit6",202595.134415523
+"CMC-IMH",7,"(Intercept)",227209.962131534
+"CMC-IMH",7,"road_typedual carriageway",214156.924744608
+"CMC-IMH",7,"road_typeone way street (from 2005)",194119.400877895
+"CMC-IMH",7,"road_typeroundabout",216878.251002372
+"CMC-IMH",7,"road_typeslip road (from 2005)",168974.197215591
+"CMC-IMH",7,"speed_limit1",194033.218612942
+"CMC-IMH",7,"speed_limit3",215586.716397291
+"CMC-IMH",7,"speed_limit4",198113.810153343
+"CMC-IMH",7,"speed_limit5",222957.319722699
+"CMC-IMH",7,"speed_limit6",203272.646394617
+"CMC-IMH",8,"(Intercept)",212927.802217277
+"CMC-IMH",8,"road_typedual carriageway",201039.531888581
+"CMC-IMH",8,"road_typeone way street (from 2005)",188290.51255333
+"CMC-IMH",8,"road_typeroundabout",196401.943580642
+"CMC-IMH",8,"road_typeslip road (from 2005)",112571.505755425
+"CMC-IMH",8,"speed_limit1",184665.356044803
+"CMC-IMH",8,"speed_limit3",198741.436495175
+"CMC-IMH",8,"speed_limit4",198937.43036671
+"CMC-IMH",8,"speed_limit5",200699.247891537
+"CMC-IMH",8,"speed_limit6",185480.358177192
+"CMC-IMH",9,"(Intercept)",233073.862998669
+"CMC-IMH",9,"road_typedual carriageway",215879.342369953
+"CMC-IMH",9,"road_typeone way street (from 2005)",198771.850841683
+"CMC-IMH",9,"road_typeroundabout",218347.731227411
+"CMC-IMH",9,"road_typeslip road (from 2005)",188565.261834932
+"CMC-IMH",9,"speed_limit1",204168.403171796
+"CMC-IMH",9,"speed_limit3",222973.333506995
+"CMC-IMH",9,"speed_limit4",216038.011351758
+"CMC-IMH",9,"speed_limit5",224889.682795016
+"CMC-IMH",9,"speed_limit6",211101.698121299
+"CMC-IMH",10,"(Intercept)",207608.570314826
+"CMC-IMH",10,"road_typedual carriageway",201089.703562415
+"CMC-IMH",10,"road_typeone way street (from 2005)",183757.633023867
+"CMC-IMH",10,"road_typeroundabout",202601.130472364
+"CMC-IMH",10,"road_typeslip road (from 2005)",104110.201675009
+"CMC-IMH",10,"speed_limit1",183756.499622395
+"CMC-IMH",10,"speed_limit3",203580.414475643
+"CMC-IMH",10,"speed_limit4",192847.834712073
+"CMC-IMH",10,"speed_limit5",203138.23533235
+"CMC-IMH",10,"speed_limit6",171564.661300995

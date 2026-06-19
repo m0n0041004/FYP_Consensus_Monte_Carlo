@@ -59,6 +59,10 @@
 "cmc_imh_ess_by_parameter",TRUE
 "cmc_rwmh_ess_table",TRUE
 "cmc_imh_ess_table",TRUE
+"full_data_rwmh_plot_chain_id",TRUE
+"full_data_imh_plot_chain_id",TRUE
+"cmc_rwmh_plot_chain_id",TRUE
+"cmc_imh_plot_chain_id",TRUE
 "cmc_rwmh_samples",TRUE
 "cmc_imh_samples",TRUE
 "cmc_rwmh_post_stats_table",TRUE
