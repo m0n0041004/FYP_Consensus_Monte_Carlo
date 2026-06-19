@@ -18,9 +18,9 @@ The regression coefficient $\beta_j$ is interpreted on the log-odds scale, while
 
 Bayesian logistic regression extends logistic regression by treating the coefficient vector $\boldsymbol{\beta}$ as an unknown random quantity and assigning it a prior distribution. The posterior distribution is then proportional to the product of the likelihood and the prior distribution,
 \[
-\pi(\boldsymbol{\beta}\mid \mathbf{y},\mathbf{X})
+p(\boldsymbol{\beta}\mid \mathbf{y})
 \propto
-L(\mathbf{y}\mid \boldsymbol{\beta},\mathbf{X})\pi(\boldsymbol{\beta}).
+L(\mathbf{y}\mid \boldsymbol{\beta})\pi(\boldsymbol{\beta}).
 \]
 This posterior distribution represents uncertainty about the regression coefficients after observing the data \cite{gelman2013bayesian}. The Bayesian logistic regression literature is therefore relevant to studies that require uncertainty quantification for binary response models, especially when the posterior distribution must later be explored using simulation-based methods.
 
@@ -36,22 +36,22 @@ For many Bayesian models, posterior summaries cannot be obtained analytically be
 
 The Metropolis algorithm was introduced by Metropolis et al. for simulation-based computation \cite{metropolis1953equation}, and Hastings later generalized it to allow more general proposal distributions \cite{hastings1970monte}. The resulting Metropolis--Hastings algorithm is a flexible MCMC method for sampling from a target distribution known up to a proportionality constant. Chib and Greenberg provide a clear exposition of the algorithm and its practical implementation \cite{chib1995understanding}.
 
-At iteration $t$, a candidate value $\boldsymbol{\beta}^{*}$ is generated from a proposal density $q(\boldsymbol{\beta}^{*}\mid\boldsymbol{\beta}^{(t-1)})$. The candidate is accepted with probability
+At iteration $t$, a candidate value $\boldsymbol{\beta}^{*}$ is generated from a proposal density $q(\boldsymbol{\beta}^{*}\mid\boldsymbol{\beta}^{(t-1)})$. Let $p_T(\cdot)$ denote the target posterior density up to proportionality. The candidate is accepted with probability
 \[
 \alpha
 =
 \min\left\{
 1,
 \frac{
-\pi(\boldsymbol{\beta}^{*})
+  p_T(\boldsymbol{\beta}^{*})
 q(\boldsymbol{\beta}^{(t-1)}\mid\boldsymbol{\beta}^{*})
 }{
-\pi(\boldsymbol{\beta}^{(t-1)})
+  p_T(\boldsymbol{\beta}^{(t-1)})
 q(\boldsymbol{\beta}^{*}\mid\boldsymbol{\beta}^{(t-1)})
 }
 \right\},
 \]
-where $\pi(\cdot)$ denotes the target density up to proportionality. This formulation covers both random-walk and independent proposals. In Random Walk Metropolis--Hastings, the proposal is centred at the current state, and symmetric proposal densities cancel from the acceptance ratio. In Independent Metropolis--Hastings, the proposal is independent of the current state, and the proposal-density correction remains in the ratio. This distinction is important in the MCMC literature because proposal design affects both theoretical validity and practical efficiency.
+This formulation covers both random-walk and independent proposals. In Random Walk Metropolis--Hastings, the proposal is centred at the current state, and symmetric proposal densities cancel from the acceptance ratio. In Independent Metropolis--Hastings, the proposal is independent of the current state, and the proposal-density correction remains in the ratio. This distinction is important in the MCMC literature because proposal design affects both theoretical validity and practical efficiency.
 
 \section{Proposal Design and MCMC Accuracy}
 
@@ -87,21 +87,21 @@ Consensus Monte Carlo is a distributed Bayesian computation method designed to a
 
 Suppose the full likelihood factorises over $K$ data shards as
 \[
-L(\mathbf{y}\mid\boldsymbol{\beta},\mathbf{X})
+L(\mathbf{y}\mid\boldsymbol{\beta})
 =
-\prod_{k=1}^{K}
-L(\mathbf{y}_k\mid\boldsymbol{\beta},\mathbf{X}_k).
+\prod_{m=1}^{K}
+L(\mathbf{y}_m\mid\boldsymbol{\beta}).
 \]
-A common Consensus Monte Carlo construction defines the $k$th subposterior as
+A common Consensus Monte Carlo construction defines the subposterior for shard $m$ as
 \[
-\pi_k(\boldsymbol{\beta}\mid\mathbf{y}_k,\mathbf{X}_k)
+p_m(\boldsymbol{\beta}\mid\mathbf{y}_m)
 \propto
-L(\mathbf{y}_k\mid\boldsymbol{\beta},\mathbf{X}_k)
+L(\mathbf{y}_m\mid\boldsymbol{\beta})
 \pi(\boldsymbol{\beta})^{1/K}.
 \]
-The fractional prior contribution ensures that multiplying all subposterior kernels recovers a kernel proportional to the full posterior. This construction is central to the CMC literature because it clarifies how the prior should be distributed across subsets when the goal is to approximate the original full posterior rather than to fit unrelated local Bayesian models.
+The fractional prior contribution ensures that multiplying all subposterior kernels recovers a kernel proportional to the full posterior. This construction is central to the CMC literature because it clarifies how the prior should be distributed across shards when the goal is to approximate the original full posterior rather than to fit unrelated local Bayesian models.
 
-The remaining problem is how to combine subposterior samples. In approximately Gaussian settings, precision-weighted averaging is a natural strategy. If $\widehat{\boldsymbol{\Sigma}}_k$ is the estimated covariance matrix of subposterior $k$ and $\mathbf{W}_k=\widehat{\boldsymbol{\Sigma}}_k^{-1}$ is the corresponding precision matrix, then consensus draws can be formed using precision-weighted combinations of shard-level draws. Scott compared several Consensus Monte Carlo strategies and emphasized that the practical performance of CMC depends not only on generating local posterior samples but also on the aggregation rule used to combine them \cite{scott2017comparing}. This literature shows that simple averaging rules can be effective under approximate normality but may be less reliable when subposteriors are strongly non-Gaussian or poorly aligned.
+The remaining problem is how to combine subposterior samples. In approximately Gaussian settings, precision-weighted averaging is a natural strategy. If $\Sigma_m$ is the estimated covariance matrix of subposterior sample vectors from shard $m$ and $W_m=\Sigma_m^{-1}$ is the corresponding precision matrix, then consensus draws can be formed using precision-weighted combinations of shard-level draws. Scott compared several Consensus Monte Carlo strategies and emphasized that the practical performance of CMC depends not only on generating local posterior samples but also on the aggregation rule used to combine them \cite{scott2017comparing}. This literature shows that simple averaging rules can be effective under approximate normality but may be less reliable when subposteriors are strongly non-Gaussian or poorly aligned.
 
 \section{Evaluation of Consensus Monte Carlo Approximation}
 

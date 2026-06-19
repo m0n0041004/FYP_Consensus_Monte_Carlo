@@ -168,11 +168,13 @@ In addition, I would also like to express my gratitude to my loving parents and 
 \begin{abstract}
 In statistical inference, the frequentist approach treats parameters as unknown fixed constants, whereas the Bayesian framework views them as random variables following a probability distribution. While Monte Carlo methods allow for the computational approximation of these distributions, traditional centralized Markov Chain Monte Carlo (MCMC) becomes computationally prohibitive when dealing with large-scale or distributed datasets.
 
-To address this, Consensus Monte Carlo offers a scalable alternative by partitioning data into shards, running separate MCMC chains locally, and combining the results to approximate the full posterior. This project implements a Consensus Monte Carlo framework using Independent Metropolis-Hastings (IMH) and Random Walk Metropolis-Hastings (RWMH). The study evaluates the accuracy of the consensus approach against a full-data Metropolis-Hastings baseline to determine the conditions under which the distributed method is an adequate substitute.
+To address this, Consensus Monte Carlo offers a scalable alternative by partitioning data into shards, running separate MCMC chains locally, and combining the results to approximate the full posterior. This project implements a Consensus Monte Carlo framework using Independent Metropolis--Hastings (IMH) and Random Walk Metropolis--Hastings (RWMH). The study evaluates the accuracy of the consensus approach against full-data Metropolis--Hastings baselines.
+
+The CMC posterior means closely tracked the corresponding full-data posterior means, with posterior mean RMSE values of approximately 0.0057 for CMC-RWMH and 0.0060 for CMC-IMH. The recorded wall-clock runtimes were shorter for the CMC methods under the current single-machine parallel implementation. This runtime result is specific to the present implementation and computing environment and should not be interpreted as a hardware-independent speedup claim.
 
 \vspace{6ex}
 
-\noindent {\bf Keywords}: Bayesian Inference, Markov Chain Monte Carlo (MCMC), Metropolis-Hastings, Consensus Monte Carlo.
+\noindent {\bf Keywords}: Bayesian Inference, Markov Chain Monte Carlo (MCMC), Metropolis--Hastings, Consensus Monte Carlo.
 
 \end{abstract}
 
@@ -192,11 +194,11 @@ MH & : & Metropolis--Hastings \\[1ex]
 RWMH & : & Random Walk Metropolis--Hastings \\[1ex]
 IMH & : & Independent Metropolis--Hastings \\[1ex]
 CMC & : & Consensus Monte Carlo \\[1ex]
-$\beta$ & : & Regression coefficient vector \\[1ex]
+$\boldsymbol{\beta}$ & : & Regression coefficient vector \\[1ex]
 $X$ & : & Design matrix or predictor matrix \\[1ex]
-$y$ & : & Response variable \\[1ex]
-$K$ & : & Number of data subsets \\[1ex]
-$\pi(\beta \mid y, X)$ & : & Posterior distribution of $\beta$ given $y$ and $X$
+$\mathbf{y}$ & : & Binary response vector \\[1ex]
+$K$ & : & Number of shards \\[1ex]
+$p(\boldsymbol{\beta}\mid\mathbf{y})$ & : & Posterior density of $\boldsymbol{\beta}$ given $\mathbf{y}$
  
 \end{tabular}
 

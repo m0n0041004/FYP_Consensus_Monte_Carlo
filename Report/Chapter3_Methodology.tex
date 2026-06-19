@@ -51,7 +51,7 @@ The original accident severity variable is recoded into a binary response. Serio
 \[
 y_i =
 \begin{cases}
-1, & \text{if observation } i \text{ is serious or fatal},\\
+1, & \text{if observation } i \text{ has serious/fatal accident severity},\\
 0, & \text{if observation } i \text{ is slight}.
 \end{cases}
 \]
@@ -143,11 +143,11 @@ Analytical posterior summaries are not used in this study. Instead, posterior su
 
 \section{Frequentist Logistic Regression and Diagnostic Checks}
 
-A frequentist logistic regression model is fitted before Bayesian posterior simulation. This preliminary model serves several methodological roles. First, it provides coefficient estimates, standard errors, $z$-values, and $P$-values for coefficient-level Wald tests. Second, it is used to compute a likelihood-ratio $G^2$ test against the intercept-only model. Third, it supports a generalised variance inflation factor (GVIF) check for multicollinearity among the categorical predictors. Fourth, standardised Pearson and deviance residuals are used to obtain residual diagnostic summaries and correlograms \cite{mccullagh1989generalized,hosmer2013applied}.
+A frequentist logistic regression model is fitted before Bayesian posterior simulation. This preliminary model serves several methodological roles. First, it provides coefficient estimates, standard errors, $z$-values, and $P$-values for coefficient-level Wald tests. Second, it is used to compute a likelihood-ratio $G^2$ test against the intercept-only model. Third, it supports a generalised variance inflation factor (GVIF) check for multicollinearity among the categorical predictors. Fourth, standardised Pearson and deviance residuals are used to obtain residual correlograms \cite{mccullagh1989generalized,hosmer2013applied}.
 
 The frequentist fit also provides quantities used directly in the Metropolis--Hastings algorithms. Let $\widehat{\boldsymbol{\beta}}$ denote the estimated coefficient vector from the fitted frequentist logistic regression model, and let $\widehat{\Sigma}$ denote the estimated covariance matrix of $\widehat{\boldsymbol{\beta}}$. The matrix $\widehat{\Sigma}$ is obtained from the covariance matrix of the fitted frequentist logistic regression model. It is used as a reference covariance matrix because it provides an empirical estimate of the scale and correlation structure of the coefficient estimates. These quantities are used to initialise the samplers and to construct proposal distributions for the full-data and shard-level Metropolis--Hastings algorithms.
 
-The Pearson and deviance residual correlograms are used to check for the presence of autocorrelation in the residuals. If the residual autocorrelations are low, then the independence assumption of the logistic regression model is not violated according to these residual diagnostic plots.
+The data are cross-sectional, and the Pearson and deviance residual correlograms are used only as supplementary checks for residual autocorrelation. These plots should be interpreted cautiously because the observation order may not have a meaningful temporal or spatial interpretation.
 
 \section{Full-Data Metropolis--Hastings Sampling}
 
@@ -159,13 +159,13 @@ In the following sections,
 \]
 denotes a $d$-dimensional multivariate normal distribution with mean vector $\boldsymbol{\mu}$ and covariance matrix $\Sigma$. For both full-data samplers, the starting value is the frequentist logistic regression estimate $\widehat{\boldsymbol{\beta}}$.
 
-For both full-data samplers, the number of Metropolis--Hastings iterations is set to 100000, and the burn-in fraction is 0.2. This gives 20000 burn-in iterations and 80000 retained post-burn-in samples for each full-data sampler. Runtime is recorded using start and end time measurements, and the recorded runtime values are reported in Chapter 4 as part of the computational comparison.
+For each full-data sampler, four independent chains are run. The number of Metropolis--Hastings iterations is set to 100000 per chain, and the burn-in fraction is 0.2. This gives 20000 burn-in iterations and 80000 retained post-burn-in draws per chain. Posterior summaries and effective sample size values are based on the combined retained output across the four chains where applicable, while the chains remain separate for multi-chain convergence diagnostics. The full-data RWMH and IMH procedures are run sequentially relative to one another. Runtime is recorded using start and end time measurements, and the recorded runtime values are reported in Chapter 4 as part of the computational comparison.
 
 \subsection{Metropolis--Hastings Algorithm}
 
-Let $\pi_T(\boldsymbol{\beta})$ denote the target posterior kernel, where
+Let $p_T(\boldsymbol{\beta})$ denote the target posterior kernel, where
 \[
-\pi_T(\boldsymbol{\beta})
+p_T(\boldsymbol{\beta})
 \propto
 p(\boldsymbol{\beta}\mid \mathbf{y}).
 \]
@@ -180,10 +180,10 @@ The Metropolis--Hastings acceptance probability is
 \min\left\{
 1,
 \frac{
-\pi_T(\boldsymbol{\beta}^{*})
+  p_T(\boldsymbol{\beta}^{*})
 q(\boldsymbol{\beta}^{(t-1)}\mid \boldsymbol{\beta}^{*})
 }{
-\pi_T(\boldsymbol{\beta}^{(t-1)})
+  p_T(\boldsymbol{\beta}^{(t-1)})
 q(\boldsymbol{\beta}^{*}\mid \boldsymbol{\beta}^{(t-1)})
 }
 \right\}.
@@ -357,7 +357,7 @@ Thus, multiplying the subposterior kernels recovers a kernel proportional to the
 
 \subsection{Shard-Level Metropolis--Hastings Sampling}
 
-Separate Metropolis--Hastings chains are run on the shard-level subposterior distributions. For each shard-level sampler, the target density in the acceptance probability is $p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)$ rather than the full-data posterior density. The shard-level samplers use 100000 iterations and a burn-in fraction of 0.2, giving 80000 retained post-burn-in samples per shard before consensus combination.
+Separate Metropolis--Hastings chains are run on the shard-level subposterior distributions. For each shard-level sampler, four independent chains are run for every shard, and the corresponding chain-indexed shard outputs are combined to produce four final consensus chains. The target density in the acceptance probability is $p_m(\boldsymbol{\beta}\mid \mathbf{y}_m)$ rather than the full-data posterior density. The shard-level samplers use 100000 iterations per chain and a burn-in fraction of 0.2, giving 80000 retained post-burn-in draws per chain for each shard before consensus combination. Posterior summaries and effective sample size values are based on the combined retained output across the four final consensus chains where applicable.
 
 For Consensus Monte Carlo using Random Walk Metropolis--Hastings, the proposal covariance matrix is based on the full-data covariance estimate and is scaled by $K$:
 \[
@@ -423,7 +423,7 @@ which is summarised and compared with the corresponding full-data posterior samp
 
 \section{Posterior Summary and Evaluation Criteria}
 
-Posterior samples from the full-data Metropolis--Hastings samplers and the Consensus Monte Carlo procedures are evaluated using posterior summaries and diagnostic quantities. The frequentist logistic regression stage is evaluated using coefficient estimates, standard errors, $z$-values, $P$-values, the likelihood-ratio $G^2$ test, GVIF multicollinearity checks, and Pearson and deviance residual diagnostics. For each Bayesian regression coefficient, the posterior summaries are:
+Posterior samples from the full-data Metropolis--Hastings samplers and the Consensus Monte Carlo procedures are evaluated using posterior summaries and diagnostic quantities. The frequentist logistic regression stage is evaluated using coefficient estimates, standard errors, $z$-values, $P$-values, the likelihood-ratio $G^2$ test, GVIF multicollinearity checks, and supplementary Pearson and deviance residual correlograms. For each Bayesian regression coefficient, the posterior summaries are:
 \begin{enumerate}
 \item posterior mean;
 \item posterior median;
@@ -436,6 +436,6 @@ Posterior samples from the full-data Metropolis--Hastings samplers and the Conse
 
 The effective sample size is estimated from the autocorrelation structure of the sampled values. The Monte Carlo standard error is computed as the posterior standard deviation divided by the square root of the estimated effective sample size. The 95\% credible interval is used to describe posterior uncertainty for each coefficient \cite{flegal2008mcmc}.
 
-Additional evaluation criteria include acceptance rate, runtime, trace plots, posterior histograms, autocorrelation plots, and posterior density plots. Acceptance rates are used to assess the behaviour of the Metropolis--Hastings proposal mechanisms. Runtime is recorded during the empirical analysis and reported in Chapter 4. Histogram, trace, and autocorrelation plots are produced for the full-data Metropolis--Hastings chains, while posterior density plots are produced for the combined consensus samples \cite{gelman1992inference,brooks1998general,cowles1996markov}.
+Additional evaluation criteria include acceptance rate, runtime, trace plots, posterior histograms, autocorrelation plots, posterior density plots, and the Gelman--Rubin potential scale reduction factor, denoted by $\widehat{R}$. The $\widehat{R}$ diagnostic compares within-chain and between-chain variation as a multi-chain convergence check, with values close to 1 indicating similar behaviour across the independent chains \cite{gelman1992inference}. Acceptance rates are used to assess the behaviour of the Metropolis--Hastings proposal mechanisms. Runtime is recorded during the empirical analysis and reported in Chapter 4. Histogram, trace, and autocorrelation plots are produced for the full-data Metropolis--Hastings chains, while posterior density plots are produced for the combined consensus samples \cite{brooks1998general,cowles1996markov}.
 
 For CMC-RWMH, posterior mean error and posterior mean root mean squared error are computed relative to the full-data RWMH posterior mean. For CMC-IMH, the same quantities are computed relative to the full-data IMH posterior mean. These quantities are used as empirical measures of how closely the consensus posterior means approximate the corresponding full-data posterior means under the current implementation.

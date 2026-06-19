@@ -1,1 +1,9 @@
-\chapter{Appendix}
+\chapter{Computational Materials}
+
+\section{Implementation Summary}
+
+The empirical analysis is implemented in the R scripts in the \texttt{Script} directory. The main analysis defines the data preprocessing, Bayesian logistic regression target distributions, full-data Metropolis--Hastings samplers, shard-level Consensus Monte Carlo samplers, and precision-weighted posterior combination. The multi-chain analysis produces four independent chains for each reported Bayesian method. The result-export procedure writes the numerical summaries to the \texttt{Results} directory and the diagnostic figures to the \texttt{Figure} directory.
+
+\section{Supplementary Outputs}
+
+The exported supplementary materials include chain dimensions, chain-specific posterior summaries, Gelman--Rubin diagnostics, effective sample sizes, acceptance rates, proposal covariance matrices, shard distributions, posterior mean errors, and runtime measurements. The file \texttt{Results/report\_artifact\_manifest.csv} identifies the report-ready numerical and graphical artifacts used in the thesis.

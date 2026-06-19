@@ -73,7 +73,7 @@ Table \ref{tab:frequentist_logistic} reports the frequentist coefficient estimat
 \hline
 Parameter & Estimate & Std. Error & $z$-value & $P$-value \\
 \hline
-Intercept & -1.8981 & 0.0129 & -146.8137 & 0 \\
+Intercept & -1.8981 & 0.0129 & -146.8137 & $<10^{-300}$ \\
 Road type: dual carriageway & -0.2250 & 0.0389 & -5.7799 & $7.4759\times 10^{-9}$ \\
 Road type: one way street (from 2005) & -0.0109 & 0.0726 & -0.1507 & 0.8802 \\
 Road type: roundabout & -0.4106 & 0.0368 & -11.1582 & $6.5277\times 10^{-29}$ \\
@@ -88,7 +88,7 @@ Speed limit: 6 & 0.3925 & 0.0684 & 5.7374 & $9.6120\times 10^{-9}$ \\
 }
 \end{table}
 
-The likelihood-ratio $G^2$ test compares the fitted logistic regression model with the intercept-only model. The reported result gives $G^2=432.0306$ with 9 degrees of freedom and $P$-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
+The likelihood-ratio result in Table \ref{tab:frequentist_lrt} compares the fitted logistic regression model with the intercept-only model. The reported result gives $G^2=432.0306$ with 9 degrees of freedom and $P$-value $1.9855\times 10^{-87}$, indicating that the fitted model improves on the intercept-only model in the frequentist likelihood-ratio comparison.
 
 \begin{table}[htbp]
 \centering
@@ -117,25 +117,6 @@ Road type & 1.3481 & 4 & 1.0380 \\
 Speed limit & 1.3481 & 5 & 1.0303 \\
 \hline
 \end{tabular}
-\end{table}
-
-Table \ref{tab:residual_summary} reports supplementary summaries of the standardised Pearson and deviance residuals. These summaries are descriptive diagnostics and should be interpreted together with the residual correlograms shown later in this chapter.
-
-\begin{table}[htbp]
-\centering
-\caption{Standardised residual summaries}
-\label{tab:residual_summary}
-\scriptsize
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lccccccc}
-\hline
-Residual type & Minimum & First quartile & Median & Mean & Third quartile & Maximum & Std. Dev. \\
-\hline
-Pearson & -0.5067 & -0.3871 & -0.3871 & 0.0001 & -0.3459 & 3.7709 & 1.0005 \\
-Deviance & -0.6761 & -0.5285 & -0.5285 & -0.1945 & -0.4755 & 2.3341 & 0.8614 \\
-\hline
-\end{tabular}%
-}
 \end{table}
 
 \section{Consensus Monte Carlo Shard Summary}
@@ -182,16 +163,16 @@ Table \ref{tab:full_rwmh_summary} reports posterior summaries for the full-data 
 \hline
 Parameter & Mean & Median & Std. Dev. & ESS & MCSE & 95\% CrI & Odds ratio \\
 \hline
-Intercept & -1.8980 & -1.8980 & 0.0130 & 8949.80 & 0.0001 & [-1.9235, -1.8727] & 0.1499 \\
-Road type: dual carriageway & -0.2259 & -0.2258 & 0.0392 & 9063.46 & 0.0004 & [-0.3029, -0.1497] & 0.7978 \\
-Road type: one way street (from 2005) & -0.0128 & -0.0121 & 0.0723 & 9203.64 & 0.0008 & [-0.1549, 0.1285] & 0.9873 \\
-Road type: roundabout & -0.4111 & -0.4107 & 0.0368 & 9135.29 & 0.0004 & [-0.4837, -0.3397] & 0.6629 \\
-Road type: slip road (from 2005) & -0.7580 & -0.7562 & 0.1180 & 8974.01 & 0.0012 & [-0.9957, -0.5325] & 0.4686 \\
-Speed limit: 1 & 0.1696 & 0.1703 & 0.0718 & 8952.33 & 0.0008 & [0.0260, 0.3090] & 1.1848 \\
-Speed limit: 3 & 0.1815 & 0.1818 & 0.0382 & 9107.01 & 0.0004 & [0.1066, 0.2558] & 1.1990 \\
-Speed limit: 4 & 0.3843 & 0.3845 & 0.0572 & 8968.99 & 0.0006 & [0.2719, 0.4961] & 1.4685 \\
-Speed limit: 5 & 0.5378 & 0.5378 & 0.0327 & 9110.97 & 0.0003 & [0.4740, 0.6018] & 1.7122 \\
-Speed limit: 6 & 0.3910 & 0.3916 & 0.0681 & 9168.80 & 0.0007 & [0.2559, 0.5238] & 1.4784 \\
+Intercept & -1.8980 & -1.8980 & 0.0130 & 8949.80 & 0.0001 & (-1.9235, -1.8727) & 0.1499 \\
+Road type: dual carriageway & -0.2259 & -0.2258 & 0.0392 & 9063.46 & 0.0004 & (-0.3029, -0.1497) & 0.7978 \\
+Road type: one way street (from 2005) & -0.0128 & -0.0121 & 0.0723 & 9203.64 & 0.0008 & (-0.1549, 0.1285) & 0.9873 \\
+Road type: roundabout & -0.4111 & -0.4107 & 0.0368 & 9135.29 & 0.0004 & (-0.4837, -0.3397) & 0.6629 \\
+Road type: slip road (from 2005) & -0.7580 & -0.7562 & 0.1180 & 8974.01 & 0.0012 & (-0.9957, -0.5325) & 0.4686 \\
+Speed limit: 1 & 0.1696 & 0.1703 & 0.0718 & 8952.33 & 0.0008 & (0.0260, 0.3090) & 1.1848 \\
+Speed limit: 3 & 0.1815 & 0.1818 & 0.0382 & 9107.01 & 0.0004 & (0.1066, 0.2558) & 1.1990 \\
+Speed limit: 4 & 0.3843 & 0.3845 & 0.0572 & 8968.99 & 0.0006 & (0.2719, 0.4961) & 1.4685 \\
+Speed limit: 5 & 0.5378 & 0.5378 & 0.0327 & 9110.97 & 0.0003 & (0.4740, 0.6018) & 1.7122 \\
+Speed limit: 6 & 0.3910 & 0.3916 & 0.0681 & 9168.80 & 0.0007 & (0.2559, 0.5238) & 1.4784 \\
 \hline
 \end{tabular}%
 }
@@ -211,16 +192,16 @@ Table \ref{tab:full_imh_summary} reports posterior summaries for the full-data I
 \hline
 Parameter & Mean & Median & Std. Dev. & ESS & MCSE & 95\% CrI & Odds ratio \\
 \hline
-Intercept & -1.8980 & -1.8979 & 0.0129 & 34881.84 & 0.0001 & [-1.9237, -1.8728] & 0.1499 \\
-Road type: dual carriageway & -0.2251 & -0.2250 & 0.0390 & 34253.93 & 0.0002 & [-0.3021, -0.1494] & 0.7984 \\
-Road type: one way street (from 2005) & -0.0130 & -0.0122 & 0.0724 & 35572.06 & 0.0004 & [-0.1564, 0.1277] & 0.9871 \\
-Road type: roundabout & -0.4107 & -0.4105 & 0.0370 & 34744.98 & 0.0002 & [-0.4841, -0.3386] & 0.6632 \\
-Road type: slip road (from 2005) & -0.7560 & -0.7541 & 0.1173 & 32510.40 & 0.0007 & [-0.9918, -0.5310] & 0.4695 \\
-Speed limit: 1 & 0.1709 & 0.1716 & 0.0716 & 35351.56 & 0.0004 & [0.0283, 0.3088] & 1.1864 \\
-Speed limit: 3 & 0.1819 & 0.1820 & 0.0384 & 35627.39 & 0.0002 & [0.1061, 0.2564] & 1.1994 \\
-Speed limit: 4 & 0.3830 & 0.3833 & 0.0571 & 35792.11 & 0.0003 & [0.2710, 0.4950] & 1.4667 \\
-Speed limit: 5 & 0.5375 & 0.5374 & 0.0328 & 34816.72 & 0.0002 & [0.4731, 0.6017] & 1.7117 \\
-Speed limit: 6 & 0.3902 & 0.3899 & 0.0681 & 34714.90 & 0.0004 & [0.2569, 0.5232] & 1.4773 \\
+Intercept & -1.8980 & -1.8979 & 0.0129 & 34881.84 & 0.0001 & (-1.9237, -1.8728) & 0.1499 \\
+Road type: dual carriageway & -0.2251 & -0.2250 & 0.0390 & 34253.93 & 0.0002 & (-0.3021, -0.1494) & 0.7984 \\
+Road type: one way street (from 2005) & -0.0130 & -0.0122 & 0.0724 & 35572.06 & 0.0004 & (-0.1564, 0.1277) & 0.9871 \\
+Road type: roundabout & -0.4107 & -0.4105 & 0.0370 & 34744.98 & 0.0002 & (-0.4841, -0.3386) & 0.6632 \\
+Road type: slip road (from 2005) & -0.7560 & -0.7541 & 0.1173 & 32510.40 & 0.0007 & (-0.9918, -0.5310) & 0.4695 \\
+Speed limit: 1 & 0.1709 & 0.1716 & 0.0716 & 35351.56 & 0.0004 & (0.0283, 0.3088) & 1.1864 \\
+Speed limit: 3 & 0.1819 & 0.1820 & 0.0384 & 35627.39 & 0.0002 & (0.1061, 0.2564) & 1.1994 \\
+Speed limit: 4 & 0.3830 & 0.3833 & 0.0571 & 35792.11 & 0.0003 & (0.2710, 0.4950) & 1.4667 \\
+Speed limit: 5 & 0.5375 & 0.5374 & 0.0328 & 34816.72 & 0.0002 & (0.4731, 0.6017) & 1.7117 \\
+Speed limit: 6 & 0.3902 & 0.3899 & 0.0681 & 34714.90 & 0.0004 & (0.2569, 0.5232) & 1.4773 \\
 \hline
 \end{tabular}%
 }
@@ -242,16 +223,16 @@ Table \ref{tab:cmc_rwmh_summary} reports posterior summaries from Consensus Mont
 \hline
 Parameter & Mean & Median & Std. Dev. & ESS & MCSE & 95\% CrI & Odds ratio \\
 \hline
-Intercept & -1.8982 & -1.8982 & 0.0129 & 9324.48 & 0.0001 & [-1.9234, -1.8729] & 0.1498 \\
-Road type: dual carriageway & -0.2235 & -0.2230 & 0.0391 & 9137.87 & 0.0004 & [-0.3012, -0.1482] & 0.7997 \\
-Road type: one way street (from 2005) & -0.0110 & -0.0106 & 0.0735 & 9108.76 & 0.0008 & [-0.1558, 0.1312] & 0.9890 \\
-Road type: roundabout & -0.4099 & -0.4097 & 0.0369 & 9103.63 & 0.0004 & [-0.4828, -0.3380] & 0.6637 \\
-Road type: slip road (from 2005) & -0.7517 & -0.7502 & 0.1203 & 9514.34 & 0.0012 & [-0.9925, -0.5198] & 0.4715 \\
-Speed limit: 1 & 0.1597 & 0.1602 & 0.0723 & 9216.67 & 0.0008 & [0.0169, 0.3001] & 1.1731 \\
-Speed limit: 3 & 0.1827 & 0.1826 & 0.0386 & 9014.08 & 0.0004 & [0.1067, 0.2586] & 1.2004 \\
-Speed limit: 4 & 0.3961 & 0.3960 & 0.0574 & 9358.09 & 0.0006 & [0.2840, 0.5082] & 1.4860 \\
-Speed limit: 5 & 0.5377 & 0.5378 & 0.0327 & 9246.82 & 0.0003 & [0.4737, 0.6017] & 1.7121 \\
-Speed limit: 6 & 0.3845 & 0.3847 & 0.0688 & 9252.98 & 0.0007 & [0.2490, 0.5186] & 1.4688 \\
+Intercept & -1.8982 & -1.8982 & 0.0129 & 9324.48 & 0.0001 & (-1.9234, -1.8729) & 0.1498 \\
+Road type: dual carriageway & -0.2235 & -0.2230 & 0.0391 & 9137.87 & 0.0004 & (-0.3012, -0.1482) & 0.7997 \\
+Road type: one way street (from 2005) & -0.0110 & -0.0106 & 0.0735 & 9108.76 & 0.0008 & (-0.1558, 0.1312) & 0.9890 \\
+Road type: roundabout & -0.4099 & -0.4097 & 0.0369 & 9103.63 & 0.0004 & (-0.4828, -0.3380) & 0.6637 \\
+Road type: slip road (from 2005) & -0.7517 & -0.7502 & 0.1203 & 9514.34 & 0.0012 & (-0.9925, -0.5198) & 0.4715 \\
+Speed limit: 1 & 0.1597 & 0.1602 & 0.0723 & 9216.67 & 0.0008 & (0.0169, 0.3001) & 1.1731 \\
+Speed limit: 3 & 0.1827 & 0.1826 & 0.0386 & 9014.08 & 0.0004 & (0.1067, 0.2586) & 1.2004 \\
+Speed limit: 4 & 0.3961 & 0.3960 & 0.0574 & 9358.09 & 0.0006 & (0.2840, 0.5082) & 1.4860 \\
+Speed limit: 5 & 0.5377 & 0.5378 & 0.0327 & 9246.82 & 0.0003 & (0.4737, 0.6017) & 1.7121 \\
+Speed limit: 6 & 0.3845 & 0.3847 & 0.0688 & 9252.98 & 0.0007 & (0.2490, 0.5186) & 1.4688 \\
 \hline
 \end{tabular}%
 }
@@ -271,16 +252,16 @@ Table \ref{tab:cmc_imh_summary} reports posterior summaries from Consensus Monte
 \hline
 Parameter & Mean & Median & Std. Dev. & ESS & MCSE & 95\% CrI & Odds ratio \\
 \hline
-Intercept & -1.8984 & -1.8984 & 0.0129 & 35976.81 & 0.0001 & [-1.9237, -1.8731] & 0.1498 \\
-Road type: dual carriageway & -0.2226 & -0.2224 & 0.0392 & 36066.69 & 0.0002 & [-0.2999, -0.1460] & 0.8004 \\
-Road type: one way street (from 2005) & -0.0117 & -0.0111 & 0.0731 & 35739.13 & 0.0004 & [-0.1567, 0.1300] & 0.9883 \\
-Road type: roundabout & -0.4097 & -0.4095 & 0.0368 & 34888.66 & 0.0002 & [-0.4826, -0.3383] & 0.6638 \\
-Road type: slip road (from 2005) & -0.7448 & -0.7434 & 0.1207 & 35061.34 & 0.0006 & [-0.9861, -0.5126] & 0.4748 \\
-Speed limit: 1 & 0.1626 & 0.1632 & 0.0726 & 34817.56 & 0.0004 & [0.0186, 0.3035] & 1.1765 \\
-Speed limit: 3 & 0.1825 & 0.1826 & 0.0383 & 35347.17 & 0.0002 & [0.1071, 0.2574] & 1.2002 \\
-Speed limit: 4 & 0.3948 & 0.3951 & 0.0574 & 34932.31 & 0.0003 & [0.2815, 0.5065] & 1.4840 \\
-Speed limit: 5 & 0.5372 & 0.5373 & 0.0326 & 36304.37 & 0.0002 & [0.4731, 0.6007] & 1.7112 \\
-Speed limit: 6 & 0.3863 & 0.3870 & 0.0688 & 35277.49 & 0.0004 & [0.2500, 0.5201] & 1.4715 \\
+Intercept & -1.8984 & -1.8984 & 0.0129 & 35976.81 & 0.0001 & (-1.9237, -1.8731) & 0.1498 \\
+Road type: dual carriageway & -0.2226 & -0.2224 & 0.0392 & 36066.69 & 0.0002 & (-0.2999, -0.1460) & 0.8004 \\
+Road type: one way street (from 2005) & -0.0117 & -0.0111 & 0.0731 & 35739.13 & 0.0004 & (-0.1567, 0.1300) & 0.9883 \\
+Road type: roundabout & -0.4097 & -0.4095 & 0.0368 & 34888.66 & 0.0002 & (-0.4826, -0.3383) & 0.6638 \\
+Road type: slip road (from 2005) & -0.7448 & -0.7434 & 0.1207 & 35061.34 & 0.0006 & (-0.9861, -0.5126) & 0.4748 \\
+Speed limit: 1 & 0.1626 & 0.1632 & 0.0726 & 34817.56 & 0.0004 & (0.0186, 0.3035) & 1.1765 \\
+Speed limit: 3 & 0.1825 & 0.1826 & 0.0383 & 35347.17 & 0.0002 & (0.1071, 0.2574) & 1.2002 \\
+Speed limit: 4 & 0.3948 & 0.3951 & 0.0574 & 34932.31 & 0.0003 & (0.2815, 0.5065) & 1.4840 \\
+Speed limit: 5 & 0.5372 & 0.5373 & 0.0326 & 36304.37 & 0.0002 & (0.4731, 0.6007) & 1.7112 \\
+Speed limit: 6 & 0.3863 & 0.3870 & 0.0688 & 35277.49 & 0.0004 & (0.2500, 0.5201) & 1.4715 \\
 \hline
 \end{tabular}%
 }
@@ -375,6 +356,8 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 
 \subsection{Full-data Random Walk Metropolis--Hastings diagnostics}
 
+The following figures present the representative posterior histograms, trace plots, and autocorrelation plots for the full-data RWMH output.
+
 \diagnosticfigure{full_data_rwmh_hist_trace_01.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_rwmh_hist_trace_01}
 \diagnosticfigure{full_data_rwmh_hist_trace_02.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_rwmh_hist_trace_02}
 \diagnosticfigure{full_data_rwmh_hist_trace_03.pdf}{Full-data Random Walk Metropolis--Hastings posterior histograms and trace plots, page 3}{fig:full_rwmh_hist_trace_03}
@@ -387,7 +370,10 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 \diagnosticfigure{full_data_rwmh_acf_04.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 4}{fig:full_rwmh_acf_04}
 \diagnosticfigure{full_data_rwmh_acf_05.pdf}{Full-data Random Walk Metropolis--Hastings posterior autocorrelation plots, page 5}{fig:full_rwmh_acf_05}
 
+\clearpage
 \subsection{Full-data Independent Metropolis--Hastings diagnostics}
+
+The following figures present the representative posterior histograms, trace plots, and autocorrelation plots for the full-data IMH output.
 
 \diagnosticfigure{full_data_imh_hist_trace_01.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 1}{fig:full_imh_hist_trace_01}
 \diagnosticfigure{full_data_imh_hist_trace_02.pdf}{Full-data Independent Metropolis--Hastings posterior histograms and trace plots, page 2}{fig:full_imh_hist_trace_02}
@@ -401,7 +387,10 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 \diagnosticfigure{full_data_imh_acf_04.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 4}{fig:full_imh_acf_04}
 \diagnosticfigure{full_data_imh_acf_05.pdf}{Full-data Independent Metropolis--Hastings posterior autocorrelation plots, page 5}{fig:full_imh_acf_05}
 
+\clearpage
 \subsection{Consensus Monte Carlo using Random Walk Metropolis--Hastings diagnostics}
+
+The following figures present posterior densities from the combined CMC-RWMH samples and representative histogram, trace, and autocorrelation plots for a final consensus chain.
 
 \diagnosticfigure{cmc_rwmh_density_01.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_rwmh_density_01}
 \diagnosticfigure{cmc_rwmh_density_02.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_rwmh_density_02}
@@ -421,7 +410,10 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 \diagnosticfigure{cmc_rwmh_acf_04.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 4}{fig:cmc_rwmh_acf_04}
 \diagnosticfigure{cmc_rwmh_acf_05.pdf}{Consensus Monte Carlo using Random Walk Metropolis--Hastings representative final consensus chain autocorrelation plots, page 5}{fig:cmc_rwmh_acf_05}
 
+\clearpage
 \subsection{Consensus Monte Carlo using Independent Metropolis--Hastings diagnostics}
+
+The following figures present posterior densities from the combined CMC-IMH samples and representative histogram, trace, and autocorrelation plots for a final consensus chain.
 
 \diagnosticfigure{cmc_imh_density_01.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 1}{fig:cmc_imh_density_01}
 \diagnosticfigure{cmc_imh_density_02.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings posterior density plots from combined consensus samples, page 2}{fig:cmc_imh_density_02}
@@ -441,6 +433,7 @@ The figure manifest reports numbered posterior histogram, trace, autocorrelation
 \diagnosticfigure{cmc_imh_acf_04.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 4}{fig:cmc_imh_acf_04}
 \diagnosticfigure{cmc_imh_acf_05.pdf}{Consensus Monte Carlo using Independent Metropolis--Hastings representative final consensus chain autocorrelation plots, page 5}{fig:cmc_imh_acf_05}
 
+\clearpage
 Figures \ref{fig:full_rwmh_hist_trace_01}--\ref{fig:cmc_imh_acf_05} provide visual information about marginal posterior shapes, representative sampled-chain behaviour, and autocorrelation patterns for the full-data and Consensus Monte Carlo posterior outputs. The full-data histogram and trace plots are based on representative full-data chains, while the CMC histogram and trace plots are based on representative final consensus chains. The CMC density plots are based on combined consensus samples and do not represent a single shard-level Markov chain. Therefore, the plots are used together with numerical posterior summaries, ESS, MCSE, acceptance rates, and $\widehat{R}$ diagnostics rather than as standalone convergence evidence.
 
 The Gelman--Rubin $\widehat{R}$ diagnostics provide an additional multi-chain convergence check for the final posterior samples. The reported $\widehat{R}$ values are close to 1 across all parameters: approximately 1.0001 to 1.0008 for full-data RWMH, 1.0000 to 1.0002 for full-data IMH, 1.0006 to 1.0031 for CMC-RWMH, and 1.0002 to 1.0019 for CMC-IMH. These values do not indicate substantial between-chain disagreement in the final reported samples, although they should still be considered together with trace plots, autocorrelation plots, ESS, MCSE, and posterior summaries.
